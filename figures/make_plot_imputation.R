@@ -3,14 +3,16 @@ require(tidyverse)
 require(ggplot2)
 
 
-csv_file <- "../Projects/tsimpute/results/modern_ooa_equal/results.csv"
-pdf_file <- "figure_ooa_equal.pdf"
+csv_file <- "tsimpute/results/modern_ooa_unequal_900505_haploid_miss05_yri_demes_yri//results.csv"
+pdf_file <- "figure_ooa_unequal.pdf"
 
 dat <- read.csv(csv_file, sep = ';')
+dat <- dat[dat$maf_category != '( 0.0000%,  0.0100%)', ]
+dat$perc_genotypes_correct_asin <- asin(dat$perc_genotypes_correct)
 
 
 g <- dat %>%
-  ggplot(aes(y = concordance_rate,
+  ggplot(aes(y = perc_genotypes_correct_asin,
              x = maf_category,
              fill = method)) +
   #stat_summary(fun.data = "mean_sdl",
@@ -23,8 +25,8 @@ g <- dat %>%
   #            size  = 6,
   #            position = position_dodge()) +
   #ggtitle("Single, panmictic population") +
-  ggtitle("Out-of-Africa (YRI: 1/3; CHB: 1/3; CEU: 1/3)") +
-  #ggtitle("Out-of-Africa (YRI: 0.05; CHB: 0.05; CEU: 0.95)") +
+  #ggtitle("Out-of-Africa (YRI: 33%; CHB: 33%; CEU: 33%)") +
+  ggtitle("Out-of-Africa (YRI: 2.5%; CHB: 2.5%; CEU: 95%)") +
   ylab("Concordance rate") +
   xlab("MAF category") +
   theme(panel.background = element_blank(),
@@ -45,6 +47,6 @@ g <- dat %>%
                                 0.90,
                                 0.65))
 
-#pdf(pdf_file, useDingbats = FALSE)
+pdf(pdf_file, useDingbats = FALSE)
 g
-#dev.off()
+dev.off()
