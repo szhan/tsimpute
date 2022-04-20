@@ -152,6 +152,6 @@ dependencies:
     - cyvcf2==0.30.14
     - humanfriendly==10.0
     - intervaltree==3.1.0
-    - tsinfer==0.2.3.dev9+gc8568d5
+    - tsinfer==0.2.3
     - zarr==2.10.3
 prefix: /Users/szhan/opt/anaconda3/envs/tskit-play
