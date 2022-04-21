@@ -1,4 +1,4 @@
-base_dir="data/modern_ooa_unequal_900505_haploid_miss10/"
+base_dir=$1
 
 ref_dir=${base_dir}"ref/"
 miss_dir=${base_dir}"miss/"
