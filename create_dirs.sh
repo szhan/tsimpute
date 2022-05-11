@@ -7,6 +7,7 @@ ts_anc_ref_dir=${base_dir}"ts_anc_ref/"
 imputed_tsinfer_dir=${base_dir}"imputed_tsinfer/"
 imputed_tsonly_dir=${base_dir}"imputed_tsonly/"
 imputed_beagle_dir=${base_dir}"imputed_beagle/"
+results_dir=${base_dir}"results/"
 
 mkdir -p ${base_dir}
 mkdir -p ${ref_dir}
@@ -16,4 +17,5 @@ mkdir -p ${ts_anc_ref_dir}
 mkdir -p ${imputed_tsinfer_dir}
 mkdir -p ${imputed_tsonly_dir}
 mkdir -p ${imputed_beagle_dir}
+mkdir -p ${results_dir}
 
