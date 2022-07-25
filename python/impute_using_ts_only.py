@@ -12,19 +12,26 @@ import tskit
 import tsinfer
 from tsinfer import make_ancestors_ts
 
+print(f"msprime {msprime.__version__}")
+print(f"tskit {tskit.__version__}")
+print(f"tsinfer {tsinfer.__version__}")
+
+start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+print(f"datetime {start_datetime}")
+
 
 ### Helper functions
 def count_sites_by_type(
     ts_or_sd
-):
+    ):
     """
     Iterate through the variants of a TreeSequence or SampleData object,
     and count the number of mono-, bi-, tri-, and quad-allelic sites.
     
     :param TreeSequence/SampleData ts_or_sd:
+    :return None:
     """
-    assert isinstance(ts_or_sd, tskit.TreeSequence) or\
-        isinstance(ts_or_sd, tsinfer.SampleData)
+    assert isinstance(ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData))
     
     sites_mono = 0
     sites_bi = 0
@@ -52,12 +59,14 @@ def count_sites_by_type(
     print(f"\tsites tri  : {sites_tri}")
     print(f"\tsites quad : {sites_quad}")
     print(f"\tsites total: {sites_total}")
+    
+    return None
 
 
 def check_site_positions_ts_issubset_sd(
     tree_sequence,
     sample_data
-):
+    ):
     """
     Check whether the site positions in `TreeSequence` are a subset of
     the site positions in `SampleData`.
@@ -93,18 +102,19 @@ def compare_sites_sd_and_ts(
     tree_sequence,
     is_common,
     check_matching_ancestral_state=True
-):
+    ):
     """
-    If `include` is set to True, then get the ids of the sites
+    If `is_common` is set to True, then get the ids and positions of the sites
     found in `sample_data` AND in `tree_sequence`.
     
-    if `exclude` is set to False, then get the ids of the sites
+    if `is_common` is set to False, then get the ids and positions of the sites
     found in `sample_data` but NOT in `tree_sequence`.
     
     :param TreeSequence tree_sequence:
     :param SampleData sample_data:
-    :param include bool:
-    :return np.array:
+    :param is_common bool:
+    :param check_matching_ancestral_state bool: (default=True)
+    :return tuple(np.array, np.array):
     """
     ts_site_positions = np.empty(tree_sequence.num_sites)
     
@@ -115,31 +125,39 @@ def compare_sites_sd_and_ts(
         
     assert i == tree_sequence.num_sites
     
-    sd_site_id = []
-    for v in sample_data.variants():
+    sd_site_ids = []
+    sd_site_positions = []
+    for sd_v in sample_data.variants():
         if is_common:
-            if v.site.position in ts_site_positions:
-                sd_site_id.append(v.site.id)
+            if sd_v.site.position in ts_site_positions:
+                sd_site_ids.append(sd_v.site.id)
+                sd_site_positions.append(sd_v.site.position)
                 if check_matching_ancestral_state:
-                    ts_site = tree_sequence.site(position=v.site.position)
-                    assert v.site.ancestral_state == ts_site.ancestral_state,\
-                        f"Ancestral states at position {v.site.position} not identical, " +\
-                        f"{v.site.ancestral_state} vs. {ts_site.ancestral_state}."
+                    ts_site = tree_sequence.site(position=sd_v.site.position)
+                    assert sd_v.site.ancestral_state == ts_site.ancestral_state, \
+                        f"Ancestral states at {sd_v.site.position} not the same, " + \
+                        f"{sd_v.site.ancestral_state} vs. {ts_site.ancestral_state}."
         else:
-            if v.site.position not in ts_site_positions:
-                sd_site_id.append(v.site.id)
+            if sd_v.site.position not in ts_site_positions:
+                sd_site_ids.append(sd_v.site.id)
+                sd_site_positions.append(sd_v.site.position)
     
-    return(np.array(sd_site_id))
+    return(
+        (
+            np.array(sd_site_ids),
+            np.array(sd_site_positions),
+        )
+    )
 
 
 def make_compatible_sample_data(
     sample_data,
     ancestors_ts
-):
+    ):
     """
     Make an editable copy of a `sample_data` object, and edit it so that:
-    (1) the derived alleles in the `sample_data` object not found in `ancestors_ts` are marked as MISSING;
-    (2) the allele list in the new `sample_data` corresponds to the allele list in `ancestors_ts`.
+    (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
+    (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
     
     N.B. Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
     which are not explained in the tsinfer API doc, are used to facilitate the editing.
@@ -154,14 +172,14 @@ def make_compatible_sample_data(
     # while iterating through the sites in `sample_data` using another generator,
     # letting the latter generator catch up.
     sd_variants = sample_data.variants()
-    sd_var = next(sd_variants)
+    sd_v = next(sd_variants)
     for ts_site in ancestors_ts.sites():
-        while sd_var.site.position != ts_site.position:
+        while sd_v.site.position != ts_site.position:
             # Sites in `samples_data` but not in `ancestors_ts` are not imputed.
             # Also, leave them as is in the `sample_data`, but keep track of them.
-            sd_var = next(sd_variants)
+            sd_v = next(sd_variants)
             
-        sd_site_id = sd_var.site.id # Site id in `sample_data`
+        sd_site_id = sd_v.site.id # Site id in `sample_data`
         
         # CHECK that all the sites in `ancestors_ts` are biallelic.
         assert len(ts_site.alleles) == 2
@@ -174,9 +192,9 @@ def make_compatible_sample_data(
         
         # CHECK that the ancestral allele should be the same
         # in both `ancestors_ts` and `sample_data`.
-        assert ts_ancestral_allele == sd_var.alleles[0]
+        assert ts_ancestral_allele == sd_v.alleles[0]
         
-        if ts_derived_allele not in sd_var.alleles:
+        if ts_derived_allele not in sd_v.alleles:
             # Case 1:
             # If the derived alleles in the `sample_data` are not in `ancestors_ts`,
             # then mark them as missing.
@@ -186,7 +204,7 @@ def make_compatible_sample_data(
             # We cannot determine whether the extra derived alleles in `sample_data`
             # are derived from 0 or 1 in `ancestors_ts` anyway.
             new_sample_data.sites_genotypes[sd_site_id] = np.where(
-                sd_var.genotypes != 0, # Keep if ancestral
+                sd_v.genotypes != 0, # Keep if ancestral
                 tskit.MISSING_DATA, # Otherwise, flag as missing
                 0,
             )
@@ -195,20 +213,20 @@ def make_compatible_sample_data(
             new_sample_data.sites_alleles[sd_site_id] = [ts_ancestral_allele]
         else:
             # The allele lists in `ancestors_ts` and `sample_data` may be different.
-            ts_derived_allele_index = sd_var.alleles.index(ts_derived_allele)
+            ts_derived_allele_index = sd_v.alleles.index(ts_derived_allele)
             
             if ts_derived_allele_index == 1:
                 # Case 2:
                 # Both the ancestral and derived alleles correspond exactly.
-                if len(sd_var.alleles) == 2:
+                if len(sd_v.alleles) == 2:
                     continue
                 # Case 3:
                 # The derived allele in `ancestors_ts` is indexed as 1 in `sample_data`,
                 # so mark alleles >= 2 as missing.
                 new_sample_data.sites_genotypes[sd_site_id] = np.where(
-                    sd_var.genotypes > 1, # 0 and 1 should be kept "as is"
+                    sd_v.genotypes > 1, # 0 and 1 should be kept "as is"
                     tskit.MISSING_DATA, # Otherwise, flag as missing
-                    sd_var.genotypes,
+                    sd_v.genotypes,
                 )
                 print(f"Site {sd_site_id} has extra derived allele(s) in the query samples (set as missing).")
             else:
@@ -217,10 +235,10 @@ def make_compatible_sample_data(
                 #   so the alleles in `sample_data` needs to be reordered,
                 #   such that the 1-indexed allele is also indexed as 1 in `ancestors_ts`.
                 new_sample_data.sites_genotypes[sd_site_id] = np.where(
-                    sd_var.genotypes == 0,
+                    sd_v.genotypes == 0,
                     0, # Leave ancestral allele "as is"
                     np.where(
-                        sd_var.genotypes == ts_derived_allele_index,
+                        sd_v.genotypes == ts_derived_allele_index,
                         1, # Change it to 1 so that it corresponds to `ancestors_ts`
                         tskit.MISSING_DATA, # Otherwise, mark as missing
                     ),
@@ -237,7 +255,7 @@ def make_compatible_sample_data(
 def pick_masked_sites_random(
     site_ids,
     prop_masked_sites
-):
+    ):
     """
     Draw N sites from `sites_ids` at random, where N is the number of sites to mask
     based on a specified proportion of masked sites `prop_masked_sites`.
@@ -269,10 +287,10 @@ def pick_masked_sites_random(
 def mask_sites_in_sample_data(
     sample_data,
     masked_sites=None
-):
+    ):
     """
     Create and return a `SampleData` object from an existing `SampleData` object,
-    which contain masked sites as listed in `masked_sites` (site ids).
+    which contains masked sites as listed in `masked_sites` (site ids).
     
     :param SampleData sample_data:
     :param np.array masked_sites: list of site ids (NOT positions)
@@ -292,17 +310,21 @@ def mask_sites_in_sample_data(
 def compute_iqs(
     genotypes_true,
     genotypes_imputed
-):
+    ):
     """
     Calculate the Imputation Quality Score between `genotypes_true` and `genotypes_imputed`.
+    1. A value of 1 indicates perfect imputation;
+    2. A value of 0 indicates that observed agreement rate is equal to chance agreement rate; and
+    3. A negative value indicates that the method imputes poorly than by chance.
     
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in haploid genomes.
     """
-    assert set(genotypes_true) == set([0, 1]),\
-        f"True genotypes are non-biallelic {set(genotypes_true)}."
-    assert set(genotypes_imputed) == set([0, 1]),\
-        f"Imputed genotypes are non-biallelic {set(genotypes_imputed)}."
+    assert len(genotypes_true) == len(genotypes_imputed)
+    assert set(genotypes_true) == set([0, 1]), \
+        f"Non-binary states in true genotypes {set(genotypes_true)}."
+    assert set(genotypes_imputed) == set([0, 1]), \
+        f"Non-binary states in imputed genotypes {set(genotypes_imputed)}."
     
     # Allele 0 imputed correctly
     n00 = np.sum([y == 0 for x, y in zip(genotypes_imputed, genotypes_true) if x == 0])
@@ -339,48 +361,54 @@ def compute_iqs(
 @click.command()
 @click.option(
     '--replicate_index', '-i',
-    required=True,
     type=int,
+    required=True,
     help="Replicate index"
     )
 @click.option(
     '--sampling_time_query', '-t',
-    required=True,
     type=float,
-    help="Sampling time of query genomes"
+    required=True,
+    help="Time to sample query genomes"
     )
 @click.option(
     '--prop_missing_sites', '-p',
-    required=True,
     type=float,
-    help="Proportion of missing sites"
+    required=True,
+    help="Proportion of sites to mask"
+    )
+@click.option(
+    '--do_test_run',
+    is_flag=True,
+    help="Perform a run using simulation parameters for testing"
     )
 def run_pipeline(
     replicate_index,
     sampling_time_query,
     prop_missing_sites,
-):
+    do_test_run,
+    ):
     ### Set simulation parameters
-    # For simulations
-    size_ref   = 1e4
-    size_query = 1e3
-    eff_pop_size = 10_000
-    mutation_rate = 1e-8
-    recombination_rate = 1e-8
-    sequence_length = 1_000_000
-
-    # For testing
-    #size_ref   = 50
-    #size_query = 50
-    #eff_pop_size = 10_000
-    #mutation_rate = 1e-6
-    #recombination_rate = 1e-7
-    #sequence_length = 10_000
-
     contig_id = '1'
     ploidy_level = 1
 
-    start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    if do_test_run:
+        # For testing
+        size_ref = 50
+        size_query = 50
+        eff_pop_size = 10_000
+        mutation_rate = 1e-7
+        recombination_rate = 1e-7
+        sequence_length = 10_000
+    else:
+        # For simulations
+        size_ref = 1e4
+        size_query = 1e3
+        eff_pop_size = 10_000
+        mutation_rate = 1e-8
+        recombination_rate = 1e-8
+        sequence_length = 1_000_000
+
 
     ### Simulate genealogy and genetic variation
     # Uniform recombination rate
@@ -419,6 +447,7 @@ def run_pipeline(
         rate=mut_rate_map,
         discrete_genome=True,
     )
+
     # Remove populations
     tables = ts_full.dump_tables()
     tables.populations.clear()
@@ -428,13 +457,14 @@ def run_pipeline(
     print("TS full")
     count_sites_by_type(ts_full)
 
-    # The first `size_ref` individuals or `ploidy_level` * `size_ref` samples are taken as the reference panel.
+    # The first `size_ref` individuals or `ploidy_level` * `size_ref` samples are the reference panel.
     # The remaining individuals and samples are the query/target to impute into.
     individuals_ref = np.arange(size_ref, dtype=int)
     samples_ref = np.arange(ploidy_level * size_ref, dtype=int)
 
     individuals_query = np.arange(size_ref, size_ref + size_query, dtype=int)
     samples_query = np.arange(ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int)
+
 
     ### Create an ancestor ts from the reference genomes
     # Remove all the branches leading to the query genomes
@@ -455,6 +485,7 @@ def run_pipeline(
     print("TS anc")
     count_sites_by_type(ts_anc)
 
+
     ### Create a SampleData object holding the query genomes 
     sd_full = tsinfer.SampleData.from_tree_sequence(ts_full)
     sd_query = sd_full.subset(individuals_query)
@@ -471,26 +502,37 @@ def run_pipeline(
         ancestors_ts=ts_anc,
     )
 
+
     ### Create a SampleData object with masked sites
     # Identify sites in both `sd_query` and `ts_anc`.
-    shared_sites = compare_sites_sd_and_ts(sd_query, ts_anc, is_common=True)
-    print(f"Shared sites: {len(shared_sites)}")
+    # This is a superset of the sites in `sd_query` to be masked and imputed.
+    shared_site_ids, shared_site_positions = compare_sites_sd_and_ts(sd_query, ts_anc, is_common=True)
+    print(f"Shared sites: {len(shared_site_ids)}")
 
     # Identify sites in `sd_query` but not in `ts_anc`, which are not to be imputed.
-    exclude_sites = compare_sites_sd_and_ts(sd_query, ts_anc, is_common=False)
-    print(f"Exclude sites: {len(exclude_sites)}")
+    exclude_site_ids, exclude_site_positions = compare_sites_sd_and_ts(sd_query, ts_anc, is_common=False)
+    print(f"Exclude sites: {len(exclude_site_ids)}")
 
-    assert len(set(shared_sites).intersection(set(exclude_sites))) == 0
+    assert len(set(shared_site_ids).intersection(set(exclude_site_ids))) == 0
+    assert len(set(shared_site_positions).intersection(set(exclude_site_positions))) == 0
 
+    # Select sites in `sd_query` to mask and impute.
+    # This is a subset of 'shared_site_ids'
     masked_site_ids = pick_masked_sites_random(
-        site_ids=shared_sites,
+        site_ids=shared_site_ids,
         prop_masked_sites=prop_missing_sites,
     )
+    masked_site_positions = [site.position for site in sd_query.sites(ids=masked_site_ids)]
+    print(f"Masked sites: {len(masked_site_ids)}")
+
+    assert set(masked_site_ids).issubset(set(shared_site_ids))
+    assert set(masked_site_positions).issubset(set(shared_site_positions))
 
     sd_query_masked = mask_sites_in_sample_data(
         new_sd_query,
         masked_sites=masked_site_ids,
     )
+
 
     ### Impute the query genomes
     ts_imp = tsinfer.match_samples(
@@ -498,17 +540,16 @@ def run_pipeline(
         ancestors_ts=ts_anc,
     )
 
-    ### Evaluate imputation performance
-    assert ts_ref.num_sites == ts_imp.num_sites
 
-    ts_ref_site_pos = [site.position for site in ts_ref.sites()]
-    ts_imp_site_pos = [site.position for site in ts_imp.sites()]
+    ### Evaluate imputation performance
+    ts_ref_site_pos = [s.position for s in ts_ref.sites()]
+    ts_imp_site_pos = [s.position for s in ts_imp.sites()]
 
     assert len(set(ts_ref_site_pos).intersection(set(ts_imp_site_pos))) == len(ts_ref_site_pos)
 
     results = None
     for v_ref, v_imp in zip(ts_ref.variants(), ts_imp.variants()):
-        if v_imp.site.id in shared_sites:
+        if v_imp.site.position in masked_site_positions:
             assert v_ref.alleles[0] == v_imp.alleles[0]
             # TODO:
             #   Why doesn't `v.num_alleles` always reflect the number of genotypes
@@ -544,6 +585,7 @@ def run_pipeline(
                 results = np.append(results, line, axis=0)
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
 
     ### Write results
     out_results_file = "sim" + "_" + str(replicate_index) + ".csv"
