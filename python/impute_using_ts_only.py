@@ -14,6 +14,7 @@ import tsinfer
 from tsinfer import make_ancestors_ts
 
 sys.path.append("python/")
+import masks
 import measures
 
 print(f"msprime {msprime.__version__}")
@@ -253,57 +254,6 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     return new_sample_data
 
 
-def pick_masked_sites_random(site_ids, prop_masked_sites):
-    """
-    Draw N sites from `sites_ids` at random, where N is the number of sites to mask
-    based on a specified proportion of masked sites `prop_masked_sites`.
-
-    TODO: Specify random seed.
-
-    :param np.array site_ids:
-    :param float prop_masked_sites: float between 0 and 1
-    :return ndarray: list of site ids
-    """
-    assert prop_masked_sites >= 0
-    assert prop_masked_sites <= 1
-
-    rng = np.random.default_rng()
-
-    num_masked_sites = int(np.floor(len(site_ids) * prop_masked_sites))
-
-    masked_site_ids = np.sort(
-        rng.choice(
-            site_ids,
-            num_masked_sites,
-            replace=False,
-        )
-    )
-
-    return masked_site_ids
-
-
-def mask_sites_in_sample_data(sample_data, masked_sites=None):
-    """
-    Create and return a `SampleData` object from an existing `SampleData` object,
-    which contains masked sites as listed in `masked_sites` (site ids).
-
-    :param SampleData sample_data:
-    :param np.array masked_sites: list of site ids (NOT positions)
-    :return SampleData:
-    """
-    new_sample_data = sample_data.copy()
-
-    for v in sample_data.variants():
-        if v.site.id in masked_sites:
-            new_sample_data.sites_genotypes[v.site.id] = np.full_like(
-                v.genotypes, tskit.MISSING_DATA
-            )
-
-    new_sample_data.finalise()
-
-    return new_sample_data
-
-
 @click.command()
 @click.option(
     "--replicate_index", "-i", type=int, required=True, help="Replicate index"
@@ -473,7 +423,7 @@ def run_pipeline(
 
     # Select sites in `sd_query` to mask and impute.
     # This is a subset of 'shared_site_ids'
-    masked_site_ids = pick_masked_sites_random(
+    masked_site_ids = masks.pick_masked_sites_random(
         site_ids=shared_site_ids,
         prop_masked_sites=prop_missing_sites,
     )
@@ -485,7 +435,7 @@ def run_pipeline(
     assert set(masked_site_ids).issubset(set(shared_site_ids))
     assert set(masked_site_positions).issubset(set(shared_site_positions))
 
-    sd_query_masked = mask_sites_in_sample_data(
+    sd_query_masked = masks.mask_sites_in_sample_data(
         sd_query_true, masked_sites=masked_site_ids
     )
 
