@@ -497,7 +497,7 @@ def run_pipeline(
 
     assert check_site_positions_ts_issubset_sd(ts_anc, sd_query)
 
-    new_sd_query = make_compatible_sample_data(
+    sd_query_true = make_compatible_sample_data(
         sample_data=sd_query,
         ancestors_ts=ts_anc,
     )
@@ -506,11 +506,11 @@ def run_pipeline(
     ### Create a SampleData object with masked sites
     # Identify sites in both `sd_query` and `ts_anc`.
     # This is a superset of the sites in `sd_query` to be masked and imputed.
-    shared_site_ids, shared_site_positions = compare_sites_sd_and_ts(sd_query, ts_anc, is_common=True)
+    shared_site_ids, shared_site_positions = compare_sites_sd_and_ts(sd_query_true, ts_anc, is_common=True)
     print(f"Shared sites: {len(shared_site_ids)}")
 
     # Identify sites in `sd_query` but not in `ts_anc`, which are not to be imputed.
-    exclude_site_ids, exclude_site_positions = compare_sites_sd_and_ts(sd_query, ts_anc, is_common=False)
+    exclude_site_ids, exclude_site_positions = compare_sites_sd_and_ts(sd_query_true, ts_anc, is_common=False)
     print(f"Exclude sites: {len(exclude_site_ids)}")
 
     assert len(set(shared_site_ids).intersection(set(exclude_site_ids))) == 0
@@ -522,48 +522,59 @@ def run_pipeline(
         site_ids=shared_site_ids,
         prop_masked_sites=prop_missing_sites,
     )
-    masked_site_positions = [site.position for site in sd_query.sites(ids=masked_site_ids)]
+    masked_site_positions = [s.position for s in sd_query_true.sites(ids=masked_site_ids)]
     print(f"Masked sites: {len(masked_site_ids)}")
 
     assert set(masked_site_ids).issubset(set(shared_site_ids))
     assert set(masked_site_positions).issubset(set(shared_site_positions))
 
-    sd_query_masked = mask_sites_in_sample_data(
-        new_sd_query,
-        masked_sites=masked_site_ids,
-    )
-
-
+    sd_query_masked = mask_sites_in_sample_data(sd_query_true, masked_sites=masked_site_ids)
+    
+    
     ### Impute the query genomes
-    ts_imp = tsinfer.match_samples(
-        sample_data=sd_query_masked,
-        ancestors_ts=ts_anc,
-    )
+    ts_imputed = tsinfer.match_samples(sample_data=sd_query_masked, ancestors_ts=ts_anc)
 
 
     ### Evaluate imputation performance
-    ts_ref_site_pos = [s.position for s in ts_ref.sites()]
-    ts_imp_site_pos = [s.position for s in ts_imp.sites()]
+    ts_ref_site_positions = [s.position for s in ts_ref.sites()]
+    sd_query_true_site_positions = [s.position for s in sd_query_true.sites()]
+    sd_query_masked_site_positions = [s.position for s in sd_query_masked.sites()]
+    ts_imputed_site_positions = [s.position for s in ts_imputed.sites()]
 
-    assert len(set(ts_ref_site_pos).intersection(set(ts_imp_site_pos))) == len(ts_ref_site_pos)
+    assert len(ts_ref_site_positions) == len(sd_query_true_site_positions)
+    assert len(ts_ref_site_positions) == len(sd_query_masked_site_positions)
+    assert len(ts_ref_site_positions) == len(ts_imputed_site_positions)
+    
+    assert set(ts_ref_site_positions) == set(sd_query_true_site_positions)
+    assert set(ts_ref_site_positions) == set(sd_query_masked_site_positions)
+    assert set(ts_ref_site_positions) == set(ts_imputed_site_positions)
 
     results = None
-    for v_ref, v_imp in zip(ts_ref.variants(), ts_imp.variants()):
-        if v_imp.site.position in masked_site_positions:
-            assert v_ref.alleles[0] == v_imp.alleles[0]
+    for v_ref, v_query_true, v_query_masked, v_query_imputed in zip(
+        ts_ref.variants(), # Reference genomes from which to get the minor allele and MAF
+        sd_query_true.variants(), # Query genomes before site masking
+        sd_query_masked.variants(), # Query genomes with masked sites
+        ts_imputed.variants() # Query genomes with masked sites imputed
+    ):
+        if v_query_imputed.site.position in masked_site_positions:
+            # CHECK that ancestral states are identical.
+            assert v_ref.alleles[0] == sd_query_true.sites_alleles[v_query_true.site.id][0]
+            assert v_ref.alleles[0] == sd_query_masked.sites_alleles[v_query_masked.site.id][0]
+            assert v_ref.alleles[0] == v_query_imputed.alleles[0]
+            
             # TODO:
             #   Why doesn't `v.num_alleles` always reflect the number of genotypes
             #   after simplifying?
-            if len(set(v_ref.genotypes)) == 1 or len(set(v_imp.genotypes)) == 1:
-                # Monoallelic sites in `ts_ref` or `sd_query` are not imputed
+            if len(set(v_ref.genotypes)) == 1:
+                # Monoallelic sites in `ts_ref` are not imputed
+                # TODO: Revisit
                 continue
+                
             assert v_ref.num_alleles == 2
-            assert v_imp.num_alleles == 2
-            
-            freqs_ref = v_ref.frequencies()
-            freqs_imp = v_imp.frequencies()
+            assert set(v_query_masked.genotypes) == set([-1])
             
             # Note: A minor allele in `ts_ref` may be a major allele in `sd_query`
+            freqs_ref = v_ref.frequencies()
             af_0 = freqs_ref[v_ref.alleles[0]]
             af_1 = freqs_ref[v_ref.alleles[1]]
             
@@ -576,11 +587,13 @@ def run_pipeline(
                 minor_allele_index = 0
                 maf = af_0
             
-            assert not np.any(v_imp.genotypes == -1)
+            assert not np.any(v_query_imputed.genotypes == -1)
+            
+            return((v_query_true.genotypes, v_query_imputed.genotypes,))
             
             # Assess imputation performance
-            total_concordance = np.sum(v_ref.genotypes == v_imp.genotypes) / len(v_ref.genotypes)
-            iqs = compute_iqs(genotypes_true=v_ref.genotypes, genotypes_imputed=v_imp.genotypes)
+            total_concordance = np.sum(v_query_true.genotypes == v_query_imputed.genotypes) / len(v_query_true.genotypes)
+            iqs = compute_iqs(genotypes_true=v_query_true.genotypes, genotypes_imputed=v_query_imputed.genotypes)
             
             # line.shape = (1, 4)
             line = np.array([ [v_ref.site.position, maf, total_concordance, iqs], ])
