@@ -18,12 +18,8 @@ import masks
 import measures
 import util
 
-print(f"msprime {msprime.__version__}")
-print(f"tskit {tskit.__version__}")
-print(f"tsinfer {tsinfer.__version__}")
 
 start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-print(f"datetime {start_datetime}")
 
 
 ### Helper functions
