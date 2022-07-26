@@ -106,7 +106,7 @@ def compare_sites_sd_and_ts(
     :param SampleData sample_data:
     :param is_common bool:
     :param check_matching_ancestral_state bool: (default=True)
-    :return tuple(np.array, np.array):
+    :return tuple: tuple of two ndarray
     """
     ts_site_positions = np.empty(tree_sequence.num_sites)
 
@@ -258,7 +258,7 @@ def pick_masked_sites_random(site_ids, prop_masked_sites):
 
     :param np.array site_ids:
     :param float prop_masked_sites: float between 0 and 1
-    :return np.array: list of site ids
+    :return ndarray: list of site ids
     """
     assert prop_masked_sites >= 0
     assert prop_masked_sites <= 1
@@ -308,8 +308,9 @@ def compute_concordance(genotypes_true, genotypes_imputed):
     Random agreement can inflate total concordance when MAF is low, so interpretation of
     total concordance should be done with caution.
 
-    :param np.array genotypes_true:
-    :param np.array genotypes_imputed:
+    :param ndarray genotypes_true:
+    :param ndarray genotypes_imputed:
+    :return float:
     """
     assert len(genotypes_true, genotypes_imputed)
 
@@ -331,6 +332,10 @@ def compute_iqs(genotypes_true, genotypes_imputed):
 
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in haploid genomes.
+
+    :param ndarray genotypes_true:
+    :param ndarray genotypes_imputed:
+    :return float:
     """
     assert len(genotypes_true) == len(genotypes_imputed)
 
