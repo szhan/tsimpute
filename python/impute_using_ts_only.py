@@ -16,6 +16,7 @@ from tsinfer import make_ancestors_ts
 sys.path.append("python/")
 import masks
 import measures
+import util
 
 print(f"msprime {msprime.__version__}")
 print(f"tskit {tskit.__version__}")
@@ -26,77 +27,6 @@ print(f"datetime {start_datetime}")
 
 
 ### Helper functions
-def count_sites_by_type(ts_or_sd):
-    """
-    Iterate through the variants of a TreeSequence or SampleData object,
-    and count the number of mono-, bi-, tri-, and quad-allelic sites.
-
-    :param TreeSequence/SampleData ts_or_sd:
-    :return None:
-    """
-    assert isinstance(ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData))
-
-    sites_mono = 0
-    sites_bi = 0
-    sites_bi_singleton = 0
-    sites_tri = 0
-    sites_quad = 0
-
-    for v in ts_or_sd.variants():
-        num_alleles = len(set(v.alleles) - {None})
-        if num_alleles == 1:
-            sites_mono += 1
-        elif num_alleles == 2:
-            sites_bi += 1
-            if np.sum(v.genotypes) == 1:
-                sites_bi_singleton += 1
-        elif num_alleles == 3:
-            sites_tri += 1
-        else:
-            sites_quad += 1
-
-    sites_total = sites_mono + sites_bi + sites_tri + sites_quad
-
-    print(f"\tsites mono : {sites_mono}")
-    print(f"\tsites bi   : {sites_bi} ({sites_bi_singleton} singletons)")
-    print(f"\tsites tri  : {sites_tri}")
-    print(f"\tsites quad : {sites_quad}")
-    print(f"\tsites total: {sites_total}")
-
-    return None
-
-
-def check_site_positions_ts_issubset_sd(tree_sequence, sample_data):
-    """
-    Check whether the site positions in `TreeSequence` are a subset of
-    the site positions in `SampleData`.
-
-    :param TreeSequence tree_sequence:
-    :param SampleData sample_data:
-    :return bool:
-    """
-    ts_site_positions = np.empty(tree_sequence.num_sites)
-    sd_site_positions = np.empty(sample_data.num_sites)
-
-    i = 0
-    for v in tree_sequence.variants():
-        ts_site_positions[i] = v.site.position
-        i += 1
-
-    j = 0
-    for v in sample_data.variants():
-        sd_site_positions[j] = v.site.position
-        j += 1
-
-    assert i == tree_sequence.num_sites
-    assert j == sample_data.num_sites
-
-    if set(ts_site_positions).issubset(set(sd_site_positions)):
-        return True
-    else:
-        return False
-
-
 def compare_sites_sd_and_ts(
     sample_data, tree_sequence, is_common, check_matching_ancestral_state=True
 ):
@@ -349,7 +279,7 @@ def run_pipeline(
     ts_full = tables.tree_sequence()
 
     print("TS full")
-    count_sites_by_type(ts_full)
+    util.count_sites_by_type(ts_full)
 
     # The first `size_ref` individuals or `ploidy_level` * `size_ref` samples are the reference panel.
     # The remaining individuals and samples are the query/target to impute into.
@@ -370,7 +300,7 @@ def run_pipeline(
     )
     print(f"TS ref has {ts_ref.num_sites} sites and {ts_ref.num_trees} trees")
     print("TS ref")
-    count_sites_by_type(ts_ref)
+    util.count_sites_by_type(ts_ref)
 
     # Multiallelic sites are automatically removed when generating an ancestor ts.
     # Sites which are biallelic in the full sample set but monoallelic in the ref. sample set are removed.
@@ -382,7 +312,7 @@ def run_pipeline(
     )
     print(f"TS anc has {ts_anc.num_sites} sites and {ts_anc.num_trees} trees")
     print("TS anc")
-    count_sites_by_type(ts_anc)
+    util.count_sites_by_type(ts_anc)
 
     ### Create a SampleData object holding the query genomes
     sd_full = tsinfer.SampleData.from_tree_sequence(ts_full)
@@ -393,9 +323,9 @@ def run_pipeline(
     )
     print(f"SD query has {sd_query.num_sites} sites")
     print("SD query")
-    count_sites_by_type(sd_query)
+    util.count_sites_by_type(sd_query)
 
-    assert check_site_positions_ts_issubset_sd(ts_anc, sd_query)
+    assert util.check_site_positions_ts_issubset_sd(ts_anc, sd_query)
 
     sd_query_true = make_compatible_sample_data(
         sample_data=sd_query,
