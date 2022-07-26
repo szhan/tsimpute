@@ -307,6 +307,29 @@ def mask_sites_in_sample_data(
     return(new_sample_data)
 
 
+def compute_concordance(
+    genotypes_true,
+    genotypes_imputed
+    ):
+    """
+    Calculate the total concordance (sometimes referred to as imputation accuracy) between
+    `genotypes_true` and `genotypes_imputed`.
+
+    Random agreement can inflate total concordance when MAF is low, so interpretation of
+    total concordance should be done with caution.
+
+    :param np.array genotypes_true:
+    :param np.array genotypes_imputed:
+    """
+    assert len(genotypes_true, genotypes_imputed)
+
+    num_genotypes_correct = np.sum(genotypes_true.genotypes == genotypes_imputed.genotypes)
+    num_genotypes_total = len(genotypes_true.genotypes)
+    concordance = float(num_genotypes_correct) / float(num_genotypes_total)
+
+    return concordance
+
+
 def compute_iqs(
     genotypes_true,
     genotypes_imputed
@@ -593,8 +616,14 @@ def run_pipeline(
             
             
             # Assess imputation performance
-            total_concordance = np.sum(v_query_true.genotypes == v_query_imputed.genotypes) / len(v_query_true.genotypes)
-            iqs = compute_iqs(genotypes_true=v_query_true.genotypes, genotypes_imputed=v_query_imputed.genotypes)
+            total_concordance = compute_concordance(
+                genotypes_true=v_query_true.genotypes,
+                genotypes_imputed=v_query_imputed.genotypes
+                )
+            iqs = compute_iqs(
+                genotypes_true=v_query_true.genotypes,
+                genotypes_imputed=v_query_imputed.genotypes
+                )
             
             # line.shape = (1, 4)
             line = np.array([ [v_ref.site.position, maf, total_concordance, iqs], ])
