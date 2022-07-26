@@ -321,10 +321,6 @@ def compute_iqs(
     at biallelic sites in haploid genomes.
     """
     assert len(genotypes_true) == len(genotypes_imputed)
-    assert set(genotypes_true) == set([0, 1]), \
-        f"Non-binary states in true genotypes {set(genotypes_true)}."
-    assert set(genotypes_imputed) == set([0, 1]), \
-        f"Non-binary states in imputed genotypes {set(genotypes_imputed)}."
     
     # Allele 0 imputed correctly
     n00 = np.sum([y == 0 for x, y in zip(genotypes_imputed, genotypes_true) if x == 0])
@@ -572,7 +568,8 @@ def run_pipeline(
                 
             assert v_ref.num_alleles == 2
             assert set(v_query_masked.genotypes) == set([-1])
-            
+            assert not np.any(v_query_imputed.genotypes == -1)
+
             # Note: A minor allele in `ts_ref` may be a major allele in `sd_query`
             freqs_ref = v_ref.frequencies()
             af_0 = freqs_ref[v_ref.alleles[0]]
@@ -587,9 +584,6 @@ def run_pipeline(
                 minor_allele_index = 0
                 maf = af_0
             
-            assert not np.any(v_query_imputed.genotypes == -1)
-            
-            return((v_query_true.genotypes, v_query_imputed.genotypes,))
             
             # Assess imputation performance
             total_concordance = np.sum(v_query_true.genotypes == v_query_imputed.genotypes) / len(v_query_true.genotypes)
