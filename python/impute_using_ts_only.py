@@ -568,9 +568,14 @@ def run_pipeline(
             af_1 = freqs_ref[v_ref.alleles[1]]
             
             # Get MAF from `ts_ref`
+            # Definition of a minor allele: < 0.50
             if af_1 < af_0:
                 minor_allele_index = 1
                 maf = af_1
+            else:
+                minor_allele_index = 0
+                maf = af_0
+            
             assert not np.any(v_imp.genotypes == -1)
             
             # Assess imputation performance
