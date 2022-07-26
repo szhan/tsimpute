@@ -349,7 +349,7 @@ def compute_iqs(
     assert Po >= 0 and Po <= 1
     assert Pc >= 0 and Pc <= 1
     
-    iqs = (Po - Pc) / (1 - Pc)
+    iqs = float("nan") if Pc == 1 else (Po - Pc) / (1 - Pc)
     
     return(iqs)
 
