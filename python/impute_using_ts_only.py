@@ -374,6 +374,12 @@ def compute_iqs(
     help="Proportion of sites to mask"
     )
 @click.option(
+    '--out_prefix',
+    type=str,
+    default="sim",
+    help="Prefix of the output file"
+    )
+@click.option(
     '--do_test_run',
     is_flag=True,
     help="Perform a run using simulation parameters for testing"
@@ -382,6 +388,7 @@ def run_pipeline(
     replicate_index,
     sampling_time_query,
     prop_missing_sites,
+    out_prefix,
     do_test_run,
     ):
     ### Set simulation parameters
@@ -600,7 +607,7 @@ def run_pipeline(
 
 
     ### Write results
-    out_results_file = "sim" + "_" + str(replicate_index) + ".csv"
+    out_results_file = out_prefix + "_" + str(replicate_index) + ".csv"
 
     header_text = "\n".join(
         [
