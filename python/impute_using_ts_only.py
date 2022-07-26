@@ -478,7 +478,7 @@ def run_pipeline(
     # Multiallelic sites are automatically removed when generating an ancestor ts.
     # Sites which are biallelic in the full sample set but monoallelic in the ref. sample set are removed.
     # So, only biallelic sites are retained in the ancestor ts.
-    ts_anc = make_ancestors_ts(ts=ts_ref, remove_leaves=True, samples=None)
+    ts_anc = make_ancestors_ts(ts=ts_ref, remove_leaves=True)
 
     print(f"TS anc has {ts_anc.num_samples} sample genomes ({ts_anc.sequence_length} bp)")
     print(f"TS anc has {ts_anc.num_sites} sites and {ts_anc.num_trees} trees")
