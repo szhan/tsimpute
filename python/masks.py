@@ -2,21 +2,20 @@ import numpy as np
 import tskit
 
 
-def pick_masked_sites_random(site_ids, prop_masked_sites):
+def pick_masked_sites_random(site_ids, prop_masked_sites, seed=None):
     """
     Draw N sites from `sites_ids` at random, where N is the number of sites to mask
     based on a specified proportion of masked sites `prop_masked_sites`.
 
-    TODO: Specify random seed.
-
     :param ndarray site_ids:
     :param float prop_masked_sites: value between 0 and 1
+    :param int seed: integer to pass to np.random.rng (default = None)
     :return ndarray: list of site ids
     """
     assert prop_masked_sites >= 0
     assert prop_masked_sites <= 1
 
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(seed=seed)
 
     num_masked_sites = int(np.floor(len(site_ids) * prop_masked_sites))
 
