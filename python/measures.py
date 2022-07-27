@@ -9,6 +9,9 @@ def compute_concordance(genotypes_true, genotypes_imputed):
     Random agreement can inflate total concordance when MAF is low, so interpretation of
     total concordance should be done with caution.
 
+    This metric may be suitable for sample-wise (per genome) or site-wise (across genomes)
+    comparisons of genotypes.
+
     :param ndarray genotypes_true:
     :param ndarray genotypes_imputed:
     :return float:
