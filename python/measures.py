@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def compute_concordance(genotypes_true, genotypes_imputed):
+def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
     """
     Calculate the total concordance (sometimes referred to as imputation accuracy) between
     `genotypes_true` and `genotypes_imputed`.
@@ -9,14 +9,26 @@ def compute_concordance(genotypes_true, genotypes_imputed):
     Random agreement can inflate total concordance when MAF is low, so interpretation of
     total concordance should be done with caution.
 
+    If `allele_state` is specified, then concordance is calculated based on the elements in
+    `genotypes_true` and `genotypes_imputed` where `genotypes_true` is equal to `allele_state`.
+
     This metric may be suitable for sample-wise (per genome) or site-wise (across genomes)
     comparisons of genotypes.
 
     :param ndarray genotypes_true:
     :param ndarray genotypes_imputed:
+    :param  allele: (default = None)
     :return float:
     """
+    assert isinstance(genotypes_true, np.ndarray)
+    assert isinstance(genotypes_imputed, np.ndarray)
     assert len(genotypes_true) == len(genotypes_imputed)
+
+    if allele_state != None:
+        allele_match_bool = np.isin(genotypes_true, allele_state)
+        assert np.any(allele_match_bool)
+        genotypes_true = genotypes_true[allele_match_bool]
+        genotypes_imputed = genotypes_imputed[allele_match_bool]
 
     num_genotypes_correct = np.sum(genotypes_true == genotypes_imputed)
     num_genotypes_total = len(genotypes_true)
