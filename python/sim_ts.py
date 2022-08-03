@@ -1,3 +1,4 @@
+from re import I
 import msprime
 import tskit
 import tsinfer
@@ -83,6 +84,13 @@ def get_ts_toy():
     recombination_rate = 1e-7
     sequence_length = 10_000
 
+    inds_ref = np.arange(size_ref, dtype=int)
+    samples_ref = np.arange(ploidy_level * size_ref, dtype=int)
+    inds_query = np.arange(size_ref, size_ref + size_query, dtype=int)
+    samples_query = np.arange(
+        ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int
+    )
+    
     return(
         simulate_ts(
             size_ref=size_ref,
@@ -114,16 +122,29 @@ def get_ts_single_panmictic(sampling_time_query):
     recombination_rate = 1e-8
     sequence_length = 1_000_000
 
+    inds_ref = np.arange(size_ref, dtype=int)
+    samples_ref = np.arange(ploidy_level * size_ref, dtype=int)
+    inds_query = np.arange(size_ref, size_ref + size_query, dtype=int)
+    samples_query = np.arange(
+        ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int
+    )
+
     return(
-        simulate_ts(
-            size_ref=size_ref,
-            size_query=size_query,
-            eff_pop_size=eff_pop_size,
-            mutation_rate=mutation_rate,
-            recombination_rate=recombination_rate,
-            sequence_length=sequence_length,
-            ploidy_level=1,
-            sampling_time_query=sampling_time_query
+        (
+            simulate_ts(
+                size_ref=size_ref,
+                size_query=size_query,
+                eff_pop_size=eff_pop_size,
+                mutation_rate=mutation_rate,
+                recombination_rate=recombination_rate,
+                sequence_length=sequence_length,
+                ploidy_level=1,
+                sampling_time_query=sampling_time_query
+            ),
+            inds_ref,
+            samples_ref,
+            inds_query,
+            samples_query,
         )
     )
 
