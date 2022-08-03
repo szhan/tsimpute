@@ -17,6 +17,7 @@ sys.path.append("python/")
 import masks
 import measures
 import util
+import sim_ts
 
 
 start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -162,72 +163,11 @@ def run_pipeline(
     out_prefix,
     do_test_run,
 ):
-    ### Set simulation parameters
-    contig_id = "1"
-    ploidy_level = 1
-
     if do_test_run:
-        # For testing
-        size_ref = 50
-        size_query = 50
-        eff_pop_size = 10_000
-        mutation_rate = 1e-7
-        recombination_rate = 1e-7
-        sequence_length = 10_000
+        ts_full = sim_ts.get_ts_toy()
     else:
-        # For simulations
-        size_ref = 1e4
-        size_query = 1e3
-        eff_pop_size = 10_000
-        mutation_rate = 1e-8
-        recombination_rate = 1e-8
-        sequence_length = 1_000_000
-
-    ### Simulate genealogy and genetic variation
-    # Uniform recombination rate
-    recomb_rate_map = msprime.RateMap.uniform(
-        sequence_length=sequence_length,
-        rate=recombination_rate,
-    )
-
-    # Uniform mutation rate
-    mut_rate_map = msprime.RateMap.uniform(
-        sequence_length=sequence_length,
-        rate=mutation_rate,
-    )
-
-    sample_set = [
-        # Reference genomes
-        msprime.SampleSet(num_samples=size_ref, time=0, ploidy=ploidy_level),
-        # Query genomes
-        msprime.SampleSet(
-            num_samples=size_query, time=sampling_time_query, ploidy=ploidy_level
-        ),
-    ]
-
-    # A simulated tree sequence does not contain any monoallelic sites,
-    # but there may be multiallelic sites.
-    ts_full = msprime.sim_mutations(
-        msprime.sim_ancestry(
-            samples=sample_set,
-            population_size=eff_pop_size,
-            model="hudson",
-            recombination_rate=recomb_rate_map,
-            discrete_genome=True,
-        ),
-        rate=mut_rate_map,
-        discrete_genome=True,
-    )
-
-    # Remove populations
-    tables = ts_full.dump_tables()
-    tables.populations.clear()
-    tables.nodes.population = np.full_like(tables.nodes.population, tskit.NULL)
-    ts_full = tables.tree_sequence()
-
-    non_biallelic_sites = [v.site.id for v in ts_full.variants() if v.num_alleles != 2]
-    clean_ts = ts_full.delete_sites(site_ids=non_biallelic_sites)
-
+        ts_full = sim_ts.get_ts_single_panmictic(0)
+    
     print("TS full")
     util.count_sites_by_type(ts_full)
 
