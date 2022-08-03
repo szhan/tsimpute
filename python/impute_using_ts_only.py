@@ -225,6 +225,9 @@ def run_pipeline(
     tables.nodes.population = np.full_like(tables.nodes.population, tskit.NULL)
     ts_full = tables.tree_sequence()
 
+    non_biallelic_sites = [v.site.id for v in ts_full.variants() if v.num_alleles != 2]
+    clean_ts = ts_full.delete_sites(site_ids=non_biallelic_sites)
+
     print("TS full")
     util.count_sites_by_type(ts_full)
 
