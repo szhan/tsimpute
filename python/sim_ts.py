@@ -88,12 +88,12 @@ def get_ts_toy():
     """
     ploidy_level = 1
 
-    size_ref = 50
-    size_query = 50
-    eff_pop_size = 10_000
+    size_ref = 90
+    size_query = 10
+    eff_pop_size = 1e4
     mutation_rate = 1e-7
     recombination_rate = 1e-7
-    sequence_length = 10_000
+    sequence_length = 1e4
 
     return(
         [simulate_ts(
@@ -125,14 +125,13 @@ def get_ts_single_panmictic(sampling_time_query):
 
     size_ref = 1e4
     size_query = 1e3
-    eff_pop_size = 10_000
+    eff_pop_size = 1e4
     mutation_rate = 1e-8
     recombination_rate = 1e-8
-    sequence_length = 1_000_000
+    sequence_length = 1e6
 
     return(
-        (
-            simulate_ts(
+        [simulate_ts(
                 size_ref=size_ref,
                 size_query=size_query,
                 eff_pop_size=eff_pop_size,
@@ -141,12 +140,11 @@ def get_ts_single_panmictic(sampling_time_query):
                 sequence_length=sequence_length,
                 ploidy_level=1,
                 sampling_time_query=sampling_time_query
-            ),
-            get_ref_query_indices(
-                size_ref,
-                size_query,
-                ploidy_level
-            )
+        )] +\
+        get_ref_query_indices(
+            size_ref,
+            size_query,
+            ploidy_level
         )
     )
 
