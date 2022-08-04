@@ -2,8 +2,9 @@
 # coding: utf-8
 
 import click
-import gzip
 from datetime import datetime
+import gzip
+import json
 import sys
 
 import numpy as np
@@ -18,9 +19,6 @@ import masks
 import measures
 import util
 import sim_ts
-
-
-start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
 ### Helper functions
@@ -163,23 +161,15 @@ def run_pipeline(
     out_prefix,
     do_test_run,
 ):
+    start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
     if do_test_run:
-        ts_full = sim_ts.get_ts_toy()
+        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_toy()
     else:
-        ts_full = sim_ts.get_ts_single_panmictic(0)
+        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_single_panmictic(0)
     
     print("TS full")
     util.count_sites_by_type(ts_full)
-
-    # The first `size_ref` individuals or `ploidy_level` * `size_ref` samples are the reference panel.
-    # The remaining individuals and samples are the query/target to impute into.
-    individuals_ref = np.arange(size_ref, dtype=int)
-    samples_ref = np.arange(ploidy_level * size_ref, dtype=int)
-
-    individuals_query = np.arange(size_ref, size_ref + size_query, dtype=int)
-    samples_query = np.arange(
-        ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int
-    )
 
     ### Create an ancestor ts from the reference genomes
     # Remove all the branches leading to the query genomes
@@ -206,7 +196,7 @@ def run_pipeline(
 
     ### Create a SampleData object holding the query genomes
     sd_full = tsinfer.SampleData.from_tree_sequence(ts_full)
-    sd_query = sd_full.subset(individuals_query)
+    sd_query = sd_full.subset(inds_query)
 
     print(
         f"SD query has {sd_query.num_samples} sample genomes ({sd_query.sequence_length} bp)"
@@ -225,13 +215,13 @@ def run_pipeline(
     ### Create a SampleData object with masked sites
     # Identify sites in both `sd_query` and `ts_anc`.
     # This is a superset of the sites in `sd_query` to be masked and imputed.
-    shared_site_ids, shared_site_positions = compare_sites_sd_and_ts(
+    shared_site_ids, shared_site_positions = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=True
     )
     print(f"Shared sites: {len(shared_site_ids)}")
 
     # Identify sites in `sd_query` but not in `ts_anc`, which are not to be imputed.
-    exclude_site_ids, exclude_site_positions = compare_sites_sd_and_ts(
+    exclude_site_ids, exclude_site_positions = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=False
     )
     print(f"Exclude sites: {len(exclude_site_ids)}")
@@ -346,6 +336,19 @@ def run_pipeline(
     ### Write results
     out_results_file = out_prefix + "_" + str(replicate_index) + ".csv"
 
+    ### Get parameter values from provenances
+    prov = [p for p in ts_full.provenances()]
+    prov_anc = json.loads(prov[0].record)
+    prov_mut = json.loads(prov[1].record)
+    assert prov_anc["parameters"]["recombination_rate"]
+    assert prov_mut["parameters"]["rate"]
+
+    eff_pop_size = prov_anc["parameters"]["population_size"]
+    recombination_rate = prov_anc["parameters"]["recombination_rate"]
+    mutation_rate = prov_mut["parameters"]["rate"]
+    ploidy_level = prov_anc["parameters"]["ploidy"]
+    sequence_length = prov_anc["parameters"]["sequence_length"]
+
     header_text = (
         "\n".join(
             [
@@ -355,12 +358,11 @@ def run_pipeline(
                 "#" + "tskit" + "=" + f"{tskit.__version__}",
                 "#" + "tsinfer" + "=" + f"{tsinfer.__version__}",
                 "#" + "replicate" + "=" + f"{replicate_index}",
-                "#" + "size_ref" + "=" + f"{size_ref}",
-                "#" + "size_query" + "=" + f"{size_query}",
+                "#" + "size_ref" + "=" + f"{ts_ref.num_samples}",
+                "#" + "size_query" + "=" + f"{sd_query.num_samples}",
                 "#" + "eff_pop_size" + "=" + f"{eff_pop_size}",
-                "#" + "mutation_rate" + "=" + f"{mutation_rate}",
                 "#" + "recombination_rate" + "=" + f"{recombination_rate}",
-                "#" + "contig_id" + "=" + f"{contig_id}",
+                "#" + "mutation_rate" + "=" + f"{mutation_rate}",
                 "#" + "ploidy_level" + "=" + f"{ploidy_level}",
                 "#" + "sequence_length" + "=" + f"{sequence_length}",
                 "#" + "sampling_time_query" + "=" + f"{sampling_time_query}",
@@ -375,7 +377,7 @@ def run_pipeline(
             "position",
             "maf",
             "total_concordance",
-            "iqs",
+            "iqs"
         ]
     )
 
@@ -386,7 +388,7 @@ def run_pipeline(
         delimiter=",",
         newline="\n",
         comments="",
-        header=header_text,
+        header=header_text
     )
 
 

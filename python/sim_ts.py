@@ -67,6 +67,18 @@ def simulate_ts(
     return(ts)
 
 
+def get_ref_query_indices(size_ref, size_query, ploidy_level):
+    inds_ref = np.arange(size_ref, dtype=int)
+    samples_ref = np.arange(ploidy_level * size_ref, dtype=int)
+
+    inds_query = np.arange(size_ref, size_ref + size_query, dtype=int)
+    samples_query = np.arange(
+        ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int
+    )
+
+    return([inds_ref, samples_ref, inds_query, samples_query])
+
+
 def get_ts_toy():
     """
     Simulate a simple `TreeSequence` object for doing test runs.
@@ -74,7 +86,6 @@ def get_ts_toy():
     :param None:
     :return TreeSequence:
     """
-    contig_id = "1"
     ploidy_level = 1
 
     size_ref = 50
@@ -84,15 +95,8 @@ def get_ts_toy():
     recombination_rate = 1e-7
     sequence_length = 10_000
 
-    inds_ref = np.arange(size_ref, dtype=int)
-    samples_ref = np.arange(ploidy_level * size_ref, dtype=int)
-    inds_query = np.arange(size_ref, size_ref + size_query, dtype=int)
-    samples_query = np.arange(
-        ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int
-    )
-    
     return(
-        simulate_ts(
+        [simulate_ts(
             size_ref=size_ref,
             size_query=size_query,
             eff_pop_size=eff_pop_size,
@@ -101,6 +105,11 @@ def get_ts_toy():
             sequence_length=sequence_length,
             ploidy_level=1,
             sampling_time_query=0
+        )] +\
+        get_ref_query_indices(
+            size_ref,
+            size_query,
+            ploidy_level
         )
     )
 
@@ -112,7 +121,6 @@ def get_ts_single_panmictic(sampling_time_query):
     :param None:
     :return TreeSequence:
     """
-    contig_id = "1"
     ploidy_level = 1
 
     size_ref = 1e4
@@ -121,13 +129,6 @@ def get_ts_single_panmictic(sampling_time_query):
     mutation_rate = 1e-8
     recombination_rate = 1e-8
     sequence_length = 1_000_000
-
-    inds_ref = np.arange(size_ref, dtype=int)
-    samples_ref = np.arange(ploidy_level * size_ref, dtype=int)
-    inds_query = np.arange(size_ref, size_ref + size_query, dtype=int)
-    samples_query = np.arange(
-        ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int
-    )
 
     return(
         (
@@ -141,10 +142,11 @@ def get_ts_single_panmictic(sampling_time_query):
                 ploidy_level=1,
                 sampling_time_query=sampling_time_query
             ),
-            inds_ref,
-            samples_ref,
-            inds_query,
-            samples_query,
+            get_ref_query_indices(
+                size_ref,
+                size_query,
+                ploidy_level
+            )
         )
     )
 
