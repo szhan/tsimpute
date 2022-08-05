@@ -231,8 +231,7 @@ def run_pipeline(
     assert util.check_site_positions_ts_issubset_sd(ts_anc, sd_query)
 
     sd_query_true = make_compatible_sample_data(
-        sample_data=sd_query,
-        ancestors_ts=ts_anc,
+        sample_data=sd_query, ancestors_ts=ts_anc
     )
 
     ### Create a SampleData object with masked sites
@@ -357,7 +356,7 @@ def run_pipeline(
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     ### Write results
-    out_results_file = out_prefix + "_" + str(replicate_index) + ".csv"
+    out_results_file = out_prefix + "_" + str(index) + ".csv"
 
     ### Get parameter values from provenances
     prov = [p for p in ts_full.provenances()]
