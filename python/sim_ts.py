@@ -8,12 +8,9 @@ import numpy as np
 
 # TODO: Use a HapMap recombination rate map
 
+
 def simulate_ts(
-    sample_set,
-    demography,
-    mutation_rate,
-    recombination_rate,
-    sequence_length
+    sample_set, demography, mutation_rate, recombination_rate, sequence_length
 ):
     """
     TODO
@@ -21,14 +18,12 @@ def simulate_ts(
     ### Simulate genealogy and genetic variation
     # Uniform recombination rate
     recomb_rate_map = msprime.RateMap.uniform(
-        sequence_length=sequence_length,
-        rate=recombination_rate
+        sequence_length=sequence_length, rate=recombination_rate
     )
 
     # Uniform mutation rate
     mut_rate_map = msprime.RateMap.uniform(
-        sequence_length=sequence_length,
-        rate=mutation_rate
+        sequence_length=sequence_length, rate=mutation_rate
     )
 
     # A simulated tree sequence does not contain any monoallelic sites,
@@ -39,10 +34,10 @@ def simulate_ts(
             demography=demography,
             model="hudson",
             recombination_rate=recomb_rate_map,
-            discrete_genome=True
+            discrete_genome=True,
         ),
         rate=mut_rate_map,
-        discrete_genome=True
+        discrete_genome=True,
     )
 
     # Remove multi-allelic sites
@@ -55,7 +50,7 @@ def simulate_ts(
     tables.nodes.population = np.full_like(tables.nodes.population, tskit.NULL)
     ts = tables.tree_sequence()
 
-    return(ts)
+    return ts
 
 
 def generate_indices(size_ref, size_query, ploidy_level):
@@ -67,7 +62,7 @@ def generate_indices(size_ref, size_query, ploidy_level):
         ploidy_level * size_ref, ploidy_level * (size_ref + size_query), dtype=int
     )
 
-    return([inds_ref, samples_ref, inds_query, samples_query])
+    return [inds_ref, samples_ref, inds_query, samples_query]
 
 
 def get_ts_toy():
@@ -87,22 +82,12 @@ def get_ts_toy():
 
     demographic_model = msprime.Demography()
     demographic_model.add_population(
-        name="A",
-        description="toy",
-        initial_size=eff_pop_size
+        name="A", description="toy", initial_size=eff_pop_size
     )
 
     sample_set = [
-        msprime.SampleSet(
-            num_samples=size_ref,
-            ploidy=ploidy_level,
-            time=0
-        ),
-        msprime.SampleSet(
-            num_samples=size_query,
-            ploidy=ploidy_level,
-            time=0
-        )
+        msprime.SampleSet(num_samples=size_ref, ploidy=ploidy_level, time=0),
+        msprime.SampleSet(num_samples=size_query, ploidy=ploidy_level, time=0),
     ]
 
     ts = simulate_ts(
@@ -110,17 +95,10 @@ def get_ts_toy():
         demography=demographic_model,
         mutation_rate=mutation_rate,
         recombination_rate=recombination_rate,
-        sequence_length=sequence_length
+        sequence_length=sequence_length,
     )
 
-    return(
-        [ts] +\
-        generate_indices(
-            size_ref,
-            size_query,
-            ploidy_level
-        )
-    )
+    return [ts] + generate_indices(size_ref, size_query, ploidy_level)
 
 
 def get_ts_single_panmictic(sampling_time_query):
@@ -136,26 +114,18 @@ def get_ts_single_panmictic(sampling_time_query):
     mutation_rate = 1e-8
     recombination_rate = 1e-8
     sequence_length = 1e6
-    ploidy_level=1
+    ploidy_level = 1
 
     demographic_model = msprime.Demography()
     demographic_model.add_population(
-        name="A",
-        description="single panmictic",
-        initial_size=eff_pop_size
+        name="A", description="single panmictic", initial_size=eff_pop_size
     )
 
     sample_set = [
+        msprime.SampleSet(num_samples=size_ref, ploidy=ploidy_level, time=0),
         msprime.SampleSet(
-            num_samples=size_ref,
-            ploidy=ploidy_level,
-            time=0
+            num_samples=size_query, ploidy=ploidy_level, time=sampling_time_query
         ),
-        msprime.SampleSet(
-            num_samples=size_query,
-            ploidy=ploidy_level,
-            time=sampling_time_query
-        )
     ]
 
     ts = simulate_ts(
@@ -163,23 +133,16 @@ def get_ts_single_panmictic(sampling_time_query):
         demography=demographic_model,
         mutation_rate=mutation_rate,
         recombination_rate=recombination_rate,
-        sequence_length=sequence_length
+        sequence_length=sequence_length,
     )
 
-    return(
-        [ts] +\
-        generate_indices(
-            size_ref,
-            size_query,
-            ploidy_level
-        )
-    )
+    return [ts] + generate_indices(size_ref, size_query, ploidy_level)
 
 
 def get_ts_ten_pop(pop_ref, pop_query):
     """
     TODO
-    
+
     Contemporary populations: YRI, CHB, and CEU.
 
     :param pop_ref str:
@@ -195,21 +158,15 @@ def get_ts_ten_pop(pop_ref, pop_query):
     mutation_rate = 1e-8
     recombination_rate = 1e-8
     sequence_length = 1e6
-    ploidy_level=1
+    ploidy_level = 1
 
     sample_set = [
         msprime.SampleSet(
-            num_samples=size_ref,
-            population=pop_ref,
-            ploidy=ploidy_level,
-            time=0
+            num_samples=size_ref, population=pop_ref, ploidy=ploidy_level, time=0
         ),
         msprime.SampleSet(
-            num_samples=size_query,
-            population=pop_query,
-            ploidy=ploidy_level,
-            time=0
-        )
+            num_samples=size_query, population=pop_query, ploidy=ploidy_level, time=0
+        ),
     ]
 
     ts = simulate_ts(
@@ -217,14 +174,7 @@ def get_ts_ten_pop(pop_ref, pop_query):
         demography=demographic_model,
         mutation_rate=mutation_rate,
         recombination_rate=recombination_rate,
-        sequence_length=sequence_length
+        sequence_length=sequence_length,
     )
 
-    return(
-        [ts] +\
-        generate_indices(
-            size_ref,
-            size_query,
-            ploidy_level
-        )
-    )
+    return [ts] + generate_indices(size_ref, size_query, ploidy_level)

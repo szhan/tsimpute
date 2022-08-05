@@ -139,53 +139,57 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     "-t",
     type=float,
     required=True,
-    help="Time to sample query genomes"
+    help="Time to sample query genomes",
 )
 @click.option(
     "--prop_missing_sites",
     "-p",
     type=float,
     required=True,
-    help="Proportion of sites to mask"
+    help="Proportion of sites to mask",
 )
-@click.option("--out_prefix", type=str, default="sim", help="Prefix of the output file")
 @click.option(
     "--model",
     "-m",
     type=click.Choice(["test", "simple", "ten_pop"], case_sensitive=False),
     required=True,
-    help="Perform a run using pre-set simulation parameters"
+    help="Perform a run using pre-set simulation parameters",
 )
 @click.option(
     "--pop_ref",
     type=click.Choice(["YRI", "CHB", "CEU"], case_sensitive=False),
     default=None,
-    help="Population of reference genomes. Used only if model ten_pop is set."
+    help="Population of reference genomes. Used only if model ten_pop is set.",
 )
 @click.option(
     "--pop_query",
     type=click.Choice(["YRI", "CHB", "CEU"], case_sensitive=False),
     default=None,
-    help="Population of query genomes. Used only if model ten_pop is set."
+    help="Population of query genomes. Used only if model ten_pop is set.",
 )
+@click.option("--out_prefix", type=str, default="sim", help="Prefix of the output file")
 def run_pipeline(
-    replicate_index,
-    sampling_time_query,
+    index,
+    time_query,
     prop_missing_sites,
     out_prefix,
     model,
     pop_ref=None,
-    pop_query=None
+    pop_query=None,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     if model == "test":
         ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_toy()
     elif model == "simple":
-        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_single_panmictic(sampling_time_query)
+        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_single_panmictic(
+            time_query
+        )
     elif model == "ten_pop":
         assert pop_ref is not None and pop_query is not None
-        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_ten_pop(pop_ref, pop_query)
+        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_ten_pop(
+            pop_ref, pop_query
+        )
 
     print("TS full")
     util.count_sites_by_type(ts_full)
@@ -376,7 +380,7 @@ def run_pipeline(
                 "#" + "msprime" + "=" + f"{msprime.__version__}",
                 "#" + "tskit" + "=" + f"{tskit.__version__}",
                 "#" + "tsinfer" + "=" + f"{tsinfer.__version__}",
-                "#" + "replicate" + "=" + f"{replicate_index}",
+                "#" + "replicate" + "=" + f"{index}",
                 "#" + "size_ref" + "=" + f"{ts_ref.num_samples}",
                 "#" + "size_query" + "=" + f"{sd_query.num_samples}",
                 "#" + "eff_pop_size" + "=" + f"{eff_pop_size}",
@@ -384,21 +388,14 @@ def run_pipeline(
                 "#" + "mutation_rate" + "=" + f"{mutation_rate}",
                 "#" + "ploidy_level" + "=" + f"{ploidy_level}",
                 "#" + "sequence_length" + "=" + f"{sequence_length}",
-                "#" + "sampling_time_query" + "=" + f"{sampling_time_query}",
+                "#" + "sampling_time_query" + "=" + f"{time_query}",
                 "#" + "prop_missing_sites" + "=" + f"{prop_missing_sites}",
             ]
         )
         + "\n"
     )
 
-    header_text += ",".join(
-        [
-            "position",
-            "maf",
-            "total_concordance",
-            "iqs"
-        ]
-    )
+    header_text += ",".join(["position", "maf", "total_concordance", "iqs"])
 
     np.savetxt(
         out_results_file,
@@ -407,7 +404,7 @@ def run_pipeline(
         delimiter=",",
         newline="\n",
         comments="",
-        header=header_text
+        header=header_text,
     )
 
 
