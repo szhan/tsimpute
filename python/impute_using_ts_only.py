@@ -139,35 +139,54 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     "-t",
     type=float,
     required=True,
-    help="Time to sample query genomes",
+    help="Time to sample query genomes"
 )
 @click.option(
     "--prop_missing_sites",
     "-p",
     type=float,
     required=True,
-    help="Proportion of sites to mask",
+    help="Proportion of sites to mask"
 )
 @click.option("--out_prefix", type=str, default="sim", help="Prefix of the output file")
 @click.option(
-    "--do_test_run",
-    is_flag=True,
-    help="Perform a run using simulation parameters for testing",
+    "--model",
+    "-m",
+    type=click.Choice(["test", "simple", "ten_pop"], case_sensitive=False),
+    required=True,
+    help="Perform a run using pre-set simulation parameters"
+)
+@click.option(
+    "--pop_ref",
+    type=click.Choice(["YRI", "CHB", "CEU"], case_sensitive=False),
+    default=None,
+    help="Population of reference genomes. Used only if model ten_pop is set."
+)
+@click.option(
+    "--pop_query",
+    type=click.Choice(["YRI", "CHB", "CEU"], case_sensitive=False),
+    default=None,
+    help="Population of query genomes. Used only if model ten_pop is set."
 )
 def run_pipeline(
     replicate_index,
     sampling_time_query,
     prop_missing_sites,
     out_prefix,
-    do_test_run,
+    model,
+    pop_ref=None,
+    pop_query=None
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-    if do_test_run:
+    if model == "test":
         ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_toy()
-    else:
-        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_single_panmictic(0)
-    
+    elif model == "simple":
+        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_single_panmictic(sampling_time_query)
+    elif model == "ten_pop":
+        assert pop_ref is not None and pop_query is not None
+        ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_ten_pop(pop_ref, pop_query)
+
     print("TS full")
     util.count_sites_by_type(ts_full)
 
