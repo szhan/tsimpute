@@ -101,11 +101,11 @@ def get_ts_toy():
     return [ts] + generate_indices(size_ref, size_query, ploidy_level)
 
 
-def get_ts_single_panmictic(sampling_time_query):
+def get_ts_single_panmictic(time_query):
     """
     TODO
 
-    :param sampling_time_query float:
+    :param time_query float:
     :return list:
     """
     size_ref = 1e4
@@ -124,7 +124,7 @@ def get_ts_single_panmictic(sampling_time_query):
     sample_set = [
         msprime.SampleSet(num_samples=size_ref, ploidy=ploidy_level, time=0),
         msprime.SampleSet(
-            num_samples=size_query, ploidy=ploidy_level, time=sampling_time_query
+            num_samples=size_query, ploidy=ploidy_level, time=time_query
         ),
     ]
 

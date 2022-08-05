@@ -132,10 +132,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
 
 @click.command()
 @click.option(
-    "--replicate_index", "-i", type=int, required=True, help="Replicate index"
+    "--index", "-i", type=int, required=True, help="Replicate index"
 )
 @click.option(
-    "--sampling_time_query",
+    "--time_query",
     "-t",
     type=float,
     required=True,
@@ -183,12 +183,12 @@ def run_pipeline(
         ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_toy()
     elif model == "simple":
         ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_single_panmictic(
-            time_query
+            time_query=time_query
         )
     elif model == "ten_pop":
         assert pop_ref is not None and pop_query is not None
         ts_full, _, samples_ref, inds_query, _ = sim_ts.get_ts_ten_pop(
-            pop_ref, pop_query
+            pop_ref=pop_ref, pop_query=pop_query
         )
 
     print("TS full")
@@ -379,16 +379,19 @@ def run_pipeline(
                 "#" + "msprime" + "=" + f"{msprime.__version__}",
                 "#" + "tskit" + "=" + f"{tskit.__version__}",
                 "#" + "tsinfer" + "=" + f"{tsinfer.__version__}",
-                "#" + "replicate" + "=" + f"{index}",
+                "#" + "index" + "=" + f"{index}",
                 "#" + "size_ref" + "=" + f"{ts_ref.num_samples}",
                 "#" + "size_query" + "=" + f"{sd_query.num_samples}",
+                "#" + "time_query" + "=" + f"{time_query}",
+                "#" + "prop_missing_sites" + "=" + f"{prop_missing_sites}",
                 "#" + "eff_pop_size" + "=" + f"{eff_pop_size}",
                 "#" + "recombination_rate" + "=" + f"{recombination_rate}",
                 "#" + "mutation_rate" + "=" + f"{mutation_rate}",
                 "#" + "ploidy_level" + "=" + f"{ploidy_level}",
                 "#" + "sequence_length" + "=" + f"{sequence_length}",
-                "#" + "sampling_time_query" + "=" + f"{time_query}",
-                "#" + "prop_missing_sites" + "=" + f"{prop_missing_sites}",
+                "#" + "model" + "=" + f"{model}",
+                "#" + "pop_ref" + "=" + f"{pop_ref}",
+                "#" + "pop_query" + "=" + f"{pop_query}",
             ]
         )
         + "\n"
