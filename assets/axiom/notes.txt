@@ -1,5 +1,0 @@
-# Download the annotation files for the UK Biobank Axiom Array
-# URL
-https://www.thermofisher.com/order/catalog/product/902502#:~:text=UK%20Biobank%20Axiom%E2%84%A2%20Array%20was%20designed%20by%20and%20for,single%20comprehensive%20low%2Dcost%20solution.
-# File
-TFS-Assets_LSG_Support-Files_Axiom_UKB_WCSG.na35.annot.csv.zip
