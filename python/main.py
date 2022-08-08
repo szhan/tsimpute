@@ -131,9 +131,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
 
 
 @click.command()
-@click.option(
-    "--index", "-i", type=int, required=True, help="Replicate index"
-)
+@click.option("--index", "-i", type=int, required=True, help="Replicate index")
 @click.option(
     "--time_query",
     "-t",
@@ -168,6 +166,11 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     help="Population of query genomes. Used only if model ten_pop is set.",
 )
 @click.option("--out_prefix", type=str, default="sim", help="Prefix of the output file")
+@click.option(
+    "--verbose",
+    is_flag=True,
+    help="Print out site information after each processing step",
+)
 def run_pipeline(
     index,
     time_query,
@@ -176,6 +179,7 @@ def run_pipeline(
     model,
     pop_ref=None,
     pop_query=None,
+    verbose=False,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
@@ -191,42 +195,46 @@ def run_pipeline(
             pop_ref=pop_ref, pop_query=pop_query
         )
 
-    print("TS full")
-    util.count_sites_by_type(ts_full)
+    if verbose:
+        print("TS full")
+        util.count_sites_by_type(ts_full)
 
     ### Create an ancestor ts from the reference genomes
     # Remove all the branches leading to the query genomes
     ts_ref = ts_full.simplify(samples_ref, filter_sites=False)
 
-    print(
-        f"TS ref has {ts_ref.num_samples} sample genomes ({ts_ref.sequence_length} bp)"
-    )
-    print(f"TS ref has {ts_ref.num_sites} sites and {ts_ref.num_trees} trees")
-    print("TS ref")
-    util.count_sites_by_type(ts_ref)
+    if verbose:
+        print(
+            f"TS ref has {ts_ref.num_samples} sample genomes ({ts_ref.sequence_length} bp)"
+        )
+        print(f"TS ref has {ts_ref.num_sites} sites and {ts_ref.num_trees} trees")
+        print("TS ref")
+        util.count_sites_by_type(ts_ref)
 
     # Multiallelic sites are automatically removed when generating an ancestor ts.
     # Sites which are biallelic in the full sample set but monoallelic in the ref. sample set are removed.
     # So, only biallelic sites are retained in the ancestor ts.
     ts_anc = make_ancestors_ts(ts=ts_ref, remove_leaves=True)
 
-    print(
-        f"TS anc has {ts_anc.num_samples} sample genomes ({ts_anc.sequence_length} bp)"
-    )
-    print(f"TS anc has {ts_anc.num_sites} sites and {ts_anc.num_trees} trees")
-    print("TS anc")
-    util.count_sites_by_type(ts_anc)
+    if verbose:
+        print(
+            f"TS anc has {ts_anc.num_samples} sample genomes ({ts_anc.sequence_length} bp)"
+        )
+        print(f"TS anc has {ts_anc.num_sites} sites and {ts_anc.num_trees} trees")
+        print("TS anc")
+        util.count_sites_by_type(ts_anc)
 
     ### Create a SampleData object holding the query genomes
     sd_full = tsinfer.SampleData.from_tree_sequence(ts_full)
     sd_query = sd_full.subset(inds_query)
 
-    print(
-        f"SD query has {sd_query.num_samples} sample genomes ({sd_query.sequence_length} bp)"
-    )
-    print(f"SD query has {sd_query.num_sites} sites")
-    print("SD query")
-    util.count_sites_by_type(sd_query)
+    if verbose:
+        print(
+            f"SD query has {sd_query.num_samples} sample genomes ({sd_query.sequence_length} bp)"
+        )
+        print(f"SD query has {sd_query.num_sites} sites")
+        print("SD query")
+        util.count_sites_by_type(sd_query)
 
     assert util.check_site_positions_ts_issubset_sd(ts_anc, sd_query)
 
@@ -240,13 +248,17 @@ def run_pipeline(
     shared_site_ids, shared_site_positions = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=True
     )
-    print(f"Shared sites: {len(shared_site_ids)}")
+
+    if verbose:
+        print(f"Shared sites: {len(shared_site_ids)}")
 
     # Identify sites in `sd_query` but not in `ts_anc`, which are not to be imputed.
     exclude_site_ids, exclude_site_positions = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=False
     )
-    print(f"Exclude sites: {len(exclude_site_ids)}")
+
+    if verbose:
+        print(f"Exclude sites: {len(exclude_site_ids)}")
 
     assert len(set(shared_site_ids).intersection(set(exclude_site_ids))) == 0
     assert (
@@ -262,7 +274,9 @@ def run_pipeline(
     masked_site_positions = [
         s.position for s in sd_query_true.sites(ids=masked_site_ids)
     ]
-    print(f"Masked sites: {len(masked_site_ids)}")
+
+    if verbose:
+        print(f"Masked sites: {len(masked_site_ids)}")
 
     assert set(masked_site_ids).issubset(set(shared_site_ids))
     assert set(masked_site_positions).issubset(set(shared_site_positions))
