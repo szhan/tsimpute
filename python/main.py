@@ -131,27 +131,27 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
 
 
 @click.command()
-@click.option("--index", "-i", type=int, required=True, help="Replicate index")
+@click.option("--index", "-i", type=int, required=True, help="Replicate index.")
 @click.option(
     "--time_query",
     "-t",
     type=float,
     required=True,
-    help="Time to sample query genomes",
+    help="Time to sample query genomes.",
 )
 @click.option(
     "--prop_missing_sites",
     "-p",
     type=float,
     required=True,
-    help="Proportion of sites to mask",
+    help="Proportion of sites to mask.",
 )
 @click.option(
     "--model",
     "-m",
     type=click.Choice(["test", "simple", "ten_pop"], case_sensitive=False),
     required=True,
-    help="Perform a run using pre-set simulation parameters",
+    help="Perform a run using pre-set simulation parameters.",
 )
 @click.option(
     "--pop_ref",
@@ -165,11 +165,11 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     default=None,
     help="Population of query genomes. Used only if model ten_pop is set.",
 )
-@click.option("--out_prefix", type=str, default="sim", help="Prefix of the output file")
+@click.option("--out_prefix", type=str, default="sim", help="Prefix of the output file.")
 @click.option(
     "--verbose",
     is_flag=True,
-    help="Print out site information after each processing step",
+    help="Print out site information after each processing step.",
 )
 def run_pipeline(
     index,
@@ -177,9 +177,9 @@ def run_pipeline(
     prop_missing_sites,
     out_prefix,
     model,
-    pop_ref=None,
-    pop_query=None,
-    verbose=False,
+    pop_ref,
+    pop_query,
+    verbose,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
