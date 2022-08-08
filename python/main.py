@@ -376,8 +376,8 @@ def run_pipeline(
     prov = [p for p in ts_full.provenances()]
     prov_anc = json.loads(prov[0].record)
     prov_mut = json.loads(prov[1].record)
-    assert prov_anc["parameters"]["recombination_rate"]
-    assert prov_mut["parameters"]["rate"]
+    assert prov_anc["parameters"]["command"] == "sim_ancestry"
+    assert prov_mut["parameters"]["command"] == "sim_mutations"
 
     eff_pop_size = prov_anc["parameters"]["population_size"]
     recombination_rate = prov_anc["parameters"]["recombination_rate"]
