@@ -378,6 +378,8 @@ def run_pipeline(
     prov_mut = json.loads(prov[1].record)
     assert prov_anc["parameters"]["command"] == "sim_ancestry"
     assert prov_mut["parameters"]["command"] == "sim_mutations"
+    seed_anc = prov_anc["parameters"]["random_seed"]
+    seed_mut = prov_mut["parameters"]["random_seed"]
 
     eff_pop_size = prov_anc["parameters"]["population_size"]
     recombination_rate = prov_anc["parameters"]["recombination_rate"]
@@ -393,6 +395,8 @@ def run_pipeline(
                 "#" + "msprime" + "=" + f"{msprime.__version__}",
                 "#" + "tskit" + "=" + f"{tskit.__version__}",
                 "#" + "tsinfer" + "=" + f"{tsinfer.__version__}",
+                "#" + "seed_sim_ancestry" + "=" + f"{seed_anc}",
+                "#" + "seed_sim_mutations" + "=" + f"{seed_mut}",
                 "#" + "index" + "=" + f"{index}",
                 "#" + "size_ref" + "=" + f"{ts_ref.num_samples}",
                 "#" + "size_query" + "=" + f"{sd_query.num_samples}",
