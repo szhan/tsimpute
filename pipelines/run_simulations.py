@@ -3,6 +3,7 @@ from datetime import datetime
 import gzip
 import json
 import sys
+from pathlib import Path
 
 import numpy as np
 
@@ -11,7 +12,7 @@ import tskit
 import tsinfer
 from tsinfer import make_ancestors_ts
 
-sys.path.append("./python/")
+sys.path.append(Path(sys.path[0]) / "python")
 import masks
 import measures
 import util
