@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import click
 from datetime import datetime
 import gzip
@@ -14,7 +11,7 @@ import tskit
 import tsinfer
 from tsinfer import make_ancestors_ts
 
-sys.path.append("python/")
+sys.path.append("./python/")
 import masks
 import measures
 import util
