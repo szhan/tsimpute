@@ -1,14 +1,9 @@
 import click
 from collections import OrderedDict
 import csv
-import sys
-from pathlib import Path
 import warnings
 
-import tskit
-import tsinfer
 import cyvcf2
-
 import numpy as np
 
 
