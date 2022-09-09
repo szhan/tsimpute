@@ -17,15 +17,16 @@ def get_variant_statistics(
     Get the following variant statistics from a VCF file:
         Total number of entries
         Number of duplicate site positions
-        Number of each type of variant (unique site positions):
+        Number of multi-allelic sites
+        Number of sites by variant type (unique site positions):
             SNVs
             Indels
             SVs
-        Number of each type of genotype:
+        Number of genotypes by zygosity:
             Hom-ref
             Het
             Hom-alt
-        Number of missing / unknown genotypes (at least one allele is missing)
+        Number of missing / unknown genotypes (>= 1 allele is missing)
         Number of phased genotypes
     
     :param click.Path vcf_file: A VCF file to parse.
@@ -41,6 +42,7 @@ def get_variant_statistics(
     stats["right_coordinate"] = right_coordinate
     stats["num_entries"] = 0 # Number of unique and duplicate site positions
     stats["num_site_pos_dup"] = 0
+    stats["num_multiallelic_sites"] = 0
     stats["num_snps"] = 0
     stats["num_indels"] = 0
     stats["num_svs"] = 0
@@ -71,7 +73,11 @@ def get_variant_statistics(
                 warnings.warn(f"Duplicate site position at {v.POS}")
         else:
             pos = v.POS
-        
+
+        # Check for multi-allelic sites
+        if len(v.ALT) > 1:
+            stats["num_multiallelic_sites"] += 1
+
         # Check type of variant
         if v.is_snp:
             stats["num_snps"] += 1

@@ -108,14 +108,24 @@ def add_populations(
     sample_data
 ):
     """
-    TODO
+    Add populations to a SampleData object using information from a VCF object.
+
+    :param cyvcf2.VCF vcf: VCF object containing variant data for samples
+    :param tsinfer.SampleData tsinfer:
+    :return: List of samples by population ID rather than sample names
+    :rtype: list
     """
-    pop_ids = [sample_name[0] for sample_name in vcf.samples]
-    pop_codes = np.unique(pop_ids)
+    # Here, the first letter of the sample name is the population name.
+    pop_names = [sample_name[0] for sample_name in vcf.samples]
+
+    pop_codes = np.unique(pop_names)
     pop_lookup = {}
     for p in pop_codes:
-        pop_lookup[p] = sample_data.add_population(metadata = {"name" : p})
-    return [pop_lookup[pop_id] for pop_id in pop_ids]
+        pop_lookup[p] = sample_data.add_population(metadata={"name" : p})
+
+    pop_ids = [pop_lookup[p] for p in pop_names]
+
+    return pop_ids
 
 
 def add_individuals(
@@ -125,14 +135,26 @@ def add_individuals(
     populations
 ):
     """
-    TODO
+    Add individuals to a SampleData object using information from a VCF object.
+
+    :param cyvcf2.VCF vcf:
+    :param tsinfer.SampleData tsinfer:
+    :param int ploidy_level: 1 (haploid) or 2 (diploid)
+    :param list populations: List of population IDs
+    :return: None
+    :rtype: None
     """
-    for name, population in zip(vcf.samples, populations):
+    assert ploidy_level == 1 or ploidy_level == 2,\
+        f"Ploidy {ploidy_level} is not recognized."
+
+    for sample_name, population in zip(vcf.samples, populations):
         sample_data.add_individual(
-            ploidy = ploidy_level,
-            metadata = {"name": name},
-            population = population
+            ploidy=ploidy_level,
+            metadata={"name": sample_name},
+            population=population
         )
+    
+    return None
 
 
 def add_sites(
@@ -156,24 +178,25 @@ def add_sites(
         f"Ploidy {ploidy_level} is not recognized."
     
     pos = 0
-    for variant in vcf:
-        # Check for duplicate site positions.
-        if pos == variant.POS:
-            raise ValueError("Duplicate positions for variant at position", pos)
+    for v in vcf:
+        if pos == v.POS:
+            raise ValueError(f"Duplicate site position at {v.POS}")
         else:
-            pos = variant.POS
+            pos = v.POS
 
         # Check that the genotypes are phased.
-        if any([not phased for _, _, phased in variant.genotypes]):
+        if any([not phased for _, _, phased in v.genotypes]):
             raise ValueError("Unphased genotypes for variant at position", pos)
 
-        alleles = [variant.REF] + variant.ALT
+        alleles = [v.REF] + v.ALT
 
         if warn_monomorphic_sites:
             if len(set(alleles) - {'.'}) == 1:
                 warnings.warn(f"Monomorphic site at {pos}")
 
-        ancestral = variant.INFO.get("AA", variant.REF) # Dangerous action!!!
+        # Dangerous action!!!
+        # TODO: Provide ancestral alleles in a separate file.
+        ancestral = v.INFO.get("AA", v.REF)
 
         # Ancestral state must be first in the allele list.
         ordered_alleles = [ancestral] + list(set(alleles) - {ancestral})
@@ -185,26 +208,27 @@ def add_sites(
         }
 
         # When genotype is missing...
-        if variant.num_unknown > 0:
+        if v.num_unknown > 0:
             allele_index[-1] = tskit.MISSING_DATA
             ordered_alleles += [None]
 
         # Map original allele indexes to their indexes in the new alleles list.
         genotypes = [
             allele_index[old_index]
-            for row in variant.genotypes # cyvcf2 uses -1 to denote missing data.
+            for row in v.genotypes # cyvcf2 uses -1 to denote missing data.
             for old_index in row[0:ploidy_level] # 3-tuple (allele 1, allele 2, is phased?).
         ]
 
-        sample_data.add_site(pos, genotypes = genotypes, alleles = ordered_alleles)
+        sample_data.add_site(positions=pos, genotypes=genotypes, alleles=ordered_alleles)
+
+        return None
 
 
-def create_sample_data_from_vcf_file(vcf_file, ploidy_level):
-    vcf = cyvcf2.VCF(
-        vcf_file,
-        gts012=False, # 0=HOM_REF, 1=HET, 2=UNKNOWN, 3=HOM_ALT
-        strict_gt=True
-    )
+def create_sample_data_from_vcf_file(
+    vcf_file,
+    ploidy_level
+):
+    vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
 
     with tsinfer.SampleData(
         sequence_length = get_sequence_length(vcf)
