@@ -11,9 +11,6 @@ import cyvcf2
 
 import numpy as np
 
-sys.path.append("./python")
-import util
-
 
 def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, verbose):
     """
