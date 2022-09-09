@@ -43,10 +43,7 @@ def count_sites_by_type(ts_or_sd):
     return None
 
 
-def check_site_positions_ts_issubse_sd(
-    tree_sequence,
-    sample_data
-):
+def check_site_positions_ts_issubse_sd(tree_sequence, sample_data):
     """
     Check whether the site positions in `tskit.TreeSequence` are a subset of
     the site positions in `tsinfer.SampleData`.
@@ -79,10 +76,7 @@ def check_site_positions_ts_issubse_sd(
 
 
 def compare_sites_sd_and_ts(
-    sample_data,
-    tree_sequence,
-    is_common,
-    check_matching_ancestral_state=True
+    sample_data, tree_sequence, is_common, check_matching_ancestral_state=True
 ):
     """
     If `is_common` is set to True, then get the ids and positions of the sites
