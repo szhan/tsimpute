@@ -186,7 +186,8 @@ def add_sites(
     pos = 0
     for v in vcf:
         if pos == v.POS:
-            warnings.warn(f"Duplicate site position at {v.POS}")
+            if show_warnings:
+                warnings.warn(f"Duplicate site position at {v.POS}")
             continue
         else:
             pos = v.POS
