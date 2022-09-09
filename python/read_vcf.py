@@ -1,4 +1,5 @@
 import click
+from tqdm import tqdm
 import warnings
 
 import tskit
@@ -184,7 +185,7 @@ def add_sites(
         f"Ploidy {ploidy_level} is not recognized."
     
     pos = 0
-    for v in vcf:
+    for v in tqdm.tqdm(vcf):
         if pos == v.POS:
             if show_warnings:
                 warnings.warn(f"Duplicate site position at {v.POS}")
@@ -234,17 +235,18 @@ def add_sites(
 
 def create_sample_data_from_vcf_file(
     vcf_file,
-    ploidy_level
+    ploidy_level,
+    samples_file
 ):
     """
     :param click.Path vcf_file: VCF file to parse.
-    :param int ploidy_level: 1(haploid) or 2 (diploid).
+    :param int ploidy_level: 1 (haploid) or 2 (diploid).
     :return: A SampleData object containing variants from the VCF object.
     :rtype: tsinfer.SampleData
     """
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
 
-    with tsinfer.SampleData() as sample_data:
+    with tsinfer.SampleData(path=samples_file) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
         add_sites(vcf, sample_data, ploidy_level)
