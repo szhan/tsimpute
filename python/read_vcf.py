@@ -186,7 +186,8 @@ def add_sites(
     pos = 0
     for v in vcf:
         if pos == v.POS:
-            raise ValueError(f"Duplicate site position at {v.POS}")
+            warnings.warn(f"Duplicate site position at {v.POS}")
+            continue
         else:
             pos = v.POS
 
@@ -227,7 +228,7 @@ def add_sites(
 
         sample_data.add_site(position=pos, genotypes=genotypes, alleles=ordered_alleles)
 
-        return None
+    return None
 
 
 def create_sample_data_from_vcf_file(
