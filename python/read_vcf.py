@@ -225,7 +225,7 @@ def add_sites(
             for old_index in row[0:ploidy_level] # 3-tuple (allele 1, allele 2, is phased?).
         ]
 
-        sample_data.add_site(positions=pos, genotypes=genotypes, alleles=ordered_alleles)
+        sample_data.add_site(position=pos, genotypes=genotypes, alleles=ordered_alleles)
 
         return None
 
