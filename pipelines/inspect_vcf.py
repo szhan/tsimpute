@@ -1,5 +1,3 @@
-from asyncore import write
-from turtle import left
 import click
 from collections import OrderedDict
 import csv
