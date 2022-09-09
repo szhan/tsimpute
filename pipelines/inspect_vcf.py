@@ -7,9 +7,14 @@ import cyvcf2
 import numpy as np
 
 
-def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, verbose):
+def get_variant_statistics(
+    vcf_file,
+    left_coordinate,
+    right_coordinate,
+    verbose
+):
     """
-    Get variant statistics from the vcf file
+    Get the following variant statistics from a VCF file:
         Total number of entries
         Number of duplicate site positions
         Number of each type of variant (unique site positions):
@@ -89,7 +94,10 @@ def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, verbose)
     return stats
 
 
-def print_variant_statistics(stats, csv_file):
+def print_variant_statistics(
+    stats,
+    csv_file
+):
     """
     :param OrderedDict stats:
     :param click.Path csv_file: Output CSV file with variant statistics.
