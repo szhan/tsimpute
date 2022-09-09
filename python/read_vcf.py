@@ -185,7 +185,7 @@ def add_sites(
         f"Ploidy {ploidy_level} is not recognized."
     
     pos = 0
-    for v in tqdm.tqdm(vcf):
+    for v in tqdm(vcf):
         if pos == v.POS:
             if show_warnings:
                 warnings.warn(f"Duplicate site position at {v.POS}")
@@ -246,7 +246,19 @@ def create_sample_data_from_vcf_file(
     """
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
 
-    with tsinfer.SampleData(path=samples_file) as sample_data:
+    try:
+        sequence_length = get_sequence_length(vcf)
+    except:
+        warnings.warn(
+            "VCF does not contain sequence length."
+            "Setting sequence length to 0."
+        )
+        sequence_length = 0
+
+    with tsinfer.SampleData(
+        path=samples_file,
+        sequence_length=sequence_length
+    ) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
         add_sites(vcf, sample_data, ploidy_level)
