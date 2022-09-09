@@ -1,8 +1,10 @@
+import click
+import warnings
+
 import tskit
 import tsinfer
 import cyvcf2
 import numpy as np
-import warnings
 
 
 def print_sample_data_to_vcf(
@@ -10,10 +12,9 @@ def print_sample_data_to_vcf(
     individuals,
     samples,
     ploidy_level,
-    mask,
-    out_vcf_file,
+    site_mask,
     contig_id,
-    sequence_length_max=1e12
+    out_vcf_file
 ):
     """
     Fields:
@@ -30,6 +31,14 @@ def print_sample_data_to_vcf(
     individual 1
     ...
     individual n - 1; n = number of individuals
+
+    :param tsinfer.SampleData sample_data:
+    :param array_like individuals: List of individual IDs
+    :param array_like samples: List of sample IDs
+    :param int ploidy_level: 1 (haploid) or 2 (diploid)
+    :param array_like site_mask: List of booleans indicating to exclude the site (True) or not (False)
+    :param str contig_id:
+    :param click.Path out_vcf_file:
     """
     CHROM = contig_id
     ID = '.'
@@ -38,10 +47,10 @@ def print_sample_data_to_vcf(
     FORMAT = 'GT'
     
     assert ploidy_level == 1 or ploidy_level == 2,\
-        f"Specified ploidy_level {ploidy_level} is not recognized."
+        f"Ploidy {ploidy_level} is not recognized."
     
     assert ploidy_level * len(individuals) == len(samples),\
-        f"Some individuals may not have the same ploidy level of {ploidy_level}."
+        f"Some individuals may not have the same ploidy of {ploidy_level}."
     
     # Assume that both sample and individual ids are ordered the same way.
     #individual_id_map = np.repeat(individuals, 2)
@@ -52,27 +61,23 @@ def print_sample_data_to_vcf(
             + "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
     header += "##contig=<ID=" + contig_id + "," + "length=" + str(int(sample_data.sequence_length)) + ">\n"
     header += "\t".join(
-        ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']\
-        + ["s" + str(x) for x in individuals]
-        )
+        ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'] +\
+        ["s" + str(x) for x in individuals]
+    )
     
-    with open(out_vcf_file, "w") as vcf:
-        vcf.write(header + "\n")
-        for i, variant in enumerate(sample_data.variants()):
-            site_id = variant.site.id
-            POS = int(np.round(variant.site.position))
-            if POS > sequence_length_max:
-                break
+    with open(out_vcf_file, "w") as f:
+        f.write(header + "\n")
+        for v in sample_data.variants():
+            # Site positions are stored as float in tskit
+            POS = int(np.round(v.site.position))
             # Since the tree sequence was produced using simulation,
             #    there's no reference sequence other than the ancestral sequence.
-            REF = variant.site.ancestral_state
-            alt_alleles = list(set(variant.alleles) - {REF})
-            AA = variant.site.ancestral_state
+            REF = v.site.ancestral_state
+            alt_alleles = list(set(v.alleles) - {REF})
+            AA = v.site.ancestral_state
             ALT = ",".join(alt_alleles) if len(alt_alleles) > 0 else "."
             INFO = "AA" + "=" + AA
-            record = [str(x)
-                      for x
-                      in [CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT]]
+            record = [str(x) for x in [CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT]]
             
             for j in individuals:
                 #sample_ids = [samples[x]
@@ -82,18 +87,19 @@ def print_sample_data_to_vcf(
                 #                     for k
                 #                     in sample_ids])
                 if ploidy_level == 1:
-                    genotype = str(variant.genotypes[j])
+                    genotype = str(v.genotypes[j])
                 else:
-                    genotype = str(variant.genotypes[2 * j]) + "|" + str(variant.genotypes[2 * j + 1])
+                    genotype = str(v.genotypes[2 * j]) + "|" + str(v.genotypes[2 * j + 1])
                     
-                if mask is not None and mask.query_position(individual = j, position = POS) == True:
-                    if ploidy_level == 1:
-                        genotype = '.'
-                    else:
-                        genotype = '.|.' # Or "./."
+                if site_mask is not None:
+                    if site_mask.query_position(individual=j, position=POS) == True:
+                        if ploidy_level == 1:
+                            genotype = '.'
+                        else:
+                            genotype = '.|.' # Or "./."
                 record += [genotype]
                 
-            vcf.write("\t".join(record) + "\n")
+            f.write("\t".join(record) + "\n")
 
 
 # Sourced and modified from:
