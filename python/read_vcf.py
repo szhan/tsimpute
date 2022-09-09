@@ -161,15 +161,15 @@ def add_sites(
     vcf,
     sample_data,
     ploidy_level,
-    warn_monomorphic_sites=False
+    show_warnings=False
 ):
     """
     Read the sites from the cyvcf2.VCF object, and add them to the SampleData object,
     reordering the alleles to put the ancestral allele first, if it is available.
 
-    :param VCF vcf:
+    :param cyvcf2.VCF vcf:
     :param array_like samples:
-    :param int ploidy_level:
+    :param int ploidy_level: 1 (haploid) or 2 (diploid).
     :param bool warn_monomorphic_sites:
     :return: None
     :rtype: None
@@ -186,11 +186,11 @@ def add_sites(
 
         # Check that the genotypes are phased.
         if any([not phased for _, _, phased in v.genotypes]):
-            raise ValueError("Unphased genotypes for variant at position", pos)
+            raise ValueError(f"Unphased genotypes at {pos}")
 
         alleles = [v.REF] + v.ALT
 
-        if warn_monomorphic_sites:
+        if show_warnings:
             if len(set(alleles) - {'.'}) == 1:
                 warnings.warn(f"Monomorphic site at {pos}")
 
@@ -228,6 +228,12 @@ def create_sample_data_from_vcf_file(
     vcf_file,
     ploidy_level
 ):
+    """
+    :param click.Path vcf_file: VCF file to parse.
+    :param int ploidy_level: 1(haploid) or 2 (diploid).
+    :return: A SampleData object containing variants from the VCF object.
+    :rtype: tsinfer.SampleData
+    """
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
 
     with tsinfer.SampleData(
