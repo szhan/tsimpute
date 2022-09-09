@@ -242,9 +242,7 @@ def create_sample_data_from_vcf_file(
     """
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
 
-    with tsinfer.SampleData(
-        sequence_length = get_sequence_length(vcf)
-    ) as sample_data:
+    with tsinfer.SampleData() as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
         add_sites(vcf, sample_data, ploidy_level)
