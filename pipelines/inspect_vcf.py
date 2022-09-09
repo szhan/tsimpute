@@ -1,6 +1,7 @@
 import click
 from collections import OrderedDict
 import csv
+import tqdm
 import warnings
 
 import cyvcf2
@@ -55,7 +56,7 @@ def get_variant_statistics(
 
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
     pos = 0
-    for v in vcf:
+    for v in tqdm(vcf):
         if left_coordinate is not None:
             if v.POS < left_coordinate:
                 continue
