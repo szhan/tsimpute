@@ -75,7 +75,7 @@ def get_variant_statistics(
             pos = v.POS
 
         # Check for multi-allelic sites
-        if len(v.ALT) > 1:
+        if len(set(v.ALT) - {'.'}) > 1:
             stats["num_multiallelic_sites"] += 1
 
         # Check type of variant
