@@ -9,13 +9,7 @@ import numpy as np
 
 
 def print_sample_data_to_vcf(
-    sample_data,
-    individuals,
-    samples,
-    ploidy_level,
-    site_mask,
-    contig_id,
-    out_vcf_file
+    sample_data, individuals, samples, ploidy_level, site_mask, contig_id, out_vcf_file
 ):
     """
     Fields:
@@ -42,30 +36,43 @@ def print_sample_data_to_vcf(
     :param click.Path out_vcf_file:
     """
     CHROM = contig_id
-    ID = '.'
-    QUAL = '.'
-    FILTER = 'PASS'
-    FORMAT = 'GT'
-    
-    assert ploidy_level == 1 or ploidy_level == 2,\
-        f"Ploidy {ploidy_level} is not recognized."
-    
-    assert ploidy_level * len(individuals) == len(samples),\
-        f"Some individuals may not have the same ploidy of {ploidy_level}."
-    
+    ID = "."
+    QUAL = "."
+    FILTER = "PASS"
+    FORMAT = "GT"
+
+    assert (
+        ploidy_level == 1 or ploidy_level == 2
+    ), f"Ploidy {ploidy_level} is not recognized."
+
+    assert ploidy_level * len(individuals) == len(
+        samples
+    ), f"Some individuals may not have the same ploidy of {ploidy_level}."
+
     # Assume that both sample and individual ids are ordered the same way.
-    #individual_id_map = np.repeat(individuals, 2)
-    
-    header  = "##fileformat=VCFv4.2\n"\
-            + "##source=tskit " + tskit.__version__ + "\n"\
-            + "##INFO=<ID=AA,Number=1,Type=String,Description=\"Ancestral Allele\">\n"\
-            + "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
-    header += "##contig=<ID=" + contig_id + "," + "length=" + str(int(sample_data.sequence_length)) + ">\n"
-    header += "\t".join(
-        ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'] +\
-        ["s" + str(x) for x in individuals]
+    # individual_id_map = np.repeat(individuals, 2)
+
+    header = (
+        "##fileformat=VCFv4.2\n"
+        + "##source=tskit "
+        + tskit.__version__
+        + "\n"
+        + '##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">\n'
+        + '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
     )
-    
+    header += (
+        "##contig=<ID="
+        + contig_id
+        + ","
+        + "length="
+        + str(int(sample_data.sequence_length))
+        + ">\n"
+    )
+    header += "\t".join(
+        ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
+        + ["s" + str(x) for x in individuals]
+    )
+
     with open(out_vcf_file, "w") as f:
         f.write(header + "\n")
         for v in sample_data.variants():
@@ -78,28 +85,32 @@ def print_sample_data_to_vcf(
             AA = v.site.ancestral_state
             ALT = ",".join(alt_alleles) if len(alt_alleles) > 0 else "."
             INFO = "AA" + "=" + AA
-            record = [str(x) for x in [CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT]]
-            
+            record = [
+                str(x) for x in [CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT]
+            ]
+
             for j in individuals:
-                #sample_ids = [samples[x]
+                # sample_ids = [samples[x]
                 #              for x
                 #              in np.where(individual_id_map == j)[0].tolist()]
-                #genotype = "|".join([str(variant.genotypes[k])
+                # genotype = "|".join([str(variant.genotypes[k])
                 #                     for k
                 #                     in sample_ids])
                 if ploidy_level == 1:
                     genotype = str(v.genotypes[j])
                 else:
-                    genotype = str(v.genotypes[2 * j]) + "|" + str(v.genotypes[2 * j + 1])
-                    
+                    genotype = (
+                        str(v.genotypes[2 * j]) + "|" + str(v.genotypes[2 * j + 1])
+                    )
+
                 if site_mask is not None:
                     if site_mask.query_position(individual=j, position=POS) == True:
                         if ploidy_level == 1:
-                            genotype = '.'
+                            genotype = "."
                         else:
-                            genotype = '.|.' # Or "./."
+                            genotype = ".|."  # Or "./."
                 record += [genotype]
-                
+
             f.write("\t".join(record) + "\n")
 
 
@@ -110,12 +121,9 @@ def get_sequence_length(vcf):
     return vcf.seqlens[0]
 
 
-def add_populations(
-    vcf,
-    sample_data
-):
+def add_populations(vcf, sample_data):
     """
-    Add populations to a SampleData object using information from a VCF object.
+    Add populations to a `tsinfer.SampleData` object using information from a `cyvcf2.VCF` object.
 
     :param cyvcf2.VCF vcf: VCF object containing variant data for samples
     :param tsinfer.SampleData tsinfer:
@@ -128,21 +136,16 @@ def add_populations(
     pop_codes = np.unique(pop_names)
     pop_lookup = {}
     for p in pop_codes:
-        pop_lookup[p] = sample_data.add_population(metadata={"name" : p})
+        pop_lookup[p] = sample_data.add_population(metadata={"name": p})
 
     pop_ids = [pop_lookup[p] for p in pop_names]
 
     return pop_ids
 
 
-def add_individuals(
-    vcf,
-    sample_data,
-    ploidy_level,
-    populations
-):
+def add_individuals(vcf, sample_data, ploidy_level, populations):
     """
-    Add individuals to a SampleData object using information from a VCF object.
+    Add individuals to a `tsinfer.SampleData` object using information from a `cyvcf2.VCF` object.
 
     :param cyvcf2.VCF vcf:
     :param tsinfer.SampleData tsinfer:
@@ -151,39 +154,34 @@ def add_individuals(
     :return: None
     :rtype: None
     """
-    assert ploidy_level == 1 or ploidy_level == 2,\
-        f"Ploidy {ploidy_level} is not recognized."
+    assert (
+        ploidy_level == 1 or ploidy_level == 2
+    ), f"Ploidy {ploidy_level} is not recognized."
 
     for sample_name, population in zip(vcf.samples, populations):
         sample_data.add_individual(
-            ploidy=ploidy_level,
-            metadata={"name": sample_name},
-            population=population
+            ploidy=ploidy_level, metadata={"name": sample_name}, population=population
         )
-    
+
     return None
 
 
-def add_sites(
-    vcf,
-    sample_data,
-    ploidy_level,
-    show_warnings=False
-):
+def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
     """
-    Read the sites from the cyvcf2.VCF object, and add them to the SampleData object,
+    Read the sites from the `cyvcf2.VCF` object, and add them to the `tsinfer.SampleData` object,
     reordering the alleles to put the ancestral allele first, if it is available.
 
     :param cyvcf2.VCF vcf:
     :param array_like samples:
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
-    :param bool warn_monomorphic_sites:
+    :param bool show_warnings:
     :return: None
     :rtype: None
     """
-    assert ploidy_level == 1 or ploidy_level == 2,\
-        f"Ploidy {ploidy_level} is not recognized."
-    
+    assert (
+        ploidy_level == 1 or ploidy_level == 2
+    ), f"Ploidy {ploidy_level} is not recognized."
+
     pos = 0
     for v in tqdm(vcf):
         if pos == v.POS:
@@ -200,7 +198,7 @@ def add_sites(
         alleles = [v.REF] + v.ALT
 
         if show_warnings:
-            if len(set(alleles) - {'.'}) == 1:
+            if len(set(alleles) - {"."}) == 1:
                 warnings.warn(f"Monomorphic site at {pos}")
 
         # Dangerous action!!!
@@ -224,8 +222,10 @@ def add_sites(
         # Map original allele indexes to their indexes in the new alleles list.
         genotypes = [
             allele_index[old_index]
-            for row in v.genotypes # cyvcf2 uses -1 to denote missing data.
-            for old_index in row[0:ploidy_level] # 3-tuple (allele 1, allele 2, is phased?).
+            for row in v.genotypes  # cyvcf2 uses -1 to denote missing data.
+            for old_index in row[
+                0:ploidy_level
+            ]  # 3-tuple (allele 1, allele 2, is phased?).
         ]
 
         sample_data.add_site(position=pos, genotypes=genotypes, alleles=ordered_alleles)
@@ -233,11 +233,7 @@ def add_sites(
     return None
 
 
-def create_sample_data_from_vcf_file(
-    vcf_file,
-    ploidy_level,
-    samples_file
-):
+def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file):
     """
     :param click.Path vcf_file: VCF file to parse.
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
@@ -250,17 +246,15 @@ def create_sample_data_from_vcf_file(
         sequence_length = get_sequence_length(vcf)
     except:
         warnings.warn(
-            "VCF does not contain sequence length."
-            "Setting sequence length to 0."
+            "VCF does not contain sequence length." "Setting sequence length to 0."
         )
         sequence_length = 0
 
     with tsinfer.SampleData(
-        path=samples_file,
-        sequence_length=sequence_length
+        path=samples_file, sequence_length=sequence_length
     ) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
         add_sites(vcf, sample_data, ploidy_level)
 
-    return(sample_data)
+    return sample_data
