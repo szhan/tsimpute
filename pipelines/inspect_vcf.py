@@ -1,7 +1,7 @@
 import click
 from collections import OrderedDict
 import csv
-import tqdm
+from tqdm import tqdm
 import warnings
 
 import cyvcf2
@@ -57,6 +57,9 @@ def get_variant_statistics(
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
     pos = 0
     for v in tqdm(vcf):
+        assert pos <= v.POS,\
+            f"Sites are not sorted by coordinate starting at {v.POS}"
+
         if left_coordinate is not None:
             if v.POS < left_coordinate:
                 continue

@@ -184,6 +184,9 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
 
     pos = 0
     for v in tqdm(vcf):
+        assert pos <= v.POS,\
+            f"Sites are not sorted by coordinate starting at {v.POS}"
+
         if pos == v.POS:
             if show_warnings:
                 warnings.warn(f"Duplicate site position at {v.POS}")
