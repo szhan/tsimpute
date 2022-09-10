@@ -112,20 +112,27 @@ def print_sample_data_to_vcf(
             f.write("\t".join(record) + "\n")
 
 
-# Sourced and modified from:
-# https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
 def get_sequence_length(vcf):
+    """
+    Helper function
+
+    Sourced and modified from:
+    https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
+    """
     assert len(vcf.seqlens) == 1
     return vcf.seqlens[0]
 
 
 def add_populations(vcf, sample_data):
     """
-    Add populations to a `tsinfer.SampleData` object using information from a `cyvcf2.VCF` object.
+    Add populations to an existing `SampleData` object using data from an existing `VCF` object.
 
-    :param cyvcf2.VCF vcf: VCF object containing variant data for samples
-    :param tsinfer.SampleData tsinfer:
-    :return: List of samples by population ID rather than sample names
+    Sourced and modified from:
+    https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
+
+    :param cyvcf2.VCF vcf: A VCF object containing variant data
+    :param tsinfer.SampleData sample_data:
+    :return: Samples by population ID rather than sample names
     :rtype: list
     """
     # Here, the first letter of the sample name is the population name.
@@ -143,12 +150,15 @@ def add_populations(vcf, sample_data):
 
 def add_individuals(vcf, sample_data, ploidy_level, populations):
     """
-    Add individuals to a `tsinfer.SampleData` object using information from a `cyvcf2.VCF` object.
+    Add individuals to an existing `SampleData` object using data from an existing `VCF` object.
 
-    :param cyvcf2.VCF vcf:
-    :param tsinfer.SampleData tsinfer:
+    Sourced and modified from:
+    https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
+
+    :param cyvcf2.VCF vcf: A VCF object containing variant data
+    :param tsinfer.SampleData sample_data:
     :param int ploidy_level: 1 (haploid) or 2 (diploid)
-    :param list populations: List of population IDs
+    :param list populations: Population IDs
     :return: None
     :rtype: None
     """
@@ -166,11 +176,14 @@ def add_individuals(vcf, sample_data, ploidy_level, populations):
 
 def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
     """
-    Read the sites from the `cyvcf2.VCF` object, and add them to the `tsinfer.SampleData` object,
+    Read the sites from an existing `VCF` object, and add them to an existing `SampleData` object,
     reordering the alleles to put the ancestral allele first, if it is available.
 
-    :param cyvcf2.VCF vcf:
-    :param array_like samples:
+    Sourced and modified from:
+    https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
+
+    :param cyvcf2.VCF vcf: A VCF object containing variant data
+    :param tsinfer.SampleData sample_data:
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
     :param bool show_warnings:
     :return: None
@@ -182,7 +195,7 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
 
     pos = 0
     for v in tqdm(vcf):
-        assert pos <= v.POS, f"Sites are not sorted by coordinate starting at {v.POS}"
+        assert pos <= v.POS, f"Sites are not coordinate-sorted at {v.POS}"
 
         if pos == v.POS:
             if show_warnings:
@@ -191,7 +204,6 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
         else:
             pos = v.POS
 
-        # Check that the genotypes are phased.
         if any([not phased for _, _, phased in v.genotypes]):
             raise ValueError(f"Unphased genotypes at {pos}")
 
@@ -235,9 +247,14 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
 
 def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file):
     """
-    :param click.Path vcf_file: VCF file to parse.
+    Create a `SampleData` object from a VCF file and store it in a `.samples` file.
+
+    Sourced and modified from:
+    https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
+
+    :param str vcf_file: An input VCF file.
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
-    :return: A SampleData object containing variants from the VCF object.
+    :return: A SampleData object containing variants from the VCF file.
     :rtype: tsinfer.SampleData
     """
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
@@ -246,7 +263,7 @@ def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file):
         sequence_length = get_sequence_length(vcf)
     except:
         warnings.warn(
-            "VCF does not contain sequence length." "Setting sequence length to 0."
+            "VCF does not contain sequence length. Setting sequence length to 0."
         )
         sequence_length = 0
 
