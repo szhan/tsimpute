@@ -1,11 +1,9 @@
-import click
-from tqdm import tqdm
 import warnings
-
+from tqdm import tqdm
+import numpy as np
+import cyvcf2
 import tskit
 import tsinfer
-import cyvcf2
-import numpy as np
 
 
 def print_sample_data_to_vcf(
@@ -184,8 +182,7 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
 
     pos = 0
     for v in tqdm(vcf):
-        assert pos <= v.POS,\
-            f"Sites are not sorted by coordinate starting at {v.POS}"
+        assert pos <= v.POS, f"Sites are not sorted by coordinate starting at {v.POS}"
 
         if pos == v.POS:
             if show_warnings:

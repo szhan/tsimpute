@@ -1,11 +1,10 @@
-import click
 from collections import OrderedDict
 import csv
-from tqdm import tqdm
 import warnings
-
-import cyvcf2
+import click
+from tqdm import tqdm
 import numpy as np
+import cyvcf2
 
 
 def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, verbose):
