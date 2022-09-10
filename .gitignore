@@ -1,6 +1,6 @@
 # Local directories
 analysis/
-asserts/
+assets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
