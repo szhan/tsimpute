@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import warnings
 from tqdm import tqdm
 import numpy as np
@@ -275,3 +276,46 @@ def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file):
         add_sites(vcf, sample_data, ploidy_level)
 
     return sample_data
+
+
+def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose):
+    """
+    Extract ancestral alleles from a VCF file, for example, from Ensembl Variation.
+    Ancestral alleles (AA) should be provided in the INFO field.
+
+    :param str vcf_file: A VCF file with ancestral alleles
+    :param bool verbose: If True, then show warnings
+    :return: A dict mapping site positions to ancestral allele
+    :rtype: collections.OrderedDict
+    """
+    # Key is site position - (chr, coordinate,)
+    # Value is ancestral allele - str
+    dict_aa = OrderedDict()
+
+    num_sites_total = 0
+    num_sites_dup = 0 # Duplicte site positions
+    num_sites_aa = 0 # Unique site positions with ancestral allele in INFO
+
+    vcf = cyvcf2.VCF(vcf_file)
+    pos = 0
+    for v in tqdm(vcf):
+        num_sites_total += 1
+
+        assert pos <= v.POS, f"Sites are not coordinate-sorted at {v.POS}"
+
+        if pos == v.POS:
+            num_sites_dup += 1
+            if verbose:
+                warnings.warn(f"Duplicate site position at {v.POS}")
+            #continue
+        else:
+            pos = v.POS
+        
+        chr = str(v.CHROM)
+        pos = int(pos)
+
+        if v.INFO.get('AA'):
+            num_sites_aa += 1
+            dict_aa[(chr, pos)] = v.INFO.get('AA')
+
+    return dict_aa
