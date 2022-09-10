@@ -1,5 +1,6 @@
-# Result files
+# Local directories
 analysis/
+asserts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
