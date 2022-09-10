@@ -8,12 +8,7 @@ import cyvcf2
 import numpy as np
 
 
-def get_variant_statistics(
-    vcf_file,
-    left_coordinate,
-    right_coordinate,
-    verbose
-):
+def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, verbose):
     """
     Get the following variant statistics from a VCF file:
         Total number of entries
@@ -29,19 +24,19 @@ def get_variant_statistics(
             Hom-alt
         Number of missing / unknown genotypes (>= 1 allele is missing)
         Number of phased genotypes
-    
-    :param click.Path vcf_file: A VCF file to parse.
+
+    :param str vcf_file: A VCF file to parse.
     :param bool verbose: If True, show warnings (default = True).
     :param int left_coordinate: 0-based left coordinate of the inclusion interval.
     :param int right_coordinate: 0-based right coordinate of the inclusion interval.
-    :return: A named tuple of variant statistics.
-    :rtype: collections.namedtuple
+    :return: A dict of variant statistics.
+    :rtype: collections.OrderedDict
     """
     stats = OrderedDict()
     stats["vcf_file"] = vcf_file
     stats["left_coordinate"] = left_coordinate
     stats["right_coordinate"] = right_coordinate
-    stats["num_entries"] = 0 # Number of unique and duplicate site positions
+    stats["num_entries"] = 0  # Unique and duplicate site positions
     stats["num_site_pos_dup"] = 0
     stats["num_multiallelic_sites"] = 0
     stats["num_snps"] = 0
@@ -57,15 +52,14 @@ def get_variant_statistics(
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
     pos = 0
     for v in tqdm(vcf):
-        assert pos <= v.POS,\
-            f"Sites are not sorted by coordinate starting at {v.POS}"
+        assert pos <= v.POS, f"Sites are not sorted by coordinate starting at {v.POS}"
 
         if left_coordinate is not None:
             if v.POS < left_coordinate:
                 continue
 
         if right_coordinate is not None:
-            # Assuming that the entries are coordinate-sorted.
+            # Assuming oordinate-sorted entries
             if v.POS > right_coordinate:
                 break
 
@@ -78,8 +72,8 @@ def get_variant_statistics(
         else:
             pos = v.POS
 
-        # Check for multi-allelic sites
-        if len(set(v.ALT) - {'.'}) > 1:
+        # Check for multiallelic sites
+        if len(set(v.ALT) - {"."}) > 1:
             stats["num_multiallelic_sites"] += 1
 
         # Check type of variant
@@ -93,7 +87,7 @@ def get_variant_statistics(
             stats["num_others"] += 1
             if verbose:
                 warnings.warn(f"Unrecognized type of variant at {v.POS}")
-        
+
         # Check properties of genotype
         stats["num_hom_ref"] += v.num_hom_ref
         stats["num_het"] += v.num_het
@@ -104,13 +98,12 @@ def get_variant_statistics(
     return stats
 
 
-def print_variant_statistics(
-    stats,
-    csv_file
-):
+def print_variant_statistics(stats, csv_file):
     """
-    :param OrderedDict stats:
-    :param click.Path csv_file: Output CSV file with variant statistics.
+    Dump variant statistics into a CSV file.
+
+    :param OrderedDict stats: Output from `get_variant_statistics`.
+    :param str csv_file: Output CSV file with variant statistics.
     :return: None
     :rtype: None
     """
@@ -124,38 +117,42 @@ def print_variant_statistics(
 
 @click.command()
 @click.option(
-    "--in_vcf_file", "-i",
+    "--in_vcf_file",
+    "-i",
     type=click.Path(exists=True, file_okay=True, readable=True),
     required=True,
-    help="Input (gzipped) VCF file"
+    help="Input (gzipped) VCF file",
 )
 @click.option(
-    "--out_csv_file", "-o",
+    "--out_csv_file",
+    "-o",
     type=click.Path(file_okay=True, writable=True),
     required=True,
-    help="Output CSV file with variant statistics"
+    help="Output CSV file with variant statistics",
 )
 @click.option(
-    "--left_coordinate", "-l",
+    "--left_coordinate",
+    "-l",
     type=int,
     default=None,
-    help="Left 0-based coordinate of the inclusion interval (default = None)." + \
-        "If None, then set to 0."
+    help="Left 0-based coordinate of the inclusion interval (default = None)."
+    + "If None, then set to 0.",
 )
 @click.option(
-    "--right_coordinate", "-r",
+    "--right_coordinate",
+    "-r",
     type=int,
     default=None,
-    help="Right 0-based coordinate of the inclusion interval (default = None)." + \
-        "If None, then set to the last coordinate in the VCF file."
+    help="Right 0-based coordinate of the inclusion interval (default = None)."
+    + "If None, then set to the last coordinate in the VCF file.",
 )
-@click.option(
-    "--verbose", "-v",
-    is_flag=True,
-    help="Show warnings"
-)
-def parse_vcf_file(in_vcf_file, out_csv_file, left_coordinate, right_coordinate, verbose):
-    stats = get_variant_statistics(in_vcf_file, left_coordinate, right_coordinate, verbose)
+@click.option("--verbose", "-v", is_flag=True, help="Show warnings")
+def parse_vcf_file(
+    in_vcf_file, out_csv_file, left_coordinate, right_coordinate, verbose
+):
+    stats = get_variant_statistics(
+        in_vcf_file, left_coordinate, right_coordinate, verbose
+    )
     print_variant_statistics(stats, out_csv_file)
 
 
