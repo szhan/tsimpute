@@ -250,7 +250,7 @@ def add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=None, show_warni
     return None
 
 
-def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file, ancestral_alleles=None):
+def create_sample_data_from_vcf_file(vcf_file, samples_file, ploidy_level, ancestral_alleles=None):
     """
     Create a `SampleData` object from a VCF file and store it in a `.samples` file.
 

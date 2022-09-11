@@ -61,8 +61,8 @@ def run_standard_tsinfer_pipeline(
     print(" ".join(["INFO" + ":" + "Parsing VCF file"]))
     sample_data = read_vcf.create_sample_data_from_vcf_file(
         vcf_file=vcf_file,
-        ploidy_level=2,
-        samples_file=samples_file
+        samples_file=samples_file,
+        ploidy_level=2
     )
 
     print(" ".join(["INFO" + ":" + "Generating ancestors"]))
