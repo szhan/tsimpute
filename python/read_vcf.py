@@ -283,6 +283,8 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose):
     Extract ancestral alleles from a VCF file, for example, from Ensembl Variation.
     Ancestral alleles (AA) should be provided in the INFO field.
 
+    Note that there may be indels.
+
     :param str vcf_file: A VCF file with ancestral alleles
     :param bool verbose: If True, then show warnings
     :return: A dict mapping site positions to ancestral allele
