@@ -246,7 +246,7 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
     return None
 
 
-def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file):
+def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file, ancestral_alleles=None):
     """
     Create a `SampleData` object from a VCF file and store it in a `.samples` file.
 
@@ -255,6 +255,8 @@ def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file):
 
     :param str vcf_file: An input VCF file.
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
+    :param str samples_file: An output .samples file.
+    :param collections.OrderedDict ancestral_alleles: Default = None.
     :return: A SampleData object containing variants from the VCF file.
     :rtype: tsinfer.SampleData
     """
@@ -273,7 +275,7 @@ def create_sample_data_from_vcf_file(vcf_file, ploidy_level, samples_file):
     ) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
-        add_sites(vcf, sample_data, ploidy_level)
+        add_sites(vcf, sample_data, ploidy_level, ancestral_alleles)
 
     return sample_data
 
