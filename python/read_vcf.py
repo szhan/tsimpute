@@ -284,7 +284,7 @@ def create_sample_data_from_vcf_file(vcf_file, samples_file, ploidy_level, ances
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose=False):
+def extract_ancestral_alleles_from_vcf_file(vcf_file, show_warnings=False):
     """
     Extract ancestral alleles from a VCF file, for example, from Ensembl Variation.
     Ancestral alleles (AA) should be provided in the INFO field.
@@ -292,7 +292,7 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose=False):
     Note that there may be indels.
 
     :param str vcf_file: A VCF file with ancestral alleles
-    :param bool verbose: If True, then show warnings
+    :param bool show_warnings: If True, then show warnings
     :return: A dict mapping site positions to ancestral allele
     :rtype: collections.OrderedDict
     """
@@ -314,7 +314,7 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose=False):
 
         if pos == v.POS:
             stats["num_sites_dup"] += 1
-            if verbose:
+            if show_warnings:
                 warnings.warn(f"Duplicate site position at {v.POS}")
             #continue
         else:
