@@ -36,6 +36,7 @@ import read_vcf
 )
 def run_standard_tsinfer_pipeline(
     vcf_file,
+    vcf_ancestral_alleles_file,
     out_dir,
     out_prefix,
     num_threads
@@ -44,6 +45,7 @@ def run_standard_tsinfer_pipeline(
     See https://tsinfer.readthedocs.io/en/latest/index.html
 
     :param click.Path vcf_file:
+    :param click.Path vcf_ancestral_alleles_file:
     :param click.Path out_dir:
     :param str out_prefix:
     :param int num_threads:
@@ -58,11 +60,17 @@ def run_standard_tsinfer_pipeline(
 
     print(" ".join(["INFO" + ":" + "START"]))
 
+    print(" ".join(["INFO" + ":" + "Parsing VCF file with ancestral alleles"]))
+    map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf_file(
+        vcf_ancestral_alleles_file
+    )
+
     print(" ".join(["INFO" + ":" + "Parsing VCF file"]))
     sample_data = read_vcf.create_sample_data_from_vcf_file(
         vcf_file=vcf_file,
         samples_file=samples_file,
-        ploidy_level=2
+        ploidy_level=2,
+        ancestral_alleles=map_ancestral_alleles
     )
 
     print(" ".join(["INFO" + ":" + "Generating ancestors"]))
