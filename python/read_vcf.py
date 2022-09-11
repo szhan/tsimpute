@@ -291,20 +291,21 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose):
     # Key is site position - (chr, coordinate,)
     # Value is ancestral allele - str
     dict_aa = OrderedDict()
+    stats = OrderedDict()
 
-    num_sites_total = 0
-    num_sites_dup = 0 # Duplicte site positions
-    num_sites_aa = 0 # Unique site positions with ancestral allele in INFO
+    stats["num_sites_total"] = 0
+    stats["num_sites_dup"] = 0 # Duplicte site positions
+    stats["num_sites_aa"] = 0 # Unique site positions with ancestral allele in INFO
 
     vcf = cyvcf2.VCF(vcf_file)
     pos = 0
     for v in tqdm(vcf):
-        num_sites_total += 1
+        stats["num_sites_total"] += 1
 
         assert pos <= v.POS, f"Sites are not coordinate-sorted at {v.POS}"
 
         if pos == v.POS:
-            num_sites_dup += 1
+            stats["num_sites_dup"] += 1
             if verbose:
                 warnings.warn(f"Duplicate site position at {v.POS}")
             #continue
@@ -315,7 +316,7 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose):
         pos = int(pos)
 
         if v.INFO.get('AA'):
-            num_sites_aa += 1
+            stats["num_sites_aa"] += 1
             dict_aa[(chr, pos)] = v.INFO.get('AA')
 
-    return dict_aa
+    return (dict_aa, stats)
