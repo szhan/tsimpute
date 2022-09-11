@@ -175,10 +175,12 @@ def add_individuals(vcf, sample_data, ploidy_level, populations):
     return None
 
 
-def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
+def add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=None, show_warnings=False):
     """
     Read the sites from an existing `VCF` object, and add them to an existing `SampleData` object,
     reordering the alleles to put the ancestral allele first, if it is available.
+
+    If `ancestral_alleles` = `None`, then the reference allele is taken to be the ancestral allele.
 
     Sourced and modified from:
     https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
@@ -186,7 +188,8 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
     :param cyvcf2.VCF vcf: A VCF object containing variant data
     :param tsinfer.SampleData sample_data:
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
-    :param bool show_warnings:
+    :param collections.OrderedDict ancestral_alleles: Default = None.
+    :param bool show_warnings: If True, show warnings (default = False).
     :return: None
     :rtype: None
     """
@@ -214,9 +217,10 @@ def add_sites(vcf, sample_data, ploidy_level, show_warnings=False):
             if len(set(alleles) - {"."}) == 1:
                 warnings.warn(f"Monomorphic site at {pos}")
 
-        # Dangerous action!!!
-        # TODO: Provide ancestral alleles in a separate file.
-        ancestral = v.INFO.get("AA", v.REF)
+        if (v.CHROM, pos) in ancestral_alleles:
+            ancestral = ancestral_alleles[(v.CHROM, pos)]
+        else:
+            ancestral = v.REF
 
         # Ancestral state must be first in the allele list.
         ordered_alleles = [ancestral] + list(set(alleles) - {ancestral})
