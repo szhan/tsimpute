@@ -284,7 +284,7 @@ def create_sample_data_from_vcf_file(vcf_file, samples_file, ploidy_level, ances
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose):
+def extract_ancestral_alleles_from_vcf_file(vcf_file, verbose=False):
     """
     Extract ancestral alleles from a VCF file, for example, from Ensembl Variation.
     Ancestral alleles (AA) should be provided in the INFO field.
