@@ -33,7 +33,7 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None, num_t
     # strict_gt (bool) – if True, then any ‘.’ present
     # in a genotype will classify the corresponding element
     # in the gt_types array as UNKNOWN.
-    vcf = cyvcf2.VCF(vcf_file, strict_gt=True, num_threads=num_threads)
+    vcf = cyvcf2.VCF(vcf_file, strict_gt=True, threads=num_threads)
     vcf = vcf if region is None else vcf(region)
 
     return vcf

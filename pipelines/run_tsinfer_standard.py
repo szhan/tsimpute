@@ -63,17 +63,16 @@ def run_standard_tsinfer_pipeline(
     map_ancestral_alleles = None
     if ancestral_alleles_file is not None:
         print("INFO: Parsing VCF file with ancestral alleles")
-        vcf_aa = read_vcf.get_vcf(ancestral_alleles_file)
-        map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa, num_threads=num_threads)
+        vcf_aa = read_vcf.get_vcf(ancestral_alleles_file, num_threads=num_threads)
+        map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa)
 
     print("INFO: Parsing input VCF file")
-    vcf = read_vcf.get_vcf(in_file)
+    vcf = read_vcf.get_vcf(in_file, num_threads=num_threads)
     sample_data = read_vcf.create_sample_data_from_vcf(
         vcf,
         samples_file=out_samples_file,
         ploidy_level=2,
-        ancestral_alleles=map_ancestral_alleles,
-        num_threads=num_threads
+        ancestral_alleles=map_ancestral_alleles
     )
 
     print("INFO: Generating ancestors")
