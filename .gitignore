@@ -1,6 +1,6 @@
 # Local directories
 analysis/
-assets/
+assets/ensembl/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
