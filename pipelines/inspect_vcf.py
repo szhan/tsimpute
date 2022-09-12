@@ -1,14 +1,17 @@
+import click
 from collections import OrderedDict
 import csv
-from turtle import right
+import sys
 import warnings
-import click
 from tqdm import tqdm
 import numpy as np
 import cyvcf2
 
+sys.path.append("./python")
+import read_vcf
 
-def get_variant_statistics(vcf_file, *, seq_name=None, left_coord=None, right_coord=None, show_warnings=False):
+
+def get_variant_statistics(vcf, *, show_warnings=False):
     """
     Get the following variant statistics from a VCF file:
         Total number of entries
@@ -25,19 +28,12 @@ def get_variant_statistics(vcf_file, *, seq_name=None, left_coord=None, right_co
         Number of missing / unknown genotypes (>= 1 allele is missing)
         Number of phased genotypes
 
-    :param str vcf_file: An input VCF file.
-    :param str seq_name: Sequence name.
-    :param int left_coord: 0-based left coordinate of the inclusion interval (default = None). If None, then set to 0.
-    :param int right_coord: 0-based right coordinate of the inclusion interval (default = None). If None, then set to the last coordinate in the VCF file.
+    :param cyvcf2.VCF vcf: A VCF object.
     :param bool show_warnings: If True, show warnings (default = False).
     :return: A dict of variant statistics.
     :rtype: collections.OrderedDict
     """
     stats = OrderedDict()
-    stats["vcf_file"] = vcf_file
-    stats["seq_name"] = seq_name
-    stats["left_coord"] = left_coord
-    stats["right_coord"] = right_coord
     stats["num_entries"] = 0  # Unique and duplicate site positions
     stats["num_site_pos_dup"] = 0
     stats["num_multiallelic_sites"] = 0
@@ -146,13 +142,14 @@ def print_variant_statistics(stats, csv_file):
     help="Right 0-based coordinate of the inclusion interval (default = None)."
     + "If None, then set to the last coordinate in the VCF file.",
 )
-@click.option("--verbose", "-v", is_flag=True, help="Show warnings")
+@click.option("--verbose", "-v", is_flag=True, help="Show warnings.")
 def parse_vcf_file(
     in_vcf_file, out_csv_file, seq_name, left_coord, right_coord, verbose
 ):
-    stats = get_variant_statistics(
-        in_vcf_file, seq_name=seq_name, left_coord=left_coord, right_coord=right_coord, show_warnings=verbose
+    vcf = read_vcf.get_vcf(
+        in_vcf_file, seq_name=seq_name, left_coord=left_coord, right_coord=right_coord
     )
+    stats = get_variant_statistics(vcf, show_warnings=verbose)
     print_variant_statistics(stats, out_csv_file)
 
 
