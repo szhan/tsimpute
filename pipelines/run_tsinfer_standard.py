@@ -48,14 +48,14 @@ def run_standard_tsinfer_pipeline(
     ancestors_ts_file = out_path / out_prefix + ".ancestors.trees"
     inferred_ts_file = out_path / out_prefix + ".inferred.trees"
 
-    print(" ".join(["INFO" + ":" + "START"]))
+    print("INFO: START")
 
-    print(" ".join(["INFO" + ":" + "Parsing VCF file with ancestral alleles"]))
+    print("INFO: Parsing VCF file with ancestral alleles")
     map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf_file(
         vcf_ancestral_alleles_file
     )
 
-    print(" ".join(["INFO" + ":" + "Parsing VCF file"]))
+    print("INFO: Parsing VCF file")
     sample_data = read_vcf.create_sample_data_from_vcf_file(
         vcf_file=vcf_file,
         samples_file=samples_file,
@@ -63,24 +63,24 @@ def run_standard_tsinfer_pipeline(
         ancestral_alleles=map_ancestral_alleles,
     )
 
-    print(" ".join(["INFO" + ":" + "Generating ancestors"]))
+    print("INFO: Generating ancestors")
     ancestor_data = tsinfer.generate_ancestors(
         sample_data=sample_data, path=ancestors_file, num_threads=num_threads
     )
 
-    print(" ".join(["INFO" + ":" + "Matching ancestors"]))
+    print("INFO: Matching ancestors")
     ancestors_ts = tsinfer.match_ancestors(
         sample_data=sample_data, ancestor_data=ancestor_data, num_threads=num_threads
     )
     ancestors_ts.dump(ancestors_ts_file)
 
-    print(" ".join(["INFO" + ":" + "Matching samples"]))
+    print("INFO: Matching samples")
     inferred_ts = tsinfer.match_samples(
         sample_data=sample_data, ancestors_ts=ancestors_ts, num_threads=num_threads
     )
     inferred_ts.dump(inferred_ts_file)
 
-    print(" ".join(["INFO" + ":" + "END"]))
+    print("INFO: END")
 
     return None
 
