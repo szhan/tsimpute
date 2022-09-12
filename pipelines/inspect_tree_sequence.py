@@ -33,7 +33,7 @@ def get_tree_sequence_statistics(in_trees_file, out_csv_file):
 
     stats = OrderedDict()
     stats["sequence_length"] = ts.sequence_length
-    stats["num_ndividuals"] = ts.num_individuals
+    stats["num_individuals"] = ts.num_individuals
     stats["num_samples"] = ts.num_samples
     stats["num_trees"] = ts.num_trees
     stats["num_sites"] = ts.num_sites
