@@ -77,8 +77,7 @@ def get_variant_statistics(vcf, *, show_warnings=False):
         stats["num_het"] += v.num_het
         stats["num_hom_alt"] += v.num_hom_alt
         stats["num_unknown"] += v.num_unknown
-        stats["num_unphased"] += (v.num_called +
-                                  v.num_unknown) - np.sum(v.gt_phases)
+        stats["num_unphased"] += (v.num_called + v.num_unknown) - np.sum(v.gt_phases)
 
     return stats
 

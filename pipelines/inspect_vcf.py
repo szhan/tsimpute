@@ -26,7 +26,7 @@ import stats
     "-s",
     type=str,
     default=None,
-    help="Sequence name to query (default = None)."
+    help="Sequence name to query (default = None).",
 )
 @click.option(
     "--left_coord",
