@@ -312,7 +312,7 @@ def create_sample_data_from_vcf(vcf, samples_file, ploidy_level, *, ancestral_al
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf(vcf, show_warnings=False):
+def extract_ancestral_alleles_from_vcf(vcf, *, show_warnings=False):
     """
     Extract ancestral alleles from an existing `VCF` object.
     Ancestral alleles (AA) should be provided in the INFO field. Note that there may be indels.
