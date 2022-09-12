@@ -1,0 +1,15 @@
+##fileformat=VCFv4.2
+##fileDate=20220912
+##FILTER=<ID=PASS,Description="All filters passed">
+##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele"
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##contig=<ID=20>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	s1	s2	s3	s4
+20	10	v1	A	G	.	PASS	AA=A	GT	0|0	0|1	1|0	1|1
+20	20	v2	A	G	.	PASS	AA=G	GT	0|0	0|1	1|0	1|1
+20	30	v3	C	T	.	PASS	AA=C	GT	0|0	0|1	1|0	.|.
+20	40	v4	C	T	.	PASS	AA=T	GT	0|0	0|1	1|0	.|.
+20	50	v5	G	A	.	PASS	AA=C	GT	0|0	0|1	1|0	1|1
+20	60	v6	T	C	.	PASS	AA=T	GT	0|0	.|1	1|0	1|1
+20	70	v7	T	.	.	PASS	AA=T	GT	0|0	0|0	0|0	0|0
+20	80	v8	A	C,G	.	PASS	AA=A	GT	0|0	0|1	1|2	2|2
