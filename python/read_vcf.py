@@ -224,12 +224,14 @@ def add_sites(
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
     :param collections.OrderedDict ancestral_alleles: Default = None.
     :param bool show_warnings: If True, show warnings (default = False).
-    :return: None
-    :rtype: None
+    :return: Number of sites with an available ancestral allele.
+    :rtype: int
     """
     assert (
         ploidy_level == 1 or ploidy_level == 2
     ), f"Ploidy {ploidy_level} is not recognized."
+
+    num_sites_with_aa = 0 # Number of sites with an available ancestral allele
 
     pos = 0
     for v in tqdm(vcf):
@@ -251,10 +253,14 @@ def add_sites(
             if len(set(alleles) - {"."}) == 1:
                 warnings.warn(f"Monomorphic site at {pos}")
 
+        chr = str(v.CHROM)
+        pos = int(pos)
+
         ancestral = v.REF
         if ancestral_alleles is not None:
-            if (v.CHROM, pos) in ancestral_alleles:
-                ancestral = ancestral_alleles[(v.CHROM, pos)]
+            if (chr, pos) in ancestral_alleles:
+                ancestral = ancestral_alleles[(chr, pos)]
+                num_sites_with_aa += 1
 
         # Ancestral state must be first in the allele list.
         ordered_alleles = [ancestral] + list(set(alleles) - {ancestral})
@@ -281,7 +287,9 @@ def add_sites(
 
         sample_data.add_site(position=pos, genotypes=genotypes, alleles=ordered_alleles)
 
-    return None
+    print(f"Sites with AA {num_sites_with_aa}")
+
+    return num_sites_with_aa
 
 
 def create_sample_data_from_vcf(
