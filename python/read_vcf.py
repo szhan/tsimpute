@@ -18,6 +18,7 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None):
     :return: A VCF object containing variants.
     :rtype: cyvcf2.VCF
     """
+    region = None
     if seq_name is not None or left_coord is not None:
         # Prepare the string for region query
         assert (
@@ -26,18 +27,13 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None):
         left_coord = "0" if left_coord is None else str(left_coord)
         right_coord = "" if right_coord is None else str(right_coord)
         region = seq_name + ":" + left_coord + "-" + right_coord
-    else:
-        # Read the whole VCF file
-        region = None
 
     # See https://brentp.github.io/cyvcf2/docstrings.html
     # strict_gt (bool) – if True, then any ‘.’ present
     # in a genotype will classify the corresponding element
     # in the gt_types array as UNKNOWN.
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
-
-    if region is not None:
-        vcf = vcf(region)
+    vcf = vcf if region is None else vcf(region)
 
     return vcf
 

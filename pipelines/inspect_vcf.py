@@ -51,20 +51,6 @@ def get_variant_statistics(vcf_file, *, seq_name=None, left_coord=None, right_co
     stats["num_unknown"] = 0
     stats["num_unphased"] = 0
 
-    if seq_name is not None or left_coord is not None:
-        assert seq_name is not None
-        assert left_coord is not None
-        left_coord = '0' if left_coord is None else str(left_coord)
-        right_coord = '' if right_coord is None else str(right_coord)
-        region = seq_name + ":" + left_coord + "-" + right_coord
-    else:
-        region = None
-
-    vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
-
-    if region is not None:
-        vcf = vcf(region)
-
     pos = 0
     for v in tqdm(vcf):
         assert pos <= v.POS, f"Sites are not sorted by coordinate starting at {v.POS}"
