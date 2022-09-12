@@ -20,20 +20,25 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None):
     """
     if seq_name is not None or left_coord is not None:
         # Prepare the string for region query
-        assert seq_name is not None and left_coord is not None,\
-            f"Both seq_name and left_coord must be specified if one is specified."
-        left_coord = '0' if left_coord is None else str(left_coord)
-        right_coord = '' if right_coord is None else str(right_coord)
+        assert (
+            seq_name is not None and left_coord is not None
+        ), f"Both seq_name and left_coord must be specified if one is specified."
+        left_coord = "0" if left_coord is None else str(left_coord)
+        right_coord = "" if right_coord is None else str(right_coord)
         region = seq_name + ":" + left_coord + "-" + right_coord
     else:
         # Read the whole VCF file
         region = None
 
+    # See https://brentp.github.io/cyvcf2/docstrings.html
+    # strict_gt (bool) – if True, then any ‘.’ present
+    # in a genotype will classify the corresponding element
+    # in the gt_types array as UNKNOWN.
     vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
 
     if region is not None:
         vcf = vcf(region)
-    
+
     return vcf
 
 
@@ -205,7 +210,9 @@ def add_individuals(vcf, sample_data, ploidy_level, populations):
     return None
 
 
-def add_sites(vcf, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False):
+def add_sites(
+    vcf, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False
+):
     """
     Read the sites from an existing `VCF` object, and add them to an existing `SampleData` object,
     reordering the alleles to put the ancestral allele first, if it is available.
@@ -280,7 +287,9 @@ def add_sites(vcf, sample_data, ploidy_level, *, ancestral_alleles=None, show_wa
     return None
 
 
-def create_sample_data_from_vcf(vcf, samples_file, ploidy_level, *, ancestral_alleles=None):
+def create_sample_data_from_vcf(
+    vcf, samples_file, ploidy_level, *, ancestral_alleles=None
+):
     """
     Create a `SampleData` object from a `VCF` object and store it in a `.samples` file.
 
@@ -328,8 +337,8 @@ def extract_ancestral_alleles_from_vcf(vcf, *, show_warnings=False):
     stats = OrderedDict()
 
     stats["num_sites_total"] = 0
-    stats["num_sites_dup"] = 0 # Duplicte site positions
-    stats["num_sites_aa"] = 0 # Unique site positions with ancestral allele in INFO
+    stats["num_sites_dup"] = 0  # Duplicte site positions
+    stats["num_sites_aa"] = 0  # Unique site positions with ancestral allele in INFO
 
     pos = 0
     for v in tqdm(vcf):
@@ -343,12 +352,12 @@ def extract_ancestral_alleles_from_vcf(vcf, *, show_warnings=False):
                 warnings.warn(f"Duplicate site position at {v.POS}")
         else:
             pos = v.POS
-        
+
         chr = str(v.CHROM)
         pos = int(pos)
 
-        if v.INFO.get('AA'):
+        if v.INFO.get("AA"):
             stats["num_sites_aa"] += 1
-            dict_aa[(chr, pos)] = v.INFO.get('AA')
+            dict_aa[(chr, pos)] = v.INFO.get("AA")
 
     return (dict_aa, stats)
