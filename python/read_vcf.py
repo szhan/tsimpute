@@ -7,7 +7,7 @@ import tskit
 import tsinfer
 
 
-def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None):
+def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None, num_threads=1):
     """
     TODO
 
@@ -15,6 +15,7 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None):
     :param str seq_name: Sequence name.
     :param int left_coord: 0-based left coordinate of the inclusion interval (default = None). If None, then set to 0.
     :param int right_coord: 0-based right coordinate of the inclusion interval (default = None). If None, then set to the last coordinate in the VCF file.
+    :param int num_threads: Number of threads to use (default = 1).
     :return: A VCF object containing variants.
     :rtype: cyvcf2.VCF
     """
@@ -32,7 +33,7 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None):
     # strict_gt (bool) – if True, then any ‘.’ present
     # in a genotype will classify the corresponding element
     # in the gt_types array as UNKNOWN.
-    vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
+    vcf = cyvcf2.VCF(vcf_file, strict_gt=True, num_threads=num_threads)
     vcf = vcf if region is None else vcf(region)
 
     return vcf
@@ -250,10 +251,10 @@ def add_sites(
             if len(set(alleles) - {"."}) == 1:
                 warnings.warn(f"Monomorphic site at {pos}")
 
-        if (v.CHROM, pos) in ancestral_alleles:
-            ancestral = ancestral_alleles[(v.CHROM, pos)]
-        else:
-            ancestral = v.REF
+        ancestral = v.REF
+        if ancestral_alleles is not None:
+            if (v.CHROM, pos) in ancestral_alleles:
+                ancestral = ancestral_alleles[(v.CHROM, pos)]
 
         # Ancestral state must be first in the allele list.
         ordered_alleles = [ancestral] + list(set(alleles) - {ancestral})
@@ -312,7 +313,7 @@ def create_sample_data_from_vcf(
     ) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
-        add_sites(vcf, sample_data, ploidy_level, ancestral_alleles)
+        add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=ancestral_alleles)
 
     return sample_data
 

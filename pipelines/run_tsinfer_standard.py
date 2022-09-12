@@ -1,9 +1,8 @@
 import click
 import sys
-from pathlib import Path
-
 import tskit
 import tsinfer
+import cyvcf2
 
 sys.path.append("./python")
 import read_vcf
@@ -11,7 +10,7 @@ import read_vcf
 
 @click.command()
 @click.option(
-    "--in_vcf_file",
+    "--in_file",
     "-i",
     type=click.Path(exists=True, file_okay=True),
     required=True,
@@ -30,66 +29,69 @@ import read_vcf
     "-a",
     type=click.Path(exists=True, file_okay=True),
     default=None,
-    help="A VCF file containing ancestral alleles.",
+    help="Input VCF file with ancestral alleles.",
 )
 @click.option(
     "--num_threads", "-t", type=int, default=1, help="Number of threads to use"
 )
 def run_standard_tsinfer_pipeline(
-    vcf_file, out_dir, out_prefix, vcf_ancestral_alleles_file, num_threads
+    in_file, out_dir, out_prefix, ancestral_alleles_file, num_threads
 ):
     """
     TODO
 
     See https://tsinfer.readthedocs.io/en/latest/index.html
 
-    :param str vcf_file:
+    :param str in_file:
     :param str out_dir:
     :param str out_prefix:
-    :param str vcf_ancestral_alleles_file:
+    :param str ancestral_alleles_file:
     :param int num_threads:
     :return: None
     :rtype: None
     """
-    out_path = Path(out_dir)
-    samples_file = out_path / out_prefix + ".samples"
-    ancestors_file = out_path / out_prefix + ".ancestors"
-    ancestors_ts_file = out_path / out_prefix + ".ancestors.trees"
-    inferred_ts_file = out_path / out_prefix + ".inferred.trees"
+    out_samples_file = out_dir + "/" + out_prefix + ".samples"
+    out_ancestors_file = out_dir + "/" + out_prefix + ".ancestors"
+    out_ancestors_ts_file = out_dir + "/" + out_prefix + ".ancestors.trees"
+    out_inferred_ts_file = out_dir + "/" + out_prefix + ".inferred.trees"
 
     print("INFO: START")
-    print(f"INFO: {tskit.__version__}")
-    print(f"INFO: {tsinfer.__version__}")
+    print(f"DEPS: tskit {tskit.__version__}")
+    print(f"DEPS: tsinfer {tsinfer.__version__}")
+    print(f"DEPS: cyvcf2 {cyvcf2.__version__}")
 
-    print("INFO: Parsing VCF file with ancestral alleles")
-    map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf_file(
-        vcf_ancestral_alleles_file
-    )
+    map_ancestral_alleles = None
+    if ancestral_alleles_file is not None:
+        print("INFO: Parsing VCF file with ancestral alleles")
+        vcf_aa = read_vcf.get_vcf(ancestral_alleles_file)
+        map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa, num_threads=num_threads)
 
-    print("INFO: Parsing VCF file")
-    sample_data = read_vcf.create_sample_data_from_vcf_file(
-        vcf_file=vcf_file,
-        samples_file=samples_file,
+    print("INFO: Parsing input VCF file")
+    vcf = read_vcf.get_vcf(in_file)
+    sample_data = read_vcf.create_sample_data_from_vcf(
+        vcf,
+        samples_file=out_samples_file,
         ploidy_level=2,
         ancestral_alleles=map_ancestral_alleles,
+        num_threads=num_threads
     )
 
     print("INFO: Generating ancestors")
     ancestor_data = tsinfer.generate_ancestors(
-        sample_data=sample_data, path=ancestors_file, num_threads=num_threads
+        sample_data=sample_data, path=out_ancestors_file, num_threads=num_threads
     )
 
     print("INFO: Matching ancestors")
     ancestors_ts = tsinfer.match_ancestors(
         sample_data=sample_data, ancestor_data=ancestor_data, num_threads=num_threads
     )
-    ancestors_ts.dump(ancestors_ts_file)
+    ancestors_ts.dump(out_ancestors_ts_file)
 
     print("INFO: Matching samples")
     inferred_ts = tsinfer.match_samples(
         sample_data=sample_data, ancestors_ts=ancestors_ts, num_threads=num_threads
     )
-    inferred_ts.dump(inferred_ts_file)
+    inferred_ts.dump(out_inferred_ts_file)
 
     print("INFO: END")
 
