@@ -7,7 +7,7 @@ import numpy as np
 import cyvcf2
 
 
-def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, verbose):
+def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, show_warnings=False):
     """
     Get the following variant statistics from a VCF file:
         Total number of entries
@@ -25,9 +25,9 @@ def get_variant_statistics(vcf_file, left_coordinate, right_coordinate, verbose)
         Number of phased genotypes
 
     :param str vcf_file: A VCF file to parse.
-    :param bool verbose: If True, show warnings (default = True).
     :param int left_coordinate: 0-based left coordinate of the inclusion interval.
     :param int right_coordinate: 0-based right coordinate of the inclusion interval.
+    :param bool show_warnings: If True, show warnings (default = False).
     :return: A dict of variant statistics.
     :rtype: collections.OrderedDict
     """
@@ -101,8 +101,8 @@ def print_variant_statistics(stats, csv_file):
     """
     Dump variant statistics into a CSV file.
 
-    :param OrderedDict stats: Output from `get_variant_statistics`.
-    :param str csv_file: Output CSV file with variant statistics.
+    :param collections.OrderedDict stats: Output from `get_variant_statistics`.
+    :param str csv_file: An output CSV file with variant statistics.
     :return: None
     :rtype: None
     """
