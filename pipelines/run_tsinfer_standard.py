@@ -25,7 +25,13 @@ import read_vcf
     help="Output directory",
 )
 @click.option("--out_prefix", "-p", type=str, required=True, help="Output file prefix")
-@click.option("--ancestral_alleles_file", "-a", type=click.Path(exists=True, file_okay=True), default=None, help="A VCF file containing ancestral alleles.")
+@click.option(
+    "--ancestral_alleles_file",
+    "-a",
+    type=click.Path(exists=True, file_okay=True),
+    default=None,
+    help="A VCF file containing ancestral alleles.",
+)
 @click.option(
     "--num_threads", "-t", type=int, default=1, help="Number of threads to use"
 )
@@ -65,7 +71,7 @@ def run_standard_tsinfer_pipeline(
         vcf_file=vcf_file,
         samples_file=samples_file,
         ploidy_level=2,
-        ancestral_alleles=map_ancestral_alleles
+        ancestral_alleles=map_ancestral_alleles,
     )
 
     print("INFO: Generating ancestors")
