@@ -284,15 +284,16 @@ def create_sample_data_from_vcf_file(vcf_file, samples_file, ploidy_level, ances
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf_file(vcf_file, show_warnings=False):
+def extract_ancestral_alleles_from_vcf_file(vcf_file, seq_name, left_coord, right_coord, show_warnings=False):
     """
     Extract ancestral alleles from a VCF file, for example, from Ensembl Variation.
-    Ancestral alleles (AA) should be provided in the INFO field.
+    Ancestral alleles (AA) should be provided in the INFO field. Note that there may be indels.
 
-    Note that there may be indels.
-
-    :param str vcf_file: A VCF file with ancestral alleles
-    :param bool show_warnings: If True, then show warnings
+    :param str vcf_file: An input VCF file with ancestral alleles.
+    :param str seq_name: Sequence name.
+    :param int left_coord: 0-based left coordinate of the inclusion interval (default = None). If None, then set to 0.
+    :param int right_coord: 0-based right coordinate of the inclusion interval (default = None). If None, then set to the last coordinate in the VCF file.
+    :param bool show_warnings: If True, then show warnings (default = False).
     :return: A dict mapping site positions to ancestral allele
     :rtype: collections.OrderedDict
     """
