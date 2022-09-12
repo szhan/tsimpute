@@ -15,7 +15,7 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None):
     :param str seq_name: Sequence name.
     :param int left_coord: 0-based left coordinate of the inclusion interval (default = None). If None, then set to 0.
     :param int right_coord: 0-based right coordinate of the inclusion interval (default = None). If None, then set to the last coordinate in the VCF file.
-    :return: A VCF object containing the variants in the VCF file.
+    :return: A VCF object containing variants.
     :rtype: cyvcf2.VCF
     """
     if seq_name is not None or left_coord is not None:
@@ -314,15 +314,12 @@ def create_sample_data_from_vcf_file(vcf_file, samples_file, ploidy_level, ances
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf_file(vcf_file, seq_name, left_coord, right_coord, show_warnings=False):
+def extract_ancestral_alleles_from_vcf(vcf, show_warnings=False):
     """
-    Extract ancestral alleles from a VCF file, for example, from Ensembl Variation.
+    Extract ancestral alleles from an existing `VCF` object.
     Ancestral alleles (AA) should be provided in the INFO field. Note that there may be indels.
 
-    :param str vcf_file: An input VCF file with ancestral alleles.
-    :param str seq_name: Sequence name.
-    :param int left_coord: 0-based left coordinate of the inclusion interval (default = None). If None, then set to 0.
-    :param int right_coord: 0-based right coordinate of the inclusion interval (default = None). If None, then set to the last coordinate in the VCF file.
+    :param cyvcf2.VCF vcf: A VCF object containing ancestral alleles.
     :param bool show_warnings: If True, then show warnings (default = False).
     :return: A dict mapping site positions to ancestral allele
     :rtype: collections.OrderedDict
@@ -336,7 +333,6 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, seq_name, left_coord, righ
     stats["num_sites_dup"] = 0 # Duplicte site positions
     stats["num_sites_aa"] = 0 # Unique site positions with ancestral allele in INFO
 
-    vcf = cyvcf2.VCF(vcf_file)
     pos = 0
     for v in tqdm(vcf):
         stats["num_sites_total"] += 1
@@ -347,7 +343,6 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, seq_name, left_coord, righ
             stats["num_sites_dup"] += 1
             if show_warnings:
                 warnings.warn(f"Duplicate site position at {v.POS}")
-            #continue
         else:
             pos = v.POS
         
