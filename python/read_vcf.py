@@ -205,7 +205,7 @@ def add_individuals(vcf, sample_data, ploidy_level, populations):
     return None
 
 
-def add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=None, show_warnings=False):
+def add_sites(vcf, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False):
     """
     Read the sites from an existing `VCF` object, and add them to an existing `SampleData` object,
     reordering the alleles to put the ancestral allele first, if it is available.
@@ -280,22 +280,20 @@ def add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=None, show_warni
     return None
 
 
-def create_sample_data_from_vcf_file(vcf_file, samples_file, ploidy_level, ancestral_alleles=None):
+def create_sample_data_from_vcf(vcf, samples_file, ploidy_level, *, ancestral_alleles=None):
     """
-    Create a `SampleData` object from a VCF file and store it in a `.samples` file.
+    Create a `SampleData` object from a `VCF` object and store it in a `.samples` file.
 
     Sourced and modified from:
     https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
 
-    :param str vcf_file: An input VCF file.
-    :param int ploidy_level: 1 (haploid) or 2 (diploid).
+    :param cyvcf2.VCF vcf: A VCF object with variants.
     :param str samples_file: An output .samples file.
-    :param collections.OrderedDict ancestral_alleles: Default = None.
-    :return: A SampleData object containing variants from the VCF file.
+    :param int ploidy_level: 1 (haploid) or 2 (diploid).
+    :param collections.OrderedDict ancestral_alleles: A map of ancestral alleles (default = None).
+    :return: A SampleData object containing variants.
     :rtype: tsinfer.SampleData
     """
-    vcf = cyvcf2.VCF(vcf_file, strict_gt=True)
-
     try:
         sequence_length = get_sequence_length(vcf)
     except:
