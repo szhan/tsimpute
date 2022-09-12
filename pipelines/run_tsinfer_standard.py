@@ -1,8 +1,8 @@
-from importlib.metadata import requires
 import click
 import sys
 from pathlib import Path
 
+import tskit
 import tsinfer
 
 sys.path.append("./python")
@@ -25,19 +25,22 @@ import read_vcf
     help="Output directory",
 )
 @click.option("--out_prefix", "-p", type=str, required=True, help="Output file prefix")
+@click.option("--ancestral_alleles_file", "-a", type=click.Path(exists=True, file_okay=True), default=None, help="A VCF file containing ancestral alleles.")
 @click.option(
     "--num_threads", "-t", type=int, default=1, help="Number of threads to use"
 )
 def run_standard_tsinfer_pipeline(
-    vcf_file, vcf_ancestral_alleles_file, out_dir, out_prefix, num_threads
+    vcf_file, out_dir, out_prefix, vcf_ancestral_alleles_file, num_threads
 ):
     """
+    TODO
+
     See https://tsinfer.readthedocs.io/en/latest/index.html
 
-    :param click.Path vcf_file:
-    :param click.Path vcf_ancestral_alleles_file:
-    :param click.Path out_dir:
+    :param str vcf_file:
+    :param str out_dir:
     :param str out_prefix:
+    :param str vcf_ancestral_alleles_file:
     :param int num_threads:
     :return: None
     :rtype: None
@@ -49,6 +52,8 @@ def run_standard_tsinfer_pipeline(
     inferred_ts_file = out_path / out_prefix + ".inferred.trees"
 
     print("INFO: START")
+    print(f"INFO: {tskit.__version__}")
+    print(f"INFO: {tsinfer.__version__}")
 
     print("INFO: Parsing VCF file with ancestral alleles")
     map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf_file(
@@ -60,7 +65,7 @@ def run_standard_tsinfer_pipeline(
         vcf_file=vcf_file,
         samples_file=samples_file,
         ploidy_level=2,
-        ancestral_alleles=map_ancestral_alleles,
+        ancestral_alleles=map_ancestral_alleles
     )
 
     print("INFO: Generating ancestors")
