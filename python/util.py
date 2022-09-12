@@ -127,15 +127,17 @@ def compare_sites_sd_and_ts(
 
 def count_singletons(tree_sequence):
     """
-    Count the number of singleton sites in a `tskit.TreeSequence` object.
+    Count the number of singleton sites in a `TreeSequence` object.
 
     :param tskit.TreeSequence tree_sequence:
-    :return: Number of singleton sites
+    :return: Number of singleton sites.
     :rtype: int
     """
     num_singletons = 0
+
     for v in tree_sequence.variants():
-        num_alleles = len(set(v.alleles) - {'.'})
+        num_alleles = len(set(v.alleles) - {None})
         if num_alleles == 1:
             num_singletons += 1
+
     return num_singletons
