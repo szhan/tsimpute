@@ -64,7 +64,7 @@ def run_standard_tsinfer_pipeline(
     if ancestral_alleles_file is not None:
         print("INFO: Parsing VCF file with ancestral alleles")
         vcf_aa = read_vcf.get_vcf(ancestral_alleles_file, num_threads=num_threads)
-        map_aa, _ = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa)
+        map_aa, _ = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa, seq_name_prefix="chr")
 
     print("INFO: Parsing input VCF file")
     vcf = read_vcf.get_vcf(in_file, num_threads=num_threads)
