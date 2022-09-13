@@ -60,11 +60,11 @@ def run_standard_tsinfer_pipeline(
     print(f"DEPS: tsinfer {tsinfer.__version__}")
     print(f"DEPS: cyvcf2 {cyvcf2.__version__}")
 
-    map_ancestral_alleles = None
+    map_aa = None
     if ancestral_alleles_file is not None:
         print("INFO: Parsing VCF file with ancestral alleles")
         vcf_aa = read_vcf.get_vcf(ancestral_alleles_file, num_threads=num_threads)
-        map_ancestral_alleles = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa)
+        map_aa, _ = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa)
 
     print("INFO: Parsing input VCF file")
     vcf = read_vcf.get_vcf(in_file, num_threads=num_threads)
@@ -72,7 +72,7 @@ def run_standard_tsinfer_pipeline(
         vcf,
         samples_file=out_samples_file,
         ploidy_level=2,
-        ancestral_alleles=map_ancestral_alleles
+        ancestral_alleles=map_aa
     )
 
     print("INFO: Generating ancestors")
