@@ -8,37 +8,6 @@ import tskit
 import tsinfer
 
 
-def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None, num_threads=1):
-    """
-    TODO
-
-    :param str vcf_file: A VCF file.
-    :param str seq_name: Sequence name.
-    :param int left_coord: 0-based left coordinate of the inclusion interval (default = None). If None, then set to 0.
-    :param int right_coord: 0-based right coordinate of the inclusion interval (default = None). If None, then set to the last coordinate in the VCF file.
-    :param int num_threads: Number of threads to use (default = 1).
-    :return: A VCF object containing variants.
-    :rtype: cyvcf2.VCF
-    """
-    region = None
-    if (seq_name is not None) or (left_coord is not None) or (right_coord is not None):
-        # Prepare the string for region query
-        assert seq_name is not None,\
-            f"Left and/or right coordinates are specified, but sequence name is not."
-        left_coord = "0" if left_coord is None else str(left_coord)
-        right_coord = "" if right_coord is None else str(right_coord)
-        region = seq_name + ":" + left_coord + "-" + right_coord
-
-    # See https://brentp.github.io/cyvcf2/docstrings.html
-    # strict_gt (bool) – if True, then any ‘.’ present
-    # in a genotype will classify the corresponding element
-    # in the gt_types array as UNKNOWN.
-    vcf = cyvcf2.VCF(vcf_file, strict_gt=True, threads=num_threads)
-    vcf = vcf if region is None else vcf(region)
-
-    return vcf
-
-
 def print_sample_data_to_vcf(
     sample_data, individuals, samples, ploidy_level, site_mask, contig_id, out_vcf_file
 ):
@@ -214,18 +183,18 @@ def add_individuals(vcf, sample_data, ploidy_level, populations):
 
 
 def add_sites(
-    vcf, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False, help_debug=False
+    vcf_iter, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False, help_debug=False
 ):
     """
-    Read the sites from an existing `VCF` object, and add them to an existing `SampleData` object,
-    reordering the alleles to put the ancestral allele first, if it is available.
+    Add sites from a generator over a `VCF` object to an existing `SampleData` object,
+    reordering the alleles to put the ancestral allele first, if available.
 
     If `ancestral_alleles=None`, then the reference allele is taken to be the ancestral allele.
 
     Sourced and modified from:
     https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
 
-    :param cyvcf2.VCF vcf: VCF object containing variants.
+    :param generator vcf_iter: Generator from cyvcf2.VCF object.
     :param tsinfer.SampleData sample_data: SampleData object.
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
     :param collections.OrderedDict ancestral_alleles: Index map from old to new alleles (default = None).
@@ -241,7 +210,7 @@ def add_sites(
     num_sites_with_aa = 0 # Number of sites with a matched ancestral allele
 
     pos = 0
-    for v in tqdm(vcf):
+    for v in tqdm(vcf_iter):
         assert pos <= v.POS, f"Sites are not coordinate-sorted at {v.POS}"
 
         if pos == v.POS:
@@ -303,23 +272,30 @@ def add_sites(
     return num_sites_with_aa
 
 
-def create_sample_data_from_vcf(
-    vcf, samples_file, ploidy_level, seq_name, *, ancestral_alleles=None
+def create_sample_data_from_vcf_file(
+    vcf_file, samples_file, ploidy_level, seq_name, *, ancestral_alleles=None, num_threads=1
 ):
     """
-    Create a `SampleData` object from a `VCF` object and store it in a `.samples` file.
+    Create a `SampleData` object from a VCF file and store it in a `.samples` file.
 
     Sourced and modified from:
     https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
 
-    :param cyvcf2.VCF vcf: A VCF object with variants.
-    :param str samples_file: An output .samples file.
+    :param str vcf_file: VCF file.
+    :param str samples_file: Output .samples file.
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
     :param str seq_name: Sequence name.
-    :param collections.OrderedDict ancestral_alleles: A map of ancestral alleles (default = None).
-    :return: A SampleData object containing variants.
+    :param collections.OrderedDict ancestral_alleles: Map of ancestral alleles (default = None).
+    :param int num_threads: Number of threads to use (default = 1).
+    :return: SampleData object containing variants.
     :rtype: tsinfer.SampleData
     """
+    # See https://brentp.github.io/cyvcf2/docstrings.html
+    # strict_gt (bool) – if True, then any ‘.’ present
+    # in a genotype will classify the corresponding element
+    # in the gt_types array as UNKNOWN.
+    vcf = cyvcf2.VCF(vcf_file, strict_gt=True, threads=num_threads)
+
     seq_len = get_sequence_length(vcf, seq_name)
     if seq_len is None:
         warnings.warn(
@@ -328,29 +304,34 @@ def create_sample_data_from_vcf(
         )
         seq_len = 0
 
+    vcf_iter = vcf(seq_name)
+
     with tsinfer.SampleData(
         path=samples_file, sequence_length=seq_len
     ) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
-        num_sites_with_aa = add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=ancestral_alleles)
+        num_sites_with_aa = add_sites(vcf_iter, sample_data, ploidy_level, ancestral_alleles=ancestral_alleles)
 
     print(f"DATA: Sites with matched AA {num_sites_with_aa}")
 
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf(vcf, *, seq_name_prefix=None, show_warnings=False):
+def extract_ancestral_alleles_from_vcf_file(vcf_file, *, seq_name_prefix=None, num_threads=1, show_warnings=False):
     """
-    Extract ancestral alleles from an existing `VCF` object.
-    Ancestral alleles (AA) should be provided in the INFO field. Note that there may be indels.
+    Extract ancestral alleles from a VCF file.
+    Ancestral alleles (AA) should be provided in the INFO field. Note there may be indels.
 
-    :param cyvcf2.VCF vcf: VCF object containing ancestral alleles.
+    :param str vcf_file: VCF file.
     :param str seq_name_prefix: Prefix to prepend to sequence name (default = None).
+    :param int num_threads: Number of threads to use (default = 1).
     :param bool show_warnings: If True, then show warnings (default = False).
-    :return: A dict mapping site positions to ancestral allele
+    :return: Dict mapping site positions to ancestral allele.
     :rtype: collections.OrderedDict
     """
+    vcf = cyvcf2.VCF(vcf_file, strict_gt=True, threads=num_threads)
+
     # Key is site position - (chr, coordinate,)
     # Value is ancestral allele - str
     map_aa = OrderedDict()
