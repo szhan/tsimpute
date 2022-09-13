@@ -145,15 +145,21 @@ def print_sample_data_to_vcf(
             f.write("\t".join(record) + "\n")
 
 
-def get_sequence_length(vcf):
+def get_sequence_length(vcf, seq_name):
     """
-    Helper function
+    Get the sequence length by sequence name.
 
-    Sourced and modified from:
-    https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
+    :param cyvcf2.vcf vcf: VCF object containing header with sequence names and lengths.
+    :param str seq_name: Sequence name.
+    :return: Sequence length.
+    :rtype: int
     """
-    assert len(vcf.seqlens) == 1
-    return vcf.seqlens[0]
+    assert len(vcf.seqnames) == len(vcf.seqlens),\
+        f"Number of sequence names different than number of sequence length."
+    for seqname, seqlen in zip(vcf.seqnames, vcf.seqlens):
+        if seqname == seq_name:
+            return seqlen
+    return None
 
 
 def add_populations(vcf, sample_data):
@@ -298,7 +304,7 @@ def add_sites(
 
 
 def create_sample_data_from_vcf(
-    vcf, samples_file, ploidy_level, *, ancestral_alleles=None
+    vcf, samples_file, ploidy_level, seq_name, *, ancestral_alleles=None
 ):
     """
     Create a `SampleData` object from a `VCF` object and store it in a `.samples` file.
@@ -309,20 +315,21 @@ def create_sample_data_from_vcf(
     :param cyvcf2.VCF vcf: A VCF object with variants.
     :param str samples_file: An output .samples file.
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
+    :param str seq_name: Sequence name.
     :param collections.OrderedDict ancestral_alleles: A map of ancestral alleles (default = None).
     :return: A SampleData object containing variants.
     :rtype: tsinfer.SampleData
     """
-    try:
-        sequence_length = get_sequence_length(vcf)
-    except:
+    seq_len = get_sequence_length(vcf, seq_name)
+    if seq_len is None:
         warnings.warn(
-            "VCF does not contain sequence length. Setting sequence length to 0."
+            f"VCF does not contain sequence length for {seq_name}, so setting it to 0."
+            "This may cause internal checks to fail."
         )
-        sequence_length = 0
+        seq_len = 0
 
     with tsinfer.SampleData(
-        path=samples_file, sequence_length=sequence_length
+        path=samples_file, sequence_length=seq_len
     ) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)

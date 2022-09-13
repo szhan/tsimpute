@@ -24,6 +24,7 @@ import read_vcf
     help="Output directory",
 )
 @click.option("--out_prefix", "-p", type=str, required=True, help="Output file prefix")
+@click.option("--seq_name", "-s", type=str, required=True, help="Sequence name")
 @click.option(
     "--ancestral_alleles_file",
     "-a",
@@ -45,6 +46,7 @@ def run_standard_tsinfer_pipeline(
     in_file,
     out_dir,
     out_prefix,
+    seq_name,
     ancestral_alleles_file,
     ancestral_allele_prefix,
     num_threads,
@@ -57,6 +59,7 @@ def run_standard_tsinfer_pipeline(
     :param str in_file:
     :param str out_dir:
     :param str out_prefix:
+    :param str seq_name:
     :param str ancestral_alleles_file:
     :param str ancestral_allele_prefix:
     :param int num_threads:
@@ -82,9 +85,9 @@ def run_standard_tsinfer_pipeline(
         )
 
     print("INFO: Parsing input VCF file")
-    vcf = read_vcf.get_vcf(in_file, num_threads=num_threads)
+    vcf_in = read_vcf.get_vcf(in_file, num_threads=num_threads)
     sample_data = read_vcf.create_sample_data_from_vcf(
-        vcf, samples_file=out_samples_file, ploidy_level=2, ancestral_alleles=map_aa
+        vcf_in, samples_file=out_samples_file, ploidy_level=2, seq_name=seq_name, ancestral_alleles=map_aa
     )
 
     print("INFO: Generating ancestors")
