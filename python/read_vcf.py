@@ -232,7 +232,7 @@ def add_sites(
         ploidy_level == 1 or ploidy_level == 2
     ), f"Ploidy {ploidy_level} is not recognized."
 
-    num_sites_with_aa = 0 # Number of sites with an available ancestral allele
+    num_sites_with_aa = 0 # Number of sites with a matched ancestral allele
 
     pos = 0
     for v in tqdm(vcf):
@@ -294,8 +294,6 @@ def add_sites(
 
         sample_data.add_site(position=pos, genotypes=new_genotypes, alleles=new_allele_list)
 
-    print(f"Sites with AA {num_sites_with_aa}")
-
     return num_sites_with_aa
 
 
@@ -328,7 +326,9 @@ def create_sample_data_from_vcf(
     ) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
-        add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=ancestral_alleles)
+        num_sites_with_aa = add_sites(vcf, sample_data, ploidy_level, ancestral_alleles=ancestral_alleles)
+
+    print(f"DATA: Sites with matched AA {num_sites_with_aa}")
 
     return sample_data
 
