@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from turtle import right
 import warnings
 from tqdm import tqdm
 import numpy as np
@@ -20,11 +21,10 @@ def get_vcf(vcf_file, *, seq_name=None, left_coord=None, right_coord=None, num_t
     :rtype: cyvcf2.VCF
     """
     region = None
-    if seq_name is not None or left_coord is not None:
+    if (seq_name is not None) or (left_coord is not None) or (right_coord is not None):
         # Prepare the string for region query
-        assert (
-            seq_name is not None and left_coord is not None
-        ), f"Both seq_name and left_coord must be specified if one is specified."
+        assert seq_name is not None,\
+            f"Left and/or right coordinates are specified, but sequence name is not."
         left_coord = "0" if left_coord is None else str(left_coord)
         right_coord = "" if right_coord is None else str(right_coord)
         region = seq_name + ":" + left_coord + "-" + right_coord
