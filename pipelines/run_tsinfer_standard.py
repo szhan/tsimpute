@@ -36,13 +36,18 @@ import read_vcf
     "-b",
     type=str,
     default=None,
-    help="String prefix to prepend to sequence names in the ancestral allele VCF file (default = None). It does nothing if an ancestral allele VCF file is not provided."
+    help="String prefix to prepend to sequence names in the ancestral allele VCF file (default = None). It does nothing if an ancestral allele VCF file is not provided.",
 )
 @click.option(
     "--num_threads", "-t", type=int, default=1, help="Number of threads to use"
 )
 def run_standard_tsinfer_pipeline(
-    in_file, out_dir, out_prefix, ancestral_alleles_file, ancestral_allele_prefix, num_threads
+    in_file,
+    out_dir,
+    out_prefix,
+    ancestral_alleles_file,
+    ancestral_allele_prefix,
+    num_threads,
 ):
     """
     TODO
@@ -72,15 +77,14 @@ def run_standard_tsinfer_pipeline(
     if ancestral_alleles_file is not None:
         print("INFO: Parsing VCF file with ancestral alleles")
         vcf_aa = read_vcf.get_vcf(ancestral_alleles_file, num_threads=num_threads)
-        map_aa, _ = read_vcf.extract_ancestral_alleles_from_vcf(vcf_aa, seq_name_prefix=ancestral_allele_prefix)
+        map_aa, _ = read_vcf.extract_ancestral_alleles_from_vcf(
+            vcf_aa, seq_name_prefix=ancestral_allele_prefix
+        )
 
     print("INFO: Parsing input VCF file")
     vcf = read_vcf.get_vcf(in_file, num_threads=num_threads)
     sample_data = read_vcf.create_sample_data_from_vcf(
-        vcf,
-        samples_file=out_samples_file,
-        ploidy_level=2,
-        ancestral_alleles=map_aa
+        vcf, samples_file=out_samples_file, ploidy_level=2, ancestral_alleles=map_aa
     )
 
     print("INFO: Generating ancestors")
