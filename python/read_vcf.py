@@ -208,23 +208,24 @@ def add_individuals(vcf, sample_data, ploidy_level, populations):
 
 
 def add_sites(
-    vcf, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False
+    vcf, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False, help_debug=False
 ):
     """
     Read the sites from an existing `VCF` object, and add them to an existing `SampleData` object,
     reordering the alleles to put the ancestral allele first, if it is available.
 
-    If `ancestral_alleles` = `None`, then the reference allele is taken to be the ancestral allele.
+    If `ancestral_alleles=None`, then the reference allele is taken to be the ancestral allele.
 
     Sourced and modified from:
     https://tsinfer.readthedocs.io/en/latest/tutorial.html#data-example
 
-    :param cyvcf2.VCF vcf: A VCF object containing variant data
-    :param tsinfer.SampleData sample_data:
+    :param cyvcf2.VCF vcf: VCF object containing variants.
+    :param tsinfer.SampleData sample_data: SampleData object.
     :param int ploidy_level: 1 (haploid) or 2 (diploid).
-    :param collections.OrderedDict ancestral_alleles: Default = None.
+    :param collections.OrderedDict ancestral_alleles: Index map from old to new alleles (default = None).
     :param bool show_warnings: If True, show warnings (default = False).
-    :return: Number of sites with an available ancestral allele.
+    :param bool help_debug: If True, show debugging messages (default = False).
+    :return: Number of sites with a matched ancestral allele.
     :rtype: int
     """
     assert (
@@ -247,45 +248,51 @@ def add_sites(
         if any([not phased for _, _, phased in v.genotypes]):
             raise ValueError(f"Unphased genotypes at {pos}")
 
-        alleles = [v.REF] + v.ALT
+        old_allele_list = [v.REF] + v.ALT
 
         if show_warnings:
-            if len(set(alleles) - {"."}) == 1:
+            if len(set(old_allele_list) - {"."}) == 1:
                 warnings.warn(f"Monomorphic site at {pos}")
-
-        chr = str(v.CHROM)
-        pos = int(pos)
 
         ancestral = v.REF
         if ancestral_alleles is not None:
-            if (chr, pos) in ancestral_alleles:
-                ancestral = ancestral_alleles[(chr, pos)]
+            chr_pos = str(v.CHROM) + ":" + str(int(pos))
+            if chr_pos in ancestral_alleles:
+                ancestral = ancestral_alleles[chr_pos]
                 num_sites_with_aa += 1
 
         # Ancestral state must be first in the allele list.
-        ordered_alleles = [ancestral] + list(set(alleles) - {ancestral})
+        new_allele_list = [ancestral] + list(set(old_allele_list) - {ancestral})
 
-        # Create an index mapping from the input VCF to tsinfer input.
-        allele_index = {
-            old_index: ordered_alleles.index(allele)
-            for old_index, allele in enumerate(alleles)
+        # Create an index mapping from VCF (old) to SampleData (new).
+        allele_index_map = {
+            old_index: new_allele_list.index(allele) # new_index
+            for old_index, allele in enumerate(old_allele_list)
         }
 
         # When genotype is missing...
         if v.num_unknown > 0:
-            allele_index[-1] = tskit.MISSING_DATA
-            ordered_alleles += [None]
+            # cyvcf2 uses -1 to denote missing data.
+            # tsinfer uses tskit.MISSING_DATA (-1) to denote missing data.
+            allele_index_map[-1] = tskit.MISSING_DATA
+            new_allele_list += [None]
 
-        # Map original allele indexes to their indexes in the new alleles list.
-        genotypes = [
-            allele_index[old_index]
-            for row in v.genotypes  # cyvcf2 uses -1 to denote missing data.
-            for old_index in row[
-                0:ploidy_level
-            ]  # 3-tuple (allele 1, allele 2, is phased?).
+        # Map old allele indices to the corresponding new allele indices.
+        new_genotypes = [
+            allele_index_map[old_index]
+            for g in v.genotypes
+            for old_index in g[0:ploidy_level]  # (allele 1, allele 2, phased?).
         ]
 
-        sample_data.add_site(position=pos, genotypes=genotypes, alleles=ordered_alleles)
+        if help_debug:
+            print(f"VAR___: {v.ID}")
+            print(f"MAP___: {allele_index_map}")
+            print(f"OLD_AL: {old_allele_list}")
+            print(f"NEW_AL: {new_allele_list}")
+            print(f"OLD_GT: {v.genotypes}")
+            print(f"NEW_GT: {new_genotypes}")
+
+        sample_data.add_site(position=pos, genotypes=new_genotypes, alleles=new_allele_list)
 
     print(f"Sites with AA {num_sites_with_aa}")
 
@@ -358,11 +365,9 @@ def extract_ancestral_alleles_from_vcf(vcf, *, show_warnings=False):
         else:
             pos = v.POS
 
-        chr = str(v.CHROM)
-        pos = int(pos)
-
         if v.INFO.get("AA"):
             stats["num_sites_aa"] += 1
-            dict_aa[(chr, pos)] = v.INFO.get("AA")
+            chr_pos = str(v.CHROM) + ":" + str(int(pos))
+            dict_aa[chr_pos] = v.INFO.get("AA")
 
     return (dict_aa, stats)
