@@ -333,19 +333,20 @@ def create_sample_data_from_vcf(
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf(vcf, *, show_warnings=False):
+def extract_ancestral_alleles_from_vcf(vcf, *, seq_name_prefix=None, show_warnings=False):
     """
     Extract ancestral alleles from an existing `VCF` object.
     Ancestral alleles (AA) should be provided in the INFO field. Note that there may be indels.
 
-    :param cyvcf2.VCF vcf: A VCF object containing ancestral alleles.
+    :param cyvcf2.VCF vcf: VCF object containing ancestral alleles.
+    :param str seq_name_prefix: Prefix to prepend to sequence name (default = None).
     :param bool show_warnings: If True, then show warnings (default = False).
     :return: A dict mapping site positions to ancestral allele
     :rtype: collections.OrderedDict
     """
     # Key is site position - (chr, coordinate,)
     # Value is ancestral allele - str
-    dict_aa = OrderedDict()
+    map_aa = OrderedDict()
     stats = OrderedDict()
 
     stats["num_sites_total"] = 0
@@ -367,7 +368,9 @@ def extract_ancestral_alleles_from_vcf(vcf, *, show_warnings=False):
 
         if v.INFO.get("AA"):
             stats["num_sites_aa"] += 1
-            chr_pos = str(v.CHROM) + ":" + str(int(pos))
-            dict_aa[chr_pos] = v.INFO.get("AA")
+            chr_pos = str(v.CHROM) + ":" + str(int(pos)) # e.g. 20:123456
+            if seq_name_prefix is not None:
+                chr_pos = seq_name_prefix + chr_pos
+            map_aa[chr_pos] = v.INFO.get("AA")
 
-    return (dict_aa, stats)
+    return (map_aa, stats)
