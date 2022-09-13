@@ -3,7 +3,7 @@
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele"
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-##contig=<ID=20>
+##contig=<ID=chr20,length=64444167,assembly=GRCh38>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	s1	s2	s3	s4
 20	10	v1	A	G	.	PASS	.	GT	0|0	0|1	1|0	1|1
 20	20	v2	C	CTA	.	PASS	AA=C	GT	0|0	0|1	1|0	1|1
