@@ -136,8 +136,9 @@ def count_singletons(tree_sequence):
     num_singletons = 0
 
     for v in tree_sequence.variants():
-        num_alleles = len(set(v.alleles) - {None})
-        if num_alleles == 1:
+        # 0 denotes ancestral allele.
+        # -1 denotes missing genotypes, so it shouldn't be counted.
+        if np.sum(v.genotypes == 1) == 1:
             num_singletons += 1
 
     return num_singletons
