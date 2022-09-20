@@ -63,7 +63,7 @@ all: 1kg_chr20.dated.trees hgdp_1kg_sgdp_high_cov_ancients_dated_chr20.trees
 # Download all prerequisite files for building unified genealogy
 # ##############################################################
 
-%_download: hg38.fa hg19ToHg38.over.chain.gz homo_sapiens_ancestor_GRCh38.tar.gz \
+%_download_unified: hg38.fa hg19ToHg38.over.chain.gz homo_sapiens_ancestor_GRCh38.tar.gz \
 		homo_sapiens_ancestor_GRCh37_e71.tar.bz2 plink.%.GRCh37.map \
 		1kg_samples.ped recomb-hg38/ centromeres.csv \
 		AfanasievoFamily_%.phased.detailed.filtered.vcf.gz \
@@ -74,6 +74,10 @@ all: 1kg_chr20.dated.trees hgdp_1kg_sgdp_high_cov_ancients_dated_chr20.trees
 		lbk.%_mq25_mapab100.vcf.gz loshbour.%_mq25_mapab100.vcf.gz v42.4.1240K.tar
 		@echo Downloaded variant data used to create tree sequences
 
+%_download_finns:
+		homo_sapiens_ancestor_GRCh38.tar.gz \
+		recomb-hg38/ centromeres.csv \
+		@echo Downloaded variant data used to create tree sequences for Finns
 
 #############################################
 # hg38.fa reference genome
@@ -174,6 +178,21 @@ ${CENTROMERES_CSV}:
 	# Start and end coordinates are on different lines, so we merge them.
 	zcat cytoband.txt.gz | grep acen | sort | paste -d " " - - \
 			| cut -f 1,2,7 --output-delim="," >> ${CENTROMERES_CSV}
+
+#############################################
+# FinnGen/FIMM Genomes data.
+#############################################
+
+fimm_%.samples: v4.2.%_phased_SNPID.vcf.gz %_ancestral_states.fa.fai
+#		tabix -f -p vcf $<
+		python convert.py generic -p \
+				v4.2.$*_phased_SNPID.vcf.gz \
+				$*_ancestral_states.fa \
+				-m None \
+				--ancestral-states-url=${ANCESTRAL_STATES_URL} \
+				--reference_name=${REFERENCE_NAME} \
+				--num-threads=${NUM_THREADS} \
+				$@ > $@.report
 
 #############################################
 # 1000 Genomes data.
