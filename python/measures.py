@@ -37,7 +37,16 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
     return concordance
 
 
-def compute_iqs(genotypes_true, genotypes_imputed):
+def compute_iqs(genotypes_true, genotypes_imputed, ploidy):
+    assert ploidy == 1 or ploidy == 2, f"Ploidy {ploidy} is invalid."
+    if ploidy == 1:
+        iqs = compute_iqs_haploid(genotypes_true, genotypes_imputed)
+    else:
+        iqs = compute_iqs_diploid(genotypes_true, genotypes_imputed)
+    return iqs
+
+
+def compute_iqs_haploid(genotypes_true, genotypes_imputed):
     """
     Calculate the Imputation Quality Score between `genotypes_true` and `genotypes_imputed`.
     1. A value of 1 indicates perfect imputation;
@@ -45,13 +54,15 @@ def compute_iqs(genotypes_true, genotypes_imputed):
     3. A negative value indicates that the method imputes poorly than by chance.
 
     This specific formula is used to compute the IQS of imputed genotypes
-    at biallelic sites in haploid genomes.
+    at biallelic sites in HAPLOID genomes.
 
-    :param ndarray genotypes_true:
-    :param ndarray genotypes_imputed:
-    :return float:
+    :param np.array genotypes_true:
+    :param np.array genotypes_imputed:
+    :return: IQS
+    :rtype: float
     """
-    assert len(genotypes_true) == len(genotypes_imputed)
+    assert len(genotypes_true) == len(genotypes_imputed), \
+        f"Arrays of genotype are not of the same length."
 
     # Allele 0 imputed correctly
     n00 = np.sum([y == 0 for x, y in zip(genotypes_imputed, genotypes_true) if x == 0])
@@ -82,4 +93,25 @@ def compute_iqs(genotypes_true, genotypes_imputed):
 
     iqs = float("nan") if Pc == 1 else (Po - Pc) / (1 - Pc)
 
+    return iqs
+
+
+def compute_iqs_diploid(genotypes_true, genotypes_imputed):
+    """
+    Calculate the Imputation Quality Score between `genotypes_true` and `genotypes_imputed`.
+    1. A value of 1 indicates perfect imputation;
+    2. A value of 0 indicates that observed agreement rate is equal to chance agreement rate; and
+    3. A negative value indicates that the method imputes poorly than by chance.
+
+    This specific formula is used to compute the IQS of imputed genotypes
+    at biallelic sites in DIPLOID genomes.
+
+    :param np.array genotypes_true:
+    :param np.array genotypes_imputed:
+    :return: IQS
+    :rtype: float
+    """
+    assert len(genotypes_true) == len(genotypes_imputed), \
+        f"Arrays of genotype are not of the same length."
+    iqs = None
     return iqs
