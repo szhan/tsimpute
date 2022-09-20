@@ -403,8 +403,9 @@ class VcfConverter(Converter):
         return report_dict
 
 
-class GenericConverter():
+class GenericConverter(VcfConverter):
     """
+    TODO
     """
     def process_metadata(self, metadata_file, show_progress=False):
         """
