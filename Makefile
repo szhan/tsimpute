@@ -60,7 +60,7 @@ chr%_ancestral_states.fa.fai: chr%_ancestral_states.fa
 
 finns_%.samples: ../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz %_ancestral_states.fa.fai
 		#tabix -f -p vcf $<
-		python pipelines/convert.py generic -p \
+		python python/convert.py generic -p \
 				../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz \
 				$*_ancestral_states.fa \
 				--reference_name=${REFERENCE_NAME} \
