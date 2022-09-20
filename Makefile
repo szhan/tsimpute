@@ -26,13 +26,6 @@ finns_chr20.trees: finns_chr20.samples
 		# TODO: Infer tree sequence
 		echo "Preparing samples file to analyse Finns genomic data"
 
-################################################################
-# Download all prerequisite files
-# ##############################################################
-
-%_download: homo_sapiens_ancestor_GRCh38.tar.gz
-		@echo "Downloaded ancestral states"
-
 #############################################
 # Ancestral states from Ensembl
 #############################################
