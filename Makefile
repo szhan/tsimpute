@@ -8,7 +8,7 @@ NUM_THREADS ?= 0
 # https://github.com/awohns/unified_genealogy_paper/blob/51dc9130275ec93dfeba83bb3d31cf27d95e2dbb/all-data/Makefile
 #
 help:
-		@echo Makefile to create trees from FinnGen/FIMM genomic data
+	@echo Makefile to create trees from FinnGen/FIMM genomic data
 
 all: finns_chr20.trees
 
@@ -23,8 +23,12 @@ all: finns_chr20.trees
 ####################################################
 
 finns_chr20.trees: finns_chr20.samples
-		# TODO: Infer tree sequence
-		echo "Preparing samples file to analyse Finns genomic data"
+		python pipelines/run_tsinfer_standard.py \
+			-i finns_chr20.samples \
+			-o ../analysis/finns/chr20/ \
+			-p chr20 \
+			-t ${NUM_THREADS}
+		echo "Inferring trees"
 
 #############################################
 # Ancestral states from Ensembl
@@ -58,17 +62,14 @@ chr%_ancestral_states.fa.fai: chr%_ancestral_states.fa
 # Finns genomics data.
 #############################################
 
-finns_%.samples: ../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz %_ancestral_states.fa.fai
-		#tabix -f -p vcf $<
+finns_chr20.samples: ../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz chr20_ancestral_states.fa.fai
+		tabix -f -p vcf $<
 		python python/convert.py generic -p \
 				../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz \
-				$*_ancestral_states.fa \
+				chr20_ancestral_states.fa \
 				-m None \
 				--ancestral-states-url=${ANCESTRAL_STATES_URL} \
 				--reference-name=${REFERENCE_NAME} \
 				--num-threads=${NUM_THREADS} \
 				$@ > $@.report
-		echo "Preparing samples file"
-
-clean:
-		rm -f *.samples *.trees
+		echo "Preparing samples file from VCF file"
