@@ -132,6 +132,7 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     assert len(genotypes_true) % 2 == 0, \
         f"Not all genotypes are from diploid genomes."
 
+    # A denotes an ancestral allele, and B an derived allele.
     # Genotype AA correctly imputed as AA
     n11 = None
     # Genotype AA wrongly imputed as AB
@@ -152,12 +153,12 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     n33 = None
     
     # Marginal counts
-    n_1 = None # Total number of cases having genotype AA
-    n_2 = None # Total number of cases having genotype AB
-    n_3 = None # Total number of cases having genotype BB
-    n1_ = None # Total number of cases imputed as genotype AA
-    n2_ = None # Total number of cases imputed as genotype AB
-    n3_ = None # Total number of cases imputed as genotype BB
+    n_1 = n11 + n21 + n31 # Total number of cases having genotype AA
+    n_2 = n12 + n22 + n32 # Total number of cases having genotype AB
+    n_3 = n13 + n23 + n33 # Total number of cases having genotype BB
+    n1_ = n11 + n12 + n13 # Total number of cases imputed as genotype AA
+    n2_ = n21 + n22 + n23 # Total number of cases imputed as genotype AB
+    n3_ = n31 + n32 + n33 # Total number of cases imputed as genotype BB
 
     assert n_1 + n_2 + n_3 == n1_ + n2_ + n3_, \
         f"Marginal counts do not add up."
