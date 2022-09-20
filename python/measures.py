@@ -11,18 +11,20 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
 
     If `allele_state` is specified, then concordance is calculated based on the elements in
     `genotypes_true` and `genotypes_imputed` where `genotypes_true` is equal to `allele_state`.
+    For example, this can be used to calculate non-reference disconcordance.
 
     This metric may be suitable for sample-wise (per genome) or site-wise (across genomes)
     comparisons of genotypes.
 
-    :param ndarray genotypes_true:
-    :param ndarray genotypes_imputed:
-    :param  allele: (default = None)
+    :param np.array genotypes_true: List of alleles from ground-truth genotypes.
+    :param np.array genotypes_imputed: List of alleles from imputed genotypes.
+    :param allele: (default = None)
     :return float:
     """
-    assert isinstance(genotypes_true, np.ndarray)
-    assert isinstance(genotypes_imputed, np.ndarray)
-    assert len(genotypes_true) == len(genotypes_imputed)
+    assert isinstance(genotypes_true, np.array), f"Not a numpy.array"
+    assert isinstance(genotypes_imputed, np.array), f"Not a numpy.array"
+    assert len(genotypes_true) == len(genotypes_imputed), \
+        f"Genotype arrays are of unequal length."
 
     if allele_state != None:
         allele_match_bool = np.isin(genotypes_true, allele_state)
