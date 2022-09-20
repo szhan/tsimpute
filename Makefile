@@ -19,16 +19,20 @@ all: finns_chr20.trees
 .SECONDEXPANSION:
 
 ####################################################
-# Standard pipeline from .samples to .trees
+# File and directory paths
 ####################################################
-
-finns_chr20.trees: finns_chr20.samples
-		python pipelines/run_tsinfer_standard.py \
-			-i finns_chr20.samples \
-			-o ../analysis/finns/chr20/ \
-			-p chr20 \
-			-t ${NUM_THREADS}
-		echo "Inferring trees"
+SEQ_NAME="chr20"
+PREFIX="v4.2."${SEQ_NAME} # SiSu v4.2
+IN_DIR="../data/fimm/"
+OUT_DIR="../analysis/finns/"${PREFIX}"/"
+VCF_FILE=${IN_DIR}${PREFIX}"_phased_SNPID.vcf.gz"
+ANCESTRAL_STATES_FASTA=${SEQ_NAME}"_ancestral_states.fa"
+ANCESTRAL_STATES_FASTA_FAI=${ANCESTRAL_STATES_FASTA}".fai"
+SAMPLES_FILE=${OUT_DIR}${PREFIX}".samples"
+ANCESTORS_TREES_FILE=${OUT_DIR}${PREFIX}".ancestors.trees"
+SAMPLES_TREES_FILE=${OUT_DIR}${PREFIX}".samples.trees"
+ANCESTORS_STATS_FILE=${OUT_DIR}${ANCESTORS_TREES_FILE}".stats"
+SAMPLES_STATS_FILE=${OUT_DIR}${SAMPLES_TREES_FILE}".stats"
 
 #############################################
 # Ancestral states from Ensembl
@@ -58,18 +62,36 @@ chr%_ancestral_states.fa: ${ANCESTRAL_STATES_PREFIX}/README
 chr%_ancestral_states.fa.fai: chr%_ancestral_states.fa
 		samtools faidx $^
 
-#############################################
-# Finns genomics data.
-#############################################
+####################################################
+# Standard pipeline from VCF to .trees
+####################################################
 
-finns_chr20.samples: ../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz chr20_ancestral_states.fa.fai
+${SAMPLES_FILE}: ${VCF_FILE} ${ANCESTRAL_STATES_FASTA_FAI}
 		tabix -f -p vcf $<
 		python python/convert.py generic -p \
-				../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz \
-				chr20_ancestral_states.fa \
+				${VCF_FILE} \
+				${ANCESTRAL_STATES_FASTA} \
 				-m None \
 				--ancestral-states-url=${ANCESTRAL_STATES_URL} \
 				--reference-name=${REFERENCE_NAME} \
 				--num-threads=${NUM_THREADS} \
 				$@ > $@.report
 		echo "Preparing samples file from VCF file"
+
+${SAMPLES_TREES_FILE}: ${SAMPLES_FILE}
+		python pipelines/run_tsinfer_standard.py \
+			-i ${SAMPLES_FILE} \
+			-o ${OUT_DIR} \
+			-p ${PREFIX} \
+			-t ${NUM_THREADS}
+		echo "Inferring trees"
+
+${ANCESTORS_STATS_FILE}: ${ANCESTORS_TREES_FILE}
+		python pipelines/inspect_trees.py \
+			-i ${ANCESTORS_TREES_FILE}
+			-o $@
+
+${SAMPLES_STATS_FILE}: ${SAMPLES_TREES_FILE}
+		python pipelines/inspect_trees.py \
+			-i ${SAMPLES_TREES_FILE}
+			-o $@
