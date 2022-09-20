@@ -12,6 +12,8 @@ help:
 
 all: 1kg_chr20.dated.trees hgdp_1kg_sgdp_high_cov_ancients_dated_chr20.trees
 
+finns: fimm_chr20.trees
+
 %.bcf.csi: %.bcf
 		../tools/bin/bcftools index $(patsubst %.bcf.csi,%.bcf,$@)
 
@@ -74,8 +76,7 @@ all: 1kg_chr20.dated.trees hgdp_1kg_sgdp_high_cov_ancients_dated_chr20.trees
 		lbk.%_mq25_mapab100.vcf.gz loshbour.%_mq25_mapab100.vcf.gz v42.4.1240K.tar
 		@echo Downloaded variant data used to create tree sequences
 
-%_download_finns:
-		homo_sapiens_ancestor_GRCh38.tar.gz \
+%_download_finns: homo_sapiens_ancestor_GRCh38.tar.gz \
 		recomb-hg38/ centromeres.csv \
 		@echo Downloaded variant data used to create tree sequences for Finns
 
@@ -126,7 +127,7 @@ chr%_ancestral_states.fa: ${ANCESTRAL_STATES_PREFIX}/README
 		ln -sf ${ANCESTRAL_STATES_PREFIX}/homo_sapiens_ancestor_$*.fa $@
 
 chr%_ancestral_states.fa.fai: chr%_ancestral_states.fa
-		../tools/bin/samtools faidx $^
+		samtools faidx $^
 
 # Other datasets are in GRCh37
 # Download the ancestral states for GRCh37. 
@@ -183,16 +184,17 @@ ${CENTROMERES_CSV}:
 # FinnGen/FIMM Genomes data.
 #############################################
 
-fimm_%.samples: v4.2.%_phased_SNPID.vcf.gz %_ancestral_states.fa.fai
+fimm_%.samples: %_ancestral_states.fa.fai
 #		tabix -f -p vcf $<
-		python convert.py generic -p \
-				v4.2.$*_phased_SNPID.vcf.gz \
-				$*_ancestral_states.fa \
-				-m None \
-				--ancestral-states-url=${ANCESTRAL_STATES_URL} \
-				--reference_name=${REFERENCE_NAME} \
-				--num-threads=${NUM_THREADS} \
-				$@ > $@.report
+#		python convert.py generic -p \
+#				v4.2.$*_phased_SNPID.vcf.gz \
+#				$*_ancestral_states.fa \
+#				-m None \
+#				--ancestral-states-url=${ANCESTRAL_STATES_URL} \
+#				--reference_name=${REFERENCE_NAME} \
+#				--num-threads=${NUM_THREADS} \
+#				$@ > $@.report
+		echo "Downloaded ancestral states"
 
 #############################################
 # 1000 Genomes data.
