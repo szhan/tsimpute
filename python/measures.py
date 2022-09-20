@@ -38,27 +38,44 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
 
 
 def compute_iqs(genotypes_true, genotypes_imputed, ploidy):
-    assert ploidy == 1 or ploidy == 2, f"Ploidy {ploidy} is invalid."
+    """
+    Calculate the Imputation Quality Score as proposed by Lin et al. (2010).
+    https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0009697
+
+    Some notes on interpreting IQS:
+    1. A value of 1 indicates perfect imputation;
+    2. A value of 0 indicates that observed agreement rate is equal to chance agreement rate; and
+    3. A negative value indicates that the method imputes poorly than by chance.
+
+    Two formulas are used to compute the IQS of imputed genotypes at biallelic sites,
+    one for haploid genomes and the other for diploid genomes.
+
+    :param np.array genotypes_true: List of alleles from ground-truth genotypes.
+    :param np.array genotypes_imputed: List of alleles from imputed genotypes.
+    :ploidy int: Ploidy level (1 or 2).
+    :return: IQS.
+    :rtype: float
+    """
+    assert ploidy in [1, 2], f"Ploidy {ploidy} is invalid."
+
     if ploidy == 1:
         iqs = compute_iqs_haploid(genotypes_true, genotypes_imputed)
     else:
         iqs = compute_iqs_diploid(genotypes_true, genotypes_imputed)
+
     return iqs
 
 
 def compute_iqs_haploid(genotypes_true, genotypes_imputed):
     """
-    Calculate the Imputation Quality Score between `genotypes_true` and `genotypes_imputed`.
-    1. A value of 1 indicates perfect imputation;
-    2. A value of 0 indicates that observed agreement rate is equal to chance agreement rate; and
-    3. A negative value indicates that the method imputes poorly than by chance.
+    Calculate the IQS between `genotypes_true` and `genotypes_imputed`.
 
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in HAPLOID genomes.
 
     :param np.array genotypes_true: List of alleles from ground-truth genotypes
-    :param np.array genotypes_impute List of alleles from imputed genotypesd:
-    :return: IQS
+    :param np.array genotypes_imputed: List of alleles from imputed genotypes:
+    :return: IQS.
     :rtype: float
     """
     assert len(genotypes_true) == len(genotypes_imputed), \
@@ -100,17 +117,14 @@ def compute_iqs_haploid(genotypes_true, genotypes_imputed):
 
 def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     """
-    Calculate the Imputation Quality Score between `genotypes_true` and `genotypes_imputed`.
-    1. A value of 1 indicates perfect imputation;
-    2. A value of 0 indicates that observed agreement rate is equal to chance agreement rate; and
-    3. A negative value indicates that the method imputes poorly than by chance.
+    Calculate the IQS between `genotypes_true` and `genotypes_imputed`.
 
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in DIPLOID genomes.
 
-    :param np.array genotypes_true: List of alleles from ground-truth genotypes
-    :param np.array genotypes_imputed: List of alleles from imputed genotypes
-    :return: IQS
+    :param np.array genotypes_true: List of alleles from ground-truth genotypes.
+    :param np.array genotypes_imputed: List of alleles from imputed genotypes.
+    :return: IQS.
     :rtype: float
     """
     assert len(genotypes_true) == len(genotypes_imputed), \
