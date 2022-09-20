@@ -5,7 +5,7 @@ import tsinfer
 
 @click.command()
 @click.option(
-    "--in_sample_file",
+    "--in_samples_file",
     "-i",
     type=click.Path(exists=True, file_okay=True),
     required=True,
