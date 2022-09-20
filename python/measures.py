@@ -132,6 +132,8 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     assert len(genotypes_true) % 2 == 0, \
         f"Not all genotypes are from diploid genomes."
 
+    num_alleles = len(genotypes_true)
+
     # A denotes an ancestral allele, and B an derived allele.
     # Genotype AA correctly imputed as AA
     n11 = None
