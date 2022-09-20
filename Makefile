@@ -65,7 +65,7 @@ finns_%.samples: ../data/fimm/v4.2.chr20_phased_SNPID.vcf.gz %_ancestral_states.
 				$*_ancestral_states.fa \
 				-m None \
 				--ancestral-states-url=${ANCESTRAL_STATES_URL} \
-				--reference_name=${REFERENCE_NAME} \
+				--reference-name=${REFERENCE_NAME} \
 				--num-threads=${NUM_THREADS} \
 				$@ > $@.report
 		echo "Preparing samples file"
