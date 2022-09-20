@@ -149,6 +149,7 @@ def make_sampledata(args):
     sequence_length = len(ancestral_states) + 1
 
     converter_class = {
+        "generic": GenericConverter,
         "1kg": ThousandGenomesConverter,
         "sgdp": SgdpConverter,
         "hgdp": HgdpConverter,
@@ -400,6 +401,35 @@ class VcfConverter(Converter):
         progress.close()
         report_dict = self.report()
         return report_dict
+
+
+class GenericConverter():
+    """
+    """
+    def process_metadata(self, metadata_file, show_progress=False):
+        """
+        Add population and individuals without metadata.
+        """
+        populations = [
+            ["generic", "generic", "generic"]
+        ]
+
+        population_id_map = {}
+        for pop in populations:
+            pop_id = self.samples.add_population(
+                dict(zip(["name", "description", "super_population"], pop))
+            )
+            population_id_map[pop[0]] = pop_id
+
+        vcf = cyvcf2.VCF(self.data_file)
+        individual_names = list(vcf.samples)
+        vcf.close()
+        self.num_samples = len(individual_names) * 2
+        # Add in the metadata rows in the order of the VCF.
+        for index, name in enumerate(individual_names):
+            self.samples.add_individual(
+                metadata={"name": name}, population=populations["generic"], ploidy=2
+            )
 
 
 class ThousandGenomesConverter(VcfConverter):
@@ -987,7 +1017,7 @@ def main():
     )
     parser.add_argument(
         "source",
-        choices=["1kg", "sgdp", "hgdp", "max-planck", "afanasievo", "1240k"],
+        choices=["generic", "1kg", "sgdp", "hgdp", "max-planck", "afanasievo", "1240k"],
         help="The source of the input data.",
     )
     parser.add_argument("data_file", help="The input data file pattern.")
