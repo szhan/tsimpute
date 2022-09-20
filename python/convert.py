@@ -362,7 +362,7 @@ class VcfConverter(Converter):
     def process_sites(self, vcf_subset=None, show_progress=False, max_sites=None):
         num_data_sites = int(
             subprocess.check_output(
-                ["../tools/bin/bcftools", "index", "--nrecords", self.data_file]
+                ["bcftools", "index", "--nrecords", self.data_file]
             )
         )
 
