@@ -32,9 +32,10 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
         genotypes_true = genotypes_true[allele_match_bool]
         genotypes_imputed = genotypes_imputed[allele_match_bool]
 
-    num_genotypes_correct = np.sum(genotypes_true == genotypes_imputed)
-    num_genotypes_total = len(genotypes_true)
-    concordance = float(num_genotypes_correct) / float(num_genotypes_total)
+    genotypes_correct = np.sum(genotypes_true == genotypes_imputed)
+    genotypes_total = len(genotypes_true)
+
+    concordance = float(genotypes_correct) / float(genotypes_total)
 
     return concordance
 
