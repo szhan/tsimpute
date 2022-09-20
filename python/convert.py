@@ -429,7 +429,7 @@ class GenericConverter(VcfConverter):
         # Add in the metadata rows in the order of the VCF.
         for index, name in enumerate(individual_names):
             self.samples.add_individual(
-                metadata={"name": name}, population=populations["generic"], ploidy=2
+                metadata={"name": name}, population=0, ploidy=2
             )
 
 
