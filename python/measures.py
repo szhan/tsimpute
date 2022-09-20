@@ -106,12 +106,58 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in DIPLOID genomes.
 
-    :param np.array genotypes_true:
-    :param np.array genotypes_imputed:
+    :param np.array genotypes_true: List of alleles from ground-truth genotypes
+    :param np.array genotypes_imputed: List of alleles from imputed genotypes
     :return: IQS
     :rtype: float
     """
     assert len(genotypes_true) == len(genotypes_imputed), \
         f"Arrays of genotype are not of the same length."
-    iqs = None
+    assert len(genotypes_true) % 2 == 0, \
+        f"Not all genotypes are from diploid genomes."
+
+    # Genotype AA correctly imputed as AA
+    n11 = None
+    # Genotype AA wrongly imputed as AB
+    n12 = None
+    # Genotype AA wrongly imputed as BB
+    n13 = None
+    # Genotype AB wrongly imputed as AA
+    n21 = None
+    # Genotype AB correctly imputed as AB
+    n22 = None
+    # Genotype AB wrongly imputed as BB
+    n23 = None
+    # Genotype BB wrongly imputed as AA
+    n31 = None
+    # Genotype BB wrongly imputed as AB
+    n32 = None
+    # Genotype BB correctly imputed as BB
+    n33 = None
+    
+    # Marginal counts
+    n_1 = None # Total number of cases having genotype AA
+    n_2 = None # Total number of cases having genotype AB
+    n_3 = None # Total number of cases having genotype BB
+    n1_ = None # Total number of cases imputed as genotype AA
+    n2_ = None # Total number of cases imputed as genotype AB
+    n3_ = None # Total number of cases imputed as genotype BB
+
+    assert n_1 + n_2 + n_3 == n1_ + n2_ + n3_, \
+        f"Marginal counts do not add up."
+
+    # Total count
+    n__ = n_1 + n_2 + n_3
+
+    # Observed agreement (i.e. overall concordance)
+    Po = float(n11 + n22 + n33) / float(n__)
+
+    # Chance agreement
+    Pc = float(n1_ * n_1 + n2_ * n_2 + n3_ * n_3) / float(n__ * n__)
+
+    assert Po >= 0 and Po <= 1, f"Po {Po} is not a proportion."
+    assert Pc >= 0 and Pc <= 1, f"Pc {Pc} is not a proportion."
+
+    iqs = float("nan") if Pc == 1 else (Po - Pc) / (1 - Pc)
+
     return iqs
