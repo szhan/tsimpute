@@ -183,3 +183,16 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     iqs = float("nan") if Pc == 1 else (Po - Pc) / (1 - Pc)
 
     return iqs
+
+
+def computed_r_squared(genotypes_true, genotypes_imputed):
+    """
+    Calculate the squared correlation coefficient between `genotypes_true` and `genotypes_imputed`.
+    
+    :param np.array genotypes_true: List of alleles from ground-truth genotypes.
+    :param np.array genotypes_imputed: List of alleles from imputed genotypes.
+    :return: R-squared.
+    :rtype: float
+    """
+    r_squared = None
+    return r_squared
