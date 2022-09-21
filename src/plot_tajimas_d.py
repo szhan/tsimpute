@@ -1,5 +1,6 @@
 import click
 import matplotlib.pyplot as plt
+import tskit
 
 
 @click.command()
@@ -17,12 +18,15 @@ import matplotlib.pyplot as plt
     required=True,
     help="Output PNG file.",
 )
-def plot_tajima_d_versus_site(ts, out_png_file):
+def plot_tajima_d_versus_site(in_trees_file, out_png_file):
     """
     Plot site-wise Tajima's D over sites in a chromosome in a tree sequence.
 
-    :param tskit.TreeSequence ts: A tree sequence.
+    :param str in_trees_file: Input file containing a tree sequence.
+    :param str out_png_file: Output file with plot in PNG.
     """
+    ts = tskit.load(in_trees_file)
+
     D = ts.Tajimas_D(mode="site", windows="sites")
 
     plt.plot(D)
