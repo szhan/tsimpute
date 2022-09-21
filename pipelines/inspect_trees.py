@@ -1,8 +1,10 @@
+"""
+Get basic statistics about the properties of a tree sequence.
+"""
 import click
 from collections import OrderedDict
 import csv
 import sys
-
 import tskit
 
 sys.path.append("./python")
@@ -12,22 +14,20 @@ import util
 @click.command()
 @click.option(
     "--in_trees_file", "-i",
-    type=click.Path(exists=True, file_okay=True),
+    type=click.Path(exists=True),
     required=True,
     help="Input trees file"
 )
 @click.option(
     "--out_csv_file", "-o",
-    type=click.Path(file_okay=True),
+    type=click.Path(exists=False),
     required=True,
-    help="Output CSV file containing tree sequence statistics"
+    help="Output CSV file containing the statistics"
 )
-def get_tree_sequence_statistics(in_trees_file, out_csv_file):
+def main(in_trees_file, out_csv_file):
     """
-    :param str in_trees_file:
-    :param str out_csv_file:
-    :return: None
-    :rtype: None
+    :param str in_trees_file: Path to file containing a tree sequence.
+    :param str out_csv_file: Path to file with statistics.
     """
     ts = tskit.load(in_trees_file)
 
@@ -48,8 +48,6 @@ def get_tree_sequence_statistics(in_trees_file, out_csv_file):
         for k, v in stats.items():
             w.writerow([k, v])
 
-    return None
-
 
 if __name__ == "__main__":
-    get_tree_sequence_statistics()
+    main()
