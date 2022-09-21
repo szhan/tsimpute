@@ -10,7 +10,8 @@ def count_sites_by_type(ts_or_sd):
     and count the number of mono-, bi-, tri-, and quad-allelic sites.
 
     :param tskit.TreeSequence/tsinfer.SampleData ts_or_sd:
-    :return None:
+    :return: None
+    :rtype: None
     """
     assert isinstance(ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData))
 
@@ -44,31 +45,31 @@ def count_sites_by_type(ts_or_sd):
     return None
 
 
-def check_site_positions_ts_issubse_sd(tree_sequence, sample_data):
+def check_site_positions_ts_issubse_sd(ts, sd):
     """
-    Check whether the site positions in `tskit.TreeSequence` are a subset of
-    the site positions in `tsinfer.SampleData`.
+    Check whether the site positions in tree sequence are a subset of
+    the site positions in samples.
 
-    :param tskit.TreeSequence tree_sequence:
-    :param tsinfer.SampleData sample_data:
-    :return:
+    :param tskit.TreeSequence ts: A tree sequence.
+    :param tsinfer.SampleData sd: Samples.
+    :return: Are the site positions in the tree sequence a subset of the site positions in the samples?
     :rtype: bool
     """
-    ts_site_positions = np.empty(tree_sequence.num_sites)
-    sd_site_positions = np.empty(sample_data.num_sites)
+    ts_site_positions = np.empty(ts.num_sites)
+    sd_site_positions = np.empty(sd.num_sites)
 
     i = 0
-    for v in tree_sequence.variants():
+    for v in ts.variants():
         ts_site_positions[i] = v.site.position
         i += 1
 
     j = 0
-    for v in sample_data.variants():
+    for v in sd.variants():
         sd_site_positions[j] = v.site.position
         j += 1
 
-    assert i == tree_sequence.num_sites
-    assert j == sample_data.num_sites
+    assert i == ts.num_sites
+    assert j == sd.num_sites
 
     if set(ts_site_positions).issubset(set(sd_site_positions)):
         return True
@@ -77,40 +78,40 @@ def check_site_positions_ts_issubse_sd(tree_sequence, sample_data):
 
 
 def compare_sites_sd_and_ts(
-    sample_data, tree_sequence, is_common, check_matching_ancestral_state=True
+    sd, ts, is_common, check_matching_ancestral_state=True
 ):
     """
-    If `is_common` is set to True, then get the ids and positions of the sites
-    found in `sample_data` AND in `tree_sequence`.
+    If `is_common` is set to True, then get the IDs and positions of the sites
+    found in `sd` AND in `ts`.
 
-    if `is_common` is set to False, then get the ids and positions of the sites
-    found in `sample_data` but NOT in `tree_sequence`.
+    if `is_common` is set to False, then get the IDs and positions of the sites
+    found in `sd` but NOT in `ts`.
 
-    :param TreeSequence tree_sequence:
-    :param SampleData sample_data:
-    :param is_common bool:
-    :param check_matching_ancestral_state bool: (default=True)
+    :param tsinfer.SampleData sd:
+    :param tskit.TreeSequence ts:
+    :param bool is_common:
+    :param bool check_matching_ancestral_state: (default=True)
     :return:
-    :rtype: 2-tuple of np.array
+    :rtype: (np.array, np.array,)
     """
-    ts_site_positions = np.empty(tree_sequence.num_sites)
+    ts_site_positions = np.empty(ts.num_sites)
 
     i = 0
-    for v in tree_sequence.variants():
+    for v in ts.variants():
         ts_site_positions[i] = v.site.position
         i += 1
 
-    assert i == tree_sequence.num_sites
+    assert i == ts.num_sites
 
     sd_site_ids = []
     sd_site_positions = []
-    for sd_v in sample_data.variants():
+    for sd_v in sd.variants():
         if is_common:
             if sd_v.site.position in ts_site_positions:
                 sd_site_ids.append(sd_v.site.id)
                 sd_site_positions.append(sd_v.site.position)
                 if check_matching_ancestral_state:
-                    ts_site = tree_sequence.site(position=sd_v.site.position)
+                    ts_site = ts.site(position=sd_v.site.position)
                     assert sd_v.site.ancestral_state == ts_site.ancestral_state, (
                         f"Ancestral states at {sd_v.site.position} not the same, "
                         + f"{sd_v.site.ancestral_state} vs. {ts_site.ancestral_state}."
@@ -126,18 +127,19 @@ def compare_sites_sd_and_ts(
     )
 
 
-def count_singletons(tree_sequence):
+def count_singletons(ts):
     """
-    Count the number of singleton sites in a `TreeSequence` object.
+    Count the number of singleton sites in a tree sequence.
 
-    :param tskit.TreeSequence tree_sequence:
+    :param tskit.TreeSequence ts: A tree sequence.
     :return: Number of singleton sites.
     :rtype: int
     """
     num_singletons = 0
 
-    for v in tree_sequence.variants():
+    for v in ts.variants():
         # 0 denotes ancestral allele.
+        # 1 denotes derived allele.
         # -1 denotes missing genotypes, so it shouldn't be counted.
         if np.sum(v.genotypes == 1) == 1:
             num_singletons += 1
@@ -149,7 +151,7 @@ def count_inference_sites(ts):
     """
     Count number of sites used to infer a tree sequence.
 
-    :param tskit.TreeSequence: An inferred tree sequence.
+    :param tskit.TreeSequence ts: A tree sequence.
     :return: Number of inference sites.
     :rtype: int
     """
@@ -157,4 +159,5 @@ def count_inference_sites(ts):
         s.id for s in ts.sites()
         if json.loads(s.metadata)["inference_type"] != "full"
     ]
+    
     return ts.num_sites - len(non_inference_sites)
