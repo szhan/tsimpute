@@ -16,7 +16,7 @@ for s in sd.sites():
     if s.position >= (start - 1) and s.position <= (end - 1):
         included_site_ids.append(s.id)
 
-sd_region = sd.subset(included_site_ids, path=out_samples_file)
+sd_region = sd.subset(sites=included_site_ids, path=out_samples_file)
 
 print(f"Region: {chr}:{start}-{end}")
-print(f"Sites: {len(sd_region)}")
+print(f"Sites: {len(included_site_ids)}")
