@@ -12,13 +12,20 @@ import tskit
     help="Input tree sequence file.",
 )
 @click.option(
+    "--out_csv_file",
+    "-o1",
+    type=click.Path(exists=False),
+    required=True,
+    help="Output CSV file.",
+)
+@click.option(
     "--out_png_file",
-    "-o",
+    "-o2",
     type=click.Path(exists=False),
     required=True,
     help="Output PNG file.",
 )
-def plot_tajima_d_versus_site(in_trees_file, out_png_file):
+def plot_tajima_d_versus_site(in_trees_file, out_csv_file, out_png_file):
     """
     Plot site-wise Tajima's D over sites in a chromosome in a tree sequence.
 
@@ -33,6 +40,8 @@ def plot_tajima_d_versus_site(in_trees_file, out_png_file):
     plt.xlabel("Site ID")
     plt.ylabel("Tajima's D")
     plt.savefig(out_png_file)
+
+    print(D)
 
 
 if __name__ == "__main__":
