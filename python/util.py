@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import tskit
 import tsinfer
@@ -142,3 +143,18 @@ def count_singletons(tree_sequence):
             num_singletons += 1
 
     return num_singletons
+
+
+def count_inference_sites(ts):
+    """
+    Count number of sites used to infer a tree sequence.
+
+    :param tskit.TreeSequence: An inferred tree sequence.
+    :return: Number of inference sites.
+    :rtype: int
+    """
+    non_inference_sites = [
+        s.id for s in ts.sites()
+        if json.loads(s.metadata)["inference_type"] != "full"
+    ]
+    return ts.num_sites - len(non_inference_sites)
