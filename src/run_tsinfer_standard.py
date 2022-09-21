@@ -25,6 +25,7 @@ import tsinfer
     help="Output directory",
 )
 @click.option("--out_prefix", "-p", type=str, required=True, help="Output file prefix")
+@click.option("--recombination_rate", "-r", type=float, default=1e-8, help="Uniform recombination rate")
 @click.option(
     "--mmr_ancestors",
     "-a",
@@ -46,6 +47,7 @@ def run_standard_tsinfer_pipeline(
     in_samples_file,
     out_dir,
     out_prefix,
+    recombination_rate,
     mmr_ancestors,
     mmr_samples,
     num_threads,
@@ -54,6 +56,7 @@ def run_standard_tsinfer_pipeline(
     :param str in_samples_file: Samples file used for tsinfer input.
     :param str out_dir: Output directory.
     :param str out_prefix: Prefix of output filenames.
+    :param float recombination_rate: Uniform genome-wide recombination rate.
     :param float mmr_ancestors: Mismatch ratio used when matching ancestors.
     :param float mmr_samples: Mismatch ratio used when matching samples.
     :param int num_threads: Number of CPUs.
@@ -77,6 +80,7 @@ def run_standard_tsinfer_pipeline(
     print("INFO: Matching ancestors")
     ancestors_ts = tsinfer.match_ancestors(
         sample_data=sample_data,
+        recombination_rate=recombination_rate,
         ancestor_data=ancestor_data,
         mismatch_ratio=mmr_ancestors,
         num_threads=num_threads,
@@ -86,6 +90,7 @@ def run_standard_tsinfer_pipeline(
     print("INFO: Matching samples")
     inferred_ts = tsinfer.match_samples(
         sample_data=sample_data,
+        recombination_rate=recombination_rate,
         ancestors_ts=ancestors_ts,
         mismatch_ratio=mmr_samples,
         num_threads=num_threads,
