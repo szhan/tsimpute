@@ -46,6 +46,8 @@ def run_standard_tsinfer_pipeline(
     in_samples_file,
     out_dir,
     out_prefix,
+    mmr_ancestors,
+    mmr_samples,
     num_threads,
 ):
     """
@@ -74,13 +76,19 @@ def run_standard_tsinfer_pipeline(
 
     print("INFO: Matching ancestors")
     ancestors_ts = tsinfer.match_ancestors(
-        sample_data=sample_data, ancestor_data=ancestor_data, num_threads=num_threads
+        sample_data=sample_data,
+        ancestor_data=ancestor_data,
+        mismatch_ratio=mmr_ancestors,
+        num_threads=num_threads,
     )
     ancestors_ts.dump(out_ancestors_ts_file)
 
     print("INFO: Matching samples")
     inferred_ts = tsinfer.match_samples(
-        sample_data=sample_data, ancestors_ts=ancestors_ts, num_threads=num_threads
+        sample_data=sample_data,
+        ancestors_ts=ancestors_ts,
+        mismatch_ratio=mmr_samples,
+        num_threads=num_threads,
     )
     inferred_ts.dump(out_inferred_ts_file)
 
