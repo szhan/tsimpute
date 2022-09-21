@@ -1,3 +1,0 @@
-chromosome	start	end	band	type
-chr20	25700000	27100000	p11.1	acen
-chr20	27100000	28400000	q11.1	acen

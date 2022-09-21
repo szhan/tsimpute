@@ -1,5 +1,1 @@
-# Download cytoband data
 wget http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cytoBand.txt.gz
-
-# Get centromeric region of chr20
-grep 'chr20' cytoBand.txt | grep 'acen'
