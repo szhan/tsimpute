@@ -41,6 +41,7 @@ def get_tree_sequence_statistics(in_trees_file, out_csv_file):
     stats["num_edges"] = ts.num_edges
     stats["num_mutations"] = ts.num_mutations
     stats["num_singletons"] = util.count_singletons(ts)
+    stats["num_inference_sites"]= util.count_inference_sites(ts)
 
     with open(out_csv_file, "w") as f:
         w = csv.writer(f)
