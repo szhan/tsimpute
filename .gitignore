@@ -2,6 +2,9 @@
 analysis/
 assets/ensembl/
 
+# Visual Studio Code files
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
