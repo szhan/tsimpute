@@ -1,1 +1,2 @@
 wget http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cytoBand.txt.gz
+gunzip cytoBand.txt.gz
