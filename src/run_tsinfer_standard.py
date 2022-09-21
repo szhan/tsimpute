@@ -1,3 +1,9 @@
+"""
+Run the standard tsinfer pipeline, while allowing for specification of mismatch ratios
+in both the ancestors and samples matching steps.
+
+See https://tsinfer.readthedocs.io/en/latest/index.html
+"""
 import click
 import tskit
 import tsinfer
@@ -20,6 +26,20 @@ import tsinfer
 )
 @click.option("--out_prefix", "-p", type=str, required=True, help="Output file prefix")
 @click.option(
+    "--mmr_ancestors",
+    "-a",
+    type=float,
+    default=1,
+    help="Mismatch ratio used when matching ancestor haplotypes",
+)
+@click.option(
+    "--mmr_samples",
+    "-s",
+    type=float,
+    default=1,
+    help="Mismatch ratio used when matching sample haplotypes",
+)
+@click.option(
     "--num_threads", "-t", type=int, default=1, help="Number of threads to use"
 )
 def run_standard_tsinfer_pipeline(
@@ -29,16 +49,12 @@ def run_standard_tsinfer_pipeline(
     num_threads,
 ):
     """
-    TODO
-
-    See https://tsinfer.readthedocs.io/en/latest/index.html
-
-    :param str in_samples_file:
-    :param str out_dir:
-    :param str out_prefix:
-    :param int num_threads:
-    :return: None
-    :rtype: None
+    :param str in_samples_file: Samples file used for tsinfer input.
+    :param str out_dir: Output directory.
+    :param str out_prefix: Prefix of output filenames.
+    :param float mmr_ancestors: Mismatch ratio used when matching ancestors.
+    :param float mmr_samples: Mismatch ratio used when matching samples.
+    :param int num_threads: Number of CPUs.
     """
     out_ancestors_file = out_dir + "/" + out_prefix + ".ancestors"
     out_ancestors_ts_file = out_dir + "/" + out_prefix + ".ancestors.trees"
