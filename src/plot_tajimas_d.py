@@ -1,5 +1,6 @@
 import click
 import matplotlib.pyplot as plt
+import numpy as np
 import tskit
 
 
@@ -41,7 +42,7 @@ def plot_tajima_d_versus_site(in_trees_file, out_csv_file, out_png_file):
     plt.ylabel("Tajima's D")
     plt.savefig(out_png_file)
 
-    print(D)
+    np.savetxt(fname=out_csv_file, X=D, header="site_wise_tajimas_d")
 
 
 if __name__ == "__main__":
