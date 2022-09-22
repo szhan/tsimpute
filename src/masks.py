@@ -2,32 +2,33 @@ import numpy as np
 import tskit
 
 
-def pick_masked_sites_random(site_ids, prop_masked_sites, seed=None):
+def pick_masked_sites_random(sites, prop_masked_sites, seed=None):
     """
-    Draw N sites from `sites_ids` at random, where N is the number of sites to mask
-    based on a specified proportion of masked sites `prop_masked_sites`.
+    Draw N sites from `sites` at random, where N is the number of sites to mask
+    based on the specified proportion of masked sites.
 
-    :param ndarray site_ids:
-    :param float prop_masked_sites: value between 0 and 1
-    :param int seed: integer to pass to np.random.rng (default = None)
-    :return ndarray: list of site ids
+    :param np.array sites: List of sites IDs.
+    :param float prop_masked_sites: Proportion of masked sites [0, 1].
+    :param int seed: Seed for np.random.rng (default = None).
+    :return: List of site IDs.
+    :rtype: np.array
     """
-    assert prop_masked_sites >= 0
-    assert prop_masked_sites <= 1
+    assert prop_masked_sites >= 0 and prop_masked_sites <= 1, \
+        f"{prop_masked_sites} is not between 0 and 1."
 
     rng = np.random.default_rng(seed=seed)
 
-    num_masked_sites = int(np.floor(len(site_ids) * prop_masked_sites))
+    num_masked_sites = int(np.floor(len(sites) * prop_masked_sites))
 
-    masked_site_ids = np.sort(
+    masked_sites = np.sort(
         rng.choice(
-            site_ids,
+            sites,
             num_masked_sites,
             replace=False,
         )
     )
 
-    return masked_site_ids
+    return masked_sites
 
 
 def mask_sites_in_sample_data(sd, sites):
