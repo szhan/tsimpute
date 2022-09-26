@@ -45,7 +45,7 @@ def count_sites_by_type(ts_or_sd):
     return None
 
 
-def check_site_positions_ts_issubse_sd(ts, sd):
+def check_site_positions_ts_issubset_sd(ts, sd):
     """
     Check whether the site positions in tree sequence are a subset of
     the site positions in samples.
