@@ -13,7 +13,7 @@ sd = tsinfer.load(in_samples_file)
 # Subset by region
 # cytoband 20.p12.1
 chr = "20"
-length_focal_region = 10e7 # 10 Mbp
+length_focal_region = 1e6 # 1 Mbp
 start = 11_900_000 # 1-based, inclusive
 end = start + length_focal_region # 1-based, inclusive
 
