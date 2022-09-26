@@ -31,21 +31,25 @@ def pick_masked_sites_random(sites, prop_masked_sites, seed=None):
     return masked_sites
 
 
-def mask_sites_in_sample_data(sd, sites):
+def mask_sites_in_sample_data(sd, sites, site_type):
     """
     Create and return a `SampleData` object from an existing `SampleData` object,
     which contains masked sites (all genotypes marked as missing) specified by
-    site IDs.
+    site IDs or positions.
 
     :param tsinfer.SampleData sd: A SampleData object to mask.
-    :param np.array sites: List of site IDs (NOT positions).
+    :param np.array sites: A list of site IDs or positions.
+    :param str site_type: IDs ("id") or positions ("position").
     :return: A copy of the SampleData object with masked sites.
     :rtype: tsinfer.SampleData
     """
+    assert site_type in ["id", "position"], f"Site type {site_type} is invalid."
+
     new_sd = sd.copy()
 
     for v in sd.variants():
-        if v.site.id in sites:
+        site_ref = v.site.id if site_type == "id" else v.site.position
+        if site_ref in sites:
             new_sd.sites_genotypes[v.site.id] = np.full_like(
                 v.genotypes, tskit.MISSING_DATA
             )
