@@ -161,3 +161,22 @@ def count_inference_sites(ts):
     ]
     
     return ts.num_sites - len(non_inference_sites)
+
+
+def is_biallelic(ts_or_sd):
+    """
+    Check whether all the sites in a `TreeSequence` or `SampleData` object
+    are biallelic, disregarding missing alleles.
+
+    :param tskit.TreeSequence/tsinfer.SampleData:
+    :return: True if all sites are biallelic, otherwise False.
+    :rtype: bool
+    """
+    assert isinstance(ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData))
+
+    for v in ts_or_sd.variants():
+        num_alleles = len(set(v.alleles) - {None})
+        if len(num_alleles) != 2:
+            return False
+    
+    return True
