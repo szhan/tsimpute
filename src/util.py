@@ -172,7 +172,8 @@ def is_biallelic(ts_or_sd):
     :return: True if all sites are biallelic, otherwise False.
     :rtype: bool
     """
-    assert isinstance(ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData))
+    assert isinstance(ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData)), \
+        f"Object type is invalid."
 
     for v in ts_or_sd.variants():
         num_alleles = len(set(v.alleles) - {None})
