@@ -32,7 +32,7 @@ query_size = math.ceil(sd.num_individuals * 0.10)
 query_ids = np.random.choice(sd.num_individuals, query_size, replace=False)
 ref_ids = list(set(np.arange(sd.num_individuals)) - set(query_ids))
 
-print(f"Full: {len(sd.num_individuals)}")
+print(f"Full: {sd.num_individuals}")
 print(f"Query: {len(query_ids)}")
 print(f"Ref: {len(ref_ids)}")
 
