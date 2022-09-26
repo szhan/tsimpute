@@ -53,3 +53,23 @@ def mask_sites_in_sample_data(sd, sites):
     new_sd.finalise()
 
     return new_sd
+
+
+def parse_site_position_file(in_file):
+    """
+    Read list of site positions from a plain tab-delimited text file.
+
+    TODO: Consider sequence name, which is ignored now.
+
+    :param in_file: A list of site positions.
+    :return: A set of site positions.
+    :rtype: set
+    """
+    site_pos = set()
+    
+    with open(in_file, "rt") as f:
+        for line in f:
+            chr, pos = line.rstrip().split("\t")
+            site_pos.append(pos)
+    
+    return site_pos
