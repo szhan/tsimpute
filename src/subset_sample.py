@@ -13,7 +13,7 @@ sd = tsinfer.load(in_samples_file)
 # Subset by region
 # cytoband 20.p12.1
 chr = "20"
-length_focal_region = 5e6 # 5 Mbp
+length_focal_region = 10e7 # 10 Mbp
 start = 11_900_000 # 1-based, inclusive
 end = start + length_focal_region # 1-based, inclusive
 
@@ -28,11 +28,16 @@ print(f"Region: {chr}:{start}-{end}")
 print(f"Sites: {len(included_site_ids)}")
 
 # Subset by individuals
-query_size = math.ceil(sd.num_individuals * 0.10)
-query_ids = np.random.choice(sd.num_individuals, query_size, replace=False)
-ref_ids = list(set(np.arange(sd.num_individuals)) - set(query_ids))
+ref_size = 1_000
+query_size = 100
 
-print(f"Full: {sd.num_individuals}")
+full_ids = np.arange(sd.num_individuals)
+ref_ids = np.random.choice(full_ids, ref_size, replace=False)
+query_ids = np.random.choice(list(set(full_ids) - set(ref_ids)), query_size, replace=False)
+
+assert len(set(ref_ids) & set(query_ids)) == 0
+
+print(f"Full: {len(full_ids)}")
 print(f"Query: {len(query_ids)}")
 print(f"Ref: {len(ref_ids)}")
 
