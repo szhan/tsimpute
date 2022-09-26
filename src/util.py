@@ -176,7 +176,7 @@ def is_biallelic(ts_or_sd):
 
     for v in ts_or_sd.variants():
         num_alleles = len(set(v.alleles) - {None})
-        if len(num_alleles) != 2:
+        if num_alleles != 2:
             return False
     
     return True
