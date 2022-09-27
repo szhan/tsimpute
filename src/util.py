@@ -186,11 +186,11 @@ def is_biallelic(ts_or_sd):
 
 def make_compatible_sample_data(sample_data, ancestors_ts):
     """
-    Make an editable copy of a `sample_data` object, and edit it so that:
+    Make an editable copy of a SampleData object, and edit it so that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
     (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
 
-    N.B. Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
+    Note: Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
     which are not explained in the tsinfer API doc, are used to facilitate the editing.
 
     :param tsinfer.SampleData sample_data:
