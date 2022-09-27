@@ -114,10 +114,10 @@ def run_pipeline(
     )
 
     assert (
-        v_ref.num_sites
-        == v_compat.num_sites
-        == v_masked.num_sites
-        == v_imputed.num_sites
+        ts_ref.num_sites
+        == sd_compat.num_sites
+        == sd_masked.num_sites
+        == ts_imputed.num_sites
     ), f"Different number of sites in the tree sequences and sample data."
 
     print("INFO: Evaluating imputation performance")
