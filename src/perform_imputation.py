@@ -150,7 +150,9 @@ def run_pipeline(
 
             # Get Minor Allele index and frequency from `ts_ref`.
             # Definition of a minor allele: MAF < 0.50.
-            ref_freqs = v_ref.frequencies(remove_missing=True) # Dict: allele -> frequency
+            ref_freqs = v_ref.frequencies(
+                remove_missing=True
+            )  # Dict: allele -> frequency
             ref_af_0 = ref_freqs[ref_ancestral_allele]
             ref_af_1 = ref_freqs[ref_derived_allele]
 
@@ -164,7 +166,9 @@ def run_pipeline(
             # Get Minor Allele index and frequency from `ts_imputed`.
             imputed_freqs = v_imputed.frequencies(remove_missing=True)
             imputed_af_0 = imputed_freqs[ref_ancestral_allele]
-            imputed_af_1 = imputed_freqs[ref_derived_allele] if imputed_af_0 < 1.0 else 0.0
+            imputed_af_1 = (
+                imputed_freqs[ref_derived_allele] if imputed_af_0 < 1.0 else 0.0
+            )
 
             if imputed_af_1 < imputed_af_0:
                 imputed_ma_index = 1
@@ -181,7 +185,7 @@ def run_pipeline(
             iqs = measures.compute_iqs(
                 genotypes_true=v_compat.genotypes,
                 genotypes_imputed=v_imputed.genotypes,
-                ploidy=1
+                ploidy=1,
             )
 
             # line.shape = (1, 7)
@@ -199,10 +203,7 @@ def run_pipeline(
                 ]
             )
 
-            if results is None:
-                results = line
-            else:
-                results = np.append(results, line, axis=0)
+            results = line if results is None else np.append(results, line, axis=0)
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
