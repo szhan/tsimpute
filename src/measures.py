@@ -24,8 +24,8 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
     :param allele: (default = None)
     :return float:
     """
-    assert isinstance(genotypes_true, np.array), f"Not a numpy.array"
-    assert isinstance(genotypes_imputed, np.array), f"Not a numpy.array"
+    assert isinstance(genotypes_true, np.ndarray), f"Not a numpy.array"
+    assert isinstance(genotypes_imputed, np.ndarray), f"Not a numpy.array"
     assert len(genotypes_true) == len(genotypes_imputed), \
         f"Genotype arrays are of unequal length."
 
