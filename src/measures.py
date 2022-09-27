@@ -186,6 +186,8 @@ def compute_iqs_diploid(gt_true, gt_imputed):
 
     # Chance agreement
     Pc = float(n_c.dot(n_r)) / float(n_t**2)
+    print(n_c)
+    print(n_r)
     print(f"Pc {Pc}")
 
     assert 0 <= Po <= 1, f"Po {Po} is not a proportion."
