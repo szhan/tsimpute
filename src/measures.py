@@ -156,17 +156,16 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     genotypes_imputed_reshaped = np.reshape(genotypes_imputed, (num_individuals, 2))
 
     # Ancestral allele is denoted by A, and derived allele by B.
-    counts = []
+    counts = np.empty(len(_POSSIBLE_GENOTYPES_) ** 2)
     for i, gt_true in enumerate(_POSSIBLE_GENOTYPES_):
         for j, gt_imputed in enumerate(_POSSIBLE_GENOTYPES_):
-            counts[i * len(_POSSIBLE_GENOTYPES_) + j] = np.sum(
-                np.equal(
-                    np.equal(genotypes_true_reshaped, gt_true).all(axis=1),
-                    np.equal(genotypes_imputed_reshaped, gt_imputed).all(axis=1),
-                )
+            k = i * len(_POSSIBLE_GENOTYPES_) + j
+            counts[k] = np.sum(
+                np.equal(genotypes_true_reshaped, gt_true).all(axis=1) &
+                np.equal(genotypes_imputed_reshaped, gt_imputed).all(axis=1)
             )
     counts = np.reshape(
-        np.array(counts),
+        counts,
         (
             len(_POSSIBLE_GENOTYPES_),
             len(_POSSIBLE_GENOTYPES_),
