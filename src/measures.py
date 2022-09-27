@@ -76,30 +76,28 @@ def compute_iqs(genotypes_true, genotypes_imputed, ploidy):
     return iqs
 
 
-def compute_iqs_haploid(genotypes_true, genotypes_imputed):
+def compute_iqs_haploid(gt_true, gt_imputed):
     """
-    Calculate the IQS between `genotypes_true` and `genotypes_imputed`.
+    Calculate the IQS between `gt_true` and `gt_imputed`.
 
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in HAPLOID genomes.
 
-    :param np.ndarray genotypes_true: A list of alleles from ground-truth genotypes
-    :param np.ndarray genotypes_imputed: A list of alleles from imputed genotypes:
+    :param np.ndarray gt_true: A list of alleles from ground-truth genotypes.
+    :param np.ndarray gt_imputed: A list of alleles from imputed genotypes.
     :return: IQS.
     :rtype: float
     """
-    assert len(genotypes_true) == len(
-        genotypes_imputed
-    ), f"Arrays of genotype are not of the same length."
+    assert len(gt_true) == len(gt_imputed), f"Genotype arrays differ in size."
 
     # Allele 0 imputed correctly as allele 0
-    n00 = np.sum([y == 0 for x, y in zip(genotypes_imputed, genotypes_true) if x == 0])
+    n00 = np.sum([y == 0 for x, y in zip(gt_imputed, gt_true) if x == 0])
     # Allele 0 imputed wrongly as allele 1
-    n01 = np.sum([y == 1 for x, y in zip(genotypes_imputed, genotypes_true) if x == 0])
+    n01 = np.sum([y == 1 for x, y in zip(gt_imputed, gt_true) if x == 0])
     # Allele 1 imputed correctly as allele 1
-    n11 = np.sum([y == 1 for x, y in zip(genotypes_imputed, genotypes_true) if x == 1])
+    n11 = np.sum([y == 1 for x, y in zip(gt_imputed, gt_true) if x == 1])
     # Allele 1 imputed wrongly as allele 0
-    n10 = np.sum([y == 0 for x, y in zip(genotypes_imputed, genotypes_true) if x == 1])
+    n10 = np.sum([y == 0 for x, y in zip(gt_imputed, gt_true) if x == 1])
 
     # Marginal counts
     n0_ = n00 + n01
@@ -116,10 +114,10 @@ def compute_iqs_haploid(genotypes_true, genotypes_imputed):
     Po = float(n00 + n11) / float(n__)
 
     # Chance agreement
-    Pc = float(n0_ * n_0 + n1_ * n_1) / float(n__ * n__)
+    Pc = float(n0_ * n_0 + n1_ * n_1) / float(n__**2)
 
-    assert Po >= 0 and Po <= 1, f"Po {Po} is not a proportion."
-    assert Pc >= 0 and Pc <= 1, f"Pc {Pc} is not a proportion."
+    assert 0 <= Po <= 1, f"Po {Po} is not a proportion."
+    assert 0 <= Pc <= 1, f"Pc {Pc} is not a proportion."
 
     iqs = float("nan") if Pc == 1 else (Po - Pc) / (1 - Pc)
 
