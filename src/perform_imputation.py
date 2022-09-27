@@ -207,7 +207,7 @@ def run_pipeline(
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     print("INFO: Writing results to file")
-    out_file = out_dir + "/" + out_prefix + "imputation.csv"
+    out_file = out_dir + "/" + out_prefix + ".imputation.csv"
 
     header_text = (
         "\n".join(
