@@ -43,7 +43,7 @@ import util
 @click.option(
     "--out_prefix", "-p", type=str, required=True, help="Prefix of the output file."
 )
-@click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs.")
+@click.option("--num_threads", type=int, default=1, help="Number of CPUs.")
 def run_pipeline(
     in_reference_trees_file,
     in_target_samples_file,
