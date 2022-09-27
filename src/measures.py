@@ -133,6 +133,8 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in DIPLOID genomes.
 
+    TODO: Generalize to handle multiallelic sites.
+
     :param np.ndarray genotypes_true: A list of alleles from ground-truth genotypes.
     :param np.ndarray genotypes_imputed: A list of alleles from imputed genotypes.
     :return: IQS.
@@ -140,8 +142,8 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     """
     assert len(genotypes_true) == len(
         genotypes_imputed
-    ), f"Arrays of genotype are not of the same length."
-    assert len(genotypes_true) % 2 == 0, f"Not all genotypes are from diploid genomes."
+    ), f"Genotype arrays differ in size."
+    assert len(genotypes_true) % 2 == 0, f"Not all genotypes are diploid."
 
     AA = [0, 0]  # shorthand, 1
     AB = [0, 1]  # shorthand, 2
@@ -153,7 +155,7 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     genotypes_true_reshaped = np.reshape(genotypes_true, (num_individuals, 2))
     genotypes_imputed_reshaped = np.reshape(genotypes_imputed, (num_individuals, 2))
 
-    # A denotes an ancestral allele, and B an derived allele.
+    # Ancestral allele is denoted by A, and derived allele by B.
     counts = []
     for i, gt_true in enumerate(_POSSIBLE_GENOTYPES_):
         for j, gt_imputed in enumerate(_POSSIBLE_GENOTYPES_):
