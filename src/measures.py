@@ -167,6 +167,7 @@ def compute_iqs_diploid(gt_true, gt_imputed):
             len(_POSSIBLE_GT_),
         ),
     )
+    print(counts)
 
     # Total count
     n_t = np.sum(counts)
