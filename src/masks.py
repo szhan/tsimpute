@@ -66,10 +66,10 @@ def parse_site_position_file(in_file):
     TODO: Consider sequence name, which is ignored now.
 
     :param in_file: A list of site positions.
-    :return: A set of site positions.
-    :rtype: set
+    :return: A list of site positions.
+    :rtype: list
     """
-    site_pos = set()
+    site_pos = []
     
     with open(in_file, "rt") as f:
         for line in f:
