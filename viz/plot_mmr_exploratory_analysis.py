@@ -1,4 +1,3 @@
-from unittest import skip
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -9,9 +8,12 @@ def parse_imputation_results_file(in_file):
     :return: IQS averaged across sites.
     :rtype: float
     """
-    df = pd.read_csv(in_file, comment="#")
-    assert df[df["ref_minor_allele_freq"] > 0].shape[0] == df.shape[0]
-    mean_iqs = df["iqs"].mean(skipna=True)
+    df_full = pd.read_csv(in_file, comment="#")
+    df_subset = df_full[df_full["ref_minor_allele_freq"] > 0]
+    assert df_subset.shape[0] == df_full.shape[0], \
+        f"Some {df_subset.shape[0]} sites have no minor allele, " \
+        f"but {df_full.shape[0]} sites should have a minor allele."
+    mean_iqs = df_full["iqs"].mean(skipna=True)
     return mean_iqs
 
 
