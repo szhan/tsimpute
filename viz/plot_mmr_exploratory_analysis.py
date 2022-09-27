@@ -25,7 +25,7 @@ for i in mmr_log10:
         in_file = in_dir + "/" + prefix + ".imputation.csv"
         print(in_file)
         mean_iqs = parse_imputation_results_file(in_file)
-        results.append((mmr_log10[i], mmr_log10[j], mean_iqs))
+        results.append((str(mmr_log10[i]), str(mmr_log10[j]), mean_iqs))
 
 results = pd.DataFrame(results, columns=["mmr_ancestors", "mmr_samples", "mean_iqs"])
 print(results)
