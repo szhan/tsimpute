@@ -85,9 +85,9 @@ def run_pipeline(
     print("INFO: Making samples compatible with the ancestors tree sequence")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
 
-    for v in tqdm.tqdm(sd_compat.variants()):
-        if v.site.position not in chip_site_pos:
-            mask_site_pos.append(v.site.position)
+    for p in tqdm.tqdm(sd_compat.sites_position[:]):
+        if p not in chip_site_pos:
+            mask_site_pos.append(p)
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
