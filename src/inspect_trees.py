@@ -7,7 +7,7 @@ import csv
 import sys
 import tskit
 
-sys.path.append("./python")
+sys.path.append("./src")
 import util
 
 

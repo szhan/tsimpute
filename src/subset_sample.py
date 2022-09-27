@@ -1,5 +1,4 @@
 import tsinfer
-import math
 import numpy as np
 
 

@@ -1,4 +1,3 @@
-from os import remove
 import click
 from datetime import datetime
 import sys
@@ -7,7 +6,7 @@ import tqdm
 import tskit
 import tsinfer
 
-sys.path.append("./python")
+sys.path.append("./src")
 import masks
 import measures
 import util

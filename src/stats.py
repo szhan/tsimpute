@@ -25,7 +25,7 @@ def get_variant_statistics(vcf, *, show_warnings=False):
 
     :param cyvcf2.VCF vcf: A VCF object.
     :param bool show_warnings: If True, show warnings (default = False).
-    :return: A dict of variant statistics.
+    :return: A dictionary of variant statistics.
     :rtype: collections.OrderedDict
     """
     stats = OrderedDict()

@@ -1,7 +1,7 @@
 import click
 import sys
 
-sys.path.append("./python")
+sys.path.append("./src")
 import read_vcf
 import stats
 
@@ -10,14 +10,14 @@ import stats
 @click.option(
     "--in_vcf_file",
     "-i",
-    type=click.Path(exists=True, file_okay=True, readable=True),
+    type=click.Path(exists=True, readable=True),
     required=True,
     help="Input (gzipped) VCF file.",
 )
 @click.option(
     "--out_csv_file",
     "-o",
-    type=click.Path(file_okay=True, writable=True),
+    type=click.Path(exists=False, writable=True),
     required=True,
     help="Output CSV file with variant statistics.",
 )

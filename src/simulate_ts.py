@@ -1,8 +1,6 @@
+import demes
 import msprime
 import tskit
-import tsinfer
-import demes
-
 import numpy as np
 
 
@@ -70,7 +68,8 @@ def get_ts_toy():
     TODO
 
     :param None:
-    :return list:
+    :return:
+    :rtype: list
     """
     size_ref = 90
     size_query = 10
@@ -105,8 +104,9 @@ def get_ts_single_panmictic(time_query):
     """
     TODO
 
-    :param time_query float:
-    :return list:
+    :param float time_query:
+    :return:
+    :rtype: list
     """
     size_ref = 1e4
     size_query = 1e3
@@ -145,11 +145,12 @@ def get_ts_ten_pop(pop_ref, pop_query):
 
     Contemporary populations: YRI, CHB, and CEU.
 
-    :param pop_ref str:
-    :param pop_query str:
-    :return list:
+    :param str pop_ref:
+    :param str pop_query:
+    :return:
+    :rtypee: list
     """
-    yaml_file = "assets/demes/jacobs_2019.yaml"
+    yaml_file = "./assets/demes/jacobs_2019.yaml"
     ooa_graph = demes.load(yaml_file)
     demographic_model = msprime.Demography.from_demes(ooa_graph)
 

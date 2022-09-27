@@ -13,19 +13,25 @@ import tsinfer
 @click.option(
     "--in_samples_file",
     "-i",
-    type=click.Path(exists=True, file_okay=True),
+    type=click.Path(exists=True),
     required=True,
     help="Input samples file",
 )
 @click.option(
     "--out_dir",
     "-o",
-    type=click.Path(exists=True, dir_okay=True),
+    type=click.Path(exists=True),
     required=True,
     help="Output directory",
 )
 @click.option("--out_prefix", "-p", type=str, required=True, help="Output file prefix")
-@click.option("--recombination_rate", "-r", type=float, default=None, help="Uniform recombination rate")
+@click.option(
+    "--recombination_rate",
+    "-r",
+    type=float,
+    default=None,
+    help="Uniform recombination rate",
+)
 @click.option(
     "--mmr_ancestors",
     "-a",
@@ -40,9 +46,7 @@ import tsinfer
     default=None,
     help="Mismatch ratio used when matching sample haplotypes",
 )
-@click.option(
-    "--num_threads", "-t", type=int, default=1, help="Number of CPUs"
-)
+@click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs")
 def run_standard_tsinfer_pipeline(
     in_samples_file,
     out_dir,
