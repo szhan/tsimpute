@@ -43,6 +43,20 @@ import util
 @click.option(
     "--out_prefix", "-p", type=str, required=True, help="Prefix of the output file."
 )
+@click.option(
+    "--recombination_rate",
+    "-r",
+    type=float,
+    default=None,
+    help="Uniform recombination rate",
+)
+@click.option(
+    "--mmr_samples",
+    "-s",
+    type=float,
+    default=1,
+    help="Mismatch ratio used when matching sample haplotypes",
+)
 @click.option("--num_threads", type=int, default=1, help="Number of CPUs.")
 def run_pipeline(
     in_reference_trees_file,
@@ -50,6 +64,8 @@ def run_pipeline(
     in_chip_file,
     out_dir,
     out_prefix,
+    recombination_rate,
+    mmr_samples,
     num_threads,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -77,7 +93,11 @@ def run_pipeline(
     )
 
     ts_imputed = tsinfer.match_samples(
-        sample_data=sd_masked, ancestors_ts=ts_anc, num_threads=num_threads
+        sample_data=sd_masked,
+        ancestors_ts=ts_anc,
+        recombination_rate=recombination_rate,
+        mismatch_ratio=mmr_samples,
+        num_threads=num_threads,
     )
 
     assert (
