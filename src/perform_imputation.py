@@ -192,10 +192,10 @@ def run_pipeline(
             line = np.array(
                 [
                     [
-                        v_ref.site.position,
-                        ref_ma_index,
+                        int(v_ref.site.position),
+                        int(ref_ma_index),
                         ref_ma_freq,
-                        imputed_ma_index,
+                        int(imputed_ma_index),
                         imputed_ma_freq,
                         total_concordance,
                         iqs,
