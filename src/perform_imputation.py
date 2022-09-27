@@ -151,8 +151,8 @@ def run_pipeline(
             # Get Minor Allele index and frequency from `ts_ref`.
             # Definition of a minor allele: MAF < 0.50.
             ref_freqs = v_ref.frequencies()
-            ref_af_0 = ref_freqs[ref_ancestral_allele]
-            ref_af_1 = ref_freqs[ref_derived_allele]
+            ref_af_0 = ref_freqs[0]
+            ref_af_1 = ref_freqs[1]
 
             if ref_af_1 < ref_af_0:
                 ref_ma_index = 1
@@ -163,8 +163,8 @@ def run_pipeline(
 
             # Get Minor Allele index and frequency from `ts_imputed`.
             imputed_freqs = v_imputed.frequencies()
-            imputed_af_0 = imputed_freqs[ref_ancestral_allele]
-            imputed_af_1 = imputed_freqs[ref_derived_allele]
+            imputed_af_0 = imputed_freqs[0]
+            imputed_af_1 = imputed_freqs[1]
 
             if imputed_af_1 < imputed_af_0:
                 imputed_ma_index = 1
