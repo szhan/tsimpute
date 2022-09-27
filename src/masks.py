@@ -67,7 +67,7 @@ def parse_site_position_file(in_file):
 
     :param in_file: A list of site positions.
     :return: A list of site positions.
-    :rtype: list
+    :rtype: np.array
     """
     site_pos = []
     
@@ -76,4 +76,4 @@ def parse_site_position_file(in_file):
             chr, pos = line.rstrip().split("\t")
             site_pos.append(pos)
     
-    return site_pos
+    return np.array(site_pos)
