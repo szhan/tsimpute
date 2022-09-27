@@ -43,12 +43,14 @@ import util
 @click.option(
     "--out_prefix", "-p", type=str, required=True, help="Prefix of the output file."
 )
+@click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs.")
 def run_pipeline(
     in_reference_trees_file,
     in_target_samples_file,
     in_chip_file,
     out_dir,
     out_prefix,
+    num_threads,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
@@ -74,7 +76,9 @@ def run_pipeline(
         sd_compat, sites=mask_site_pos, site_type="position"
     )
 
-    ts_imputed = tsinfer.match_samples(sample_data=sd_masked, ancestors_ts=ts_anc)
+    ts_imputed = tsinfer.match_samples(
+        sample_data=sd_masked, ancestors_ts=ts_anc, num_threads=num_threads
+    )
 
     assert (
         v_ref.num_sites
