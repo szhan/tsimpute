@@ -77,21 +77,23 @@ def run_pipeline(
     sd_target = tsinfer.load(in_target_samples_file)
 
     chip_site_pos = masks.parse_site_position_file(in_chip_file)
-    mask_site_pos = []
 
     print("INFO: Making ancestors tree sequence")
-    if tsinfer.__version__ == '0.2.4.dev27+gd61ae2f':
+    if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
         ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
     else:
         # The samples argument is not actually used.
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(samples=None, ts=ts_ref, remove_leaves=True)
+        ts_anc = tsinfer.eval_util.make_ancestors_ts(
+            samples=None, ts=ts_ref, remove_leaves=True
+        )
 
     print("INFO: Making samples compatible with the ancestors tree sequence")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
 
-    for p in tqdm.tqdm(sd_compat.sites_position[:]):
-        if p not in chip_site_pos:
-            mask_site_pos.append(p)
+    sd_compat_sites_isnotin_chip = np.isin(
+        sd_compat.sites_position[:], chip_site_pos, assume_unique=True, invert=True
+    )
+    mask_site_pos = sd_compat.sites_position[:][sd_compat_sites_isnotin_chip]
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
@@ -122,12 +124,14 @@ def run_pipeline(
     results = None
     num_non_biallelic_masked_sites = 0
 
-    for v_ref, v_compat, v_masked, v_imputed in tqdm.tqdm(zip(
-        ts_ref.variants(),  # Reference genomes from which to get the minor allele and MAF
-        sd_compat.variants(),  # Query genomes BEFORE site masking
-        sd_masked.variants(),  # Query genomes AFTER site masking
-        ts_imputed.variants(),  # Query genomes with imputed sites
-    )):
+    for v_ref, v_compat, v_masked, v_imputed in tqdm.tqdm(
+        zip(
+            ts_ref.variants(),  # Reference genomes from which to get the minor allele and MAF
+            sd_compat.variants(),  # Query genomes BEFORE site masking
+            sd_masked.variants(),  # Query genomes AFTER site masking
+            ts_imputed.variants(),  # Query genomes with imputed sites
+        )
+    ):
         if v_imputed.site.position in mask_site_pos:
             if len(set(v_ref.alleles) - {None}) != 2:
                 num_non_biallelic_masked_sites += 1
