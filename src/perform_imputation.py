@@ -80,7 +80,11 @@ def run_pipeline(
     mask_site_pos = []
 
     print("INFO: Making ancestors tree sequence")
-    ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
+    if tsinfer.__version__ == '0.2.4.dev27+gd61ae2f':
+        ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
+    else:
+        # The samples argument is not actually used.
+        ts_anc = tsinfer.eval_util.make_ancestors_ts(samples=None, ts=ts_ref, remove_leaves=True)
 
     print("INFO: Making samples compatible with the ancestors tree sequence")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
