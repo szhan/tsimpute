@@ -68,16 +68,20 @@ def run_pipeline(
     mmr_samples,
     num_threads,
 ):
+    print("INFO: START")
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
+    print("INFO: Loading input files")
     ts_ref = tskit.load(in_reference_trees_file)
     sd_target = tsinfer.load(in_target_samples_file)
 
     chip_site_pos = masks.parse_site_position_file(in_chip_file)
     mask_site_pos = []
 
+    print("INFO: Making ancestors tree sequence")
     ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
 
+    print("INFO: Making samples compatible with the ancestors tree sequence")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
 
     for v in sd_compat.variants():
@@ -88,10 +92,12 @@ def run_pipeline(
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
     ), f"Chip and mask site positions are not mutually exclusive."
 
+    print("INFO: Masking sites")
     sd_masked = masks.mask_sites_in_sample_data(
         sd_compat, sites=mask_site_pos, site_type="position"
     )
 
+    print("INFO: Imputing target samples")
     ts_imputed = tsinfer.match_samples(
         sample_data=sd_masked,
         ancestors_ts=ts_anc,
@@ -107,7 +113,7 @@ def run_pipeline(
         == v_imputed.num_sites
     ), f"Different number of sites in the tree sequences and sample data."
 
-    ### Evaluate imputation performance
+    print("INFO: Evaluating imputation performance")
     results = None
     num_non_biallelic_masked_sites = 0
 
@@ -190,7 +196,7 @@ def run_pipeline(
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-    ### Write results
+    print("INFO: Writing results to file")
     out_file = out_dir + "/" + out_prefix + "imputation.csv"
 
     header_text = (
