@@ -25,23 +25,23 @@ import tsinfer
     help="Output directory",
 )
 @click.option("--out_prefix", "-p", type=str, required=True, help="Output file prefix")
-@click.option("--recombination_rate", "-r", type=float, default=1e-8, help="Uniform recombination rate")
+@click.option("--recombination_rate", "-r", type=float, default=None, help="Uniform recombination rate")
 @click.option(
     "--mmr_ancestors",
     "-a",
     type=float,
-    default=1,
+    default=None,
     help="Mismatch ratio used when matching ancestor haplotypes",
 )
 @click.option(
     "--mmr_samples",
     "-s",
     type=float,
-    default=1,
+    default=None,
     help="Mismatch ratio used when matching sample haplotypes",
 )
 @click.option(
-    "--num_threads", "-t", type=int, default=1, help="Number of threads to use"
+    "--num_threads", "-t", type=int, default=1, help="Number of CPUs"
 )
 def run_standard_tsinfer_pipeline(
     in_samples_file,
