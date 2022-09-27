@@ -1,3 +1,4 @@
+from os import remove
 import click
 from datetime import datetime
 import sys
@@ -150,9 +151,9 @@ def run_pipeline(
 
             # Get Minor Allele index and frequency from `ts_ref`.
             # Definition of a minor allele: MAF < 0.50.
-            ref_freqs = v_ref.frequencies()
-            ref_af_0 = ref_freqs[0]
-            ref_af_1 = ref_freqs[1]
+            ref_freqs = v_ref.frequencies(remove_missing=True) # Dict: allele -> frequency
+            ref_af_0 = ref_freqs[ref_ancestral_allele]
+            ref_af_1 = ref_freqs[ref_derived_allele]
 
             if ref_af_1 < ref_af_0:
                 ref_ma_index = 1
@@ -162,10 +163,10 @@ def run_pipeline(
                 ref_ma_freq = ref_af_0
 
             # Get Minor Allele index and frequency from `ts_imputed`.
-            imputed_freqs = v_imputed.frequencies()
-            imputed_af_0 = imputed_freqs[0]
-            imputed_af_1 = imputed_freqs[1]
-
+            imputed_freqs = v_imputed.frequencies(remove_missing=True)
+            imputed_af_0 = imputed_freqs[ref_ancestral_allele]
+            imputed_af_1 = imputed_freqs[ref_derived_allele] if imputed_af_0 < 1.0 else 0.0
+            
             if imputed_af_1 < imputed_af_0:
                 imputed_ma_index = 1
                 imputed_ma_freq = imputed_af_1
