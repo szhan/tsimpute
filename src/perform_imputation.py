@@ -187,6 +187,9 @@ def run_pipeline(
                 genotypes_imputed=v_imputed.genotypes,
                 ploidy=2,
             )
+            print(v_compat.genotypes)
+            print(v_imputed.genotypes)
+            print(iqs)
 
             # line.shape = (1, 7)
             line = np.array(
