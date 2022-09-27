@@ -2,6 +2,7 @@ import click
 from datetime import datetime
 import sys
 import numpy as np
+import tqdm
 import tskit
 import tsinfer
 
@@ -84,7 +85,7 @@ def run_pipeline(
     print("INFO: Making samples compatible with the ancestors tree sequence")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
 
-    for v in sd_compat.variants():
+    for v in tqdm.tqdm(sd_compat.variants()):
         if v.site.position not in chip_site_pos:
             mask_site_pos.append(v.site.position)
 
@@ -117,12 +118,12 @@ def run_pipeline(
     results = None
     num_non_biallelic_masked_sites = 0
 
-    for v_ref, v_compat, v_masked, v_imputed in zip(
+    for v_ref, v_compat, v_masked, v_imputed in tqdm.tqdm(zip(
         ts_ref.variants(),  # Reference genomes from which to get the minor allele and MAF
         sd_compat.variants(),  # Query genomes BEFORE site masking
         sd_masked.variants(),  # Query genomes AFTER site masking
         ts_imputed.variants(),  # Query genomes with imputed sites
-    ):
+    )):
         if v_imputed.site.position in mask_site_pos:
             if len(set(v_ref.alleles) - {None}) != 2:
                 num_non_biallelic_masked_sites += 1
