@@ -14,14 +14,14 @@ import util
 @click.command()
 @click.option(
     "--in_reference_trees_file",
-    "-r",
+    "-i1",
     type=click.Path(exists=True),
     required=True,
     help="Input tree sequence file with reference samples.",
 )
 @click.option(
     "--in_target_samples_file",
-    "-t",
+    "-i2",
     type=click.Path(exists=True),
     required=True,
     help="Input samples file with target samples.",
@@ -54,10 +54,10 @@ import util
     "--mmr_samples",
     "-s",
     type=float,
-    default=1,
+    default=None,
     help="Mismatch ratio used when matching sample haplotypes",
 )
-@click.option("--num_threads", type=int, default=1, help="Number of CPUs.")
+@click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs.")
 def run_pipeline(
     in_reference_trees_file,
     in_target_samples_file,
