@@ -157,8 +157,7 @@ def compute_iqs_diploid(gt_true, gt_imputed):
     for i, gt_i in enumerate(_POSSIBLE_GT_):
         for j, gt_j in enumerate(_POSSIBLE_GT_):
             k = i * num_possible_gt + j
-            print(gt_i)
-            print(gt_j)
+            print(gt_i, gt_j)
             counts[k] = np.sum(
                 np.equal(gt_true_reshaped, gt_i).all(axis=1)
                 & np.equal(gt_imputed_reshaped, gt_j).all(axis=1)
