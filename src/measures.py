@@ -182,9 +182,11 @@ def compute_iqs_diploid(gt_true, gt_imputed):
 
     # Observed agreement (i.e. overall concordance)
     Po = float(np.sum(counts.diagonal())) / float(n_t)
+    print(f"Po {Po}")
 
     # Chance agreement
     Pc = float(n_c.dot(n_r)) / float(n_t**2)
+    print(f"Pc {Pc}")
 
     assert 0 <= Po <= 1, f"Po {Po} is not a proportion."
     assert 0 <= Pc <= 1, f"Pc {Pc} is not a proportion."
