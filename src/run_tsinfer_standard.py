@@ -56,10 +56,10 @@ def run_standard_tsinfer_pipeline(
     :param str in_samples_file: Samples file used for tsinfer input.
     :param str out_dir: Output directory.
     :param str out_prefix: Prefix of output filenames.
-    :param float recombination_rate: Uniform genome-wide recombination rate.
-    :param float mmr_ancestors: Mismatch ratio used when matching ancestors.
-    :param float mmr_samples: Mismatch ratio used when matching samples.
-    :param int num_threads: Number of CPUs.
+    :param float recombination_rate: Uniform genome-wide recombination rate (default = None).
+    :param float mmr_ancestors: Mismatch ratio used when matching ancestors (default = None).
+    :param float mmr_samples: Mismatch ratio used when matching samples (default = None).
+    :param int num_threads: Number of CPUs (default = 1).
     """
     out_ancestors_file = out_dir + "/" + out_prefix + ".ancestors"
     out_ancestors_ts_file = out_dir + "/" + out_prefix + ".ancestors.trees"
