@@ -22,7 +22,7 @@ results = []
 for i in mmr_log10:
     for j in mmr_log10:
         prefix = "a" + str(mmr_log10[i]) + "s" + str(mmr_log10[j])
-        in_file = in_dir + "/" + prefix + ".imputation.csv"
+        in_file = in_dir + "/" + prefix + ".1Mb.imputation.csv"
         print(in_file)
         mean_iqs = parse_imputation_results_file(in_file)
         results.append((mmr_log10[i], mmr_log10[j], mean_iqs))
