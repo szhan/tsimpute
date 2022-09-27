@@ -166,7 +166,7 @@ def run_pipeline(
             imputed_freqs = v_imputed.frequencies(remove_missing=True)
             imputed_af_0 = imputed_freqs[ref_ancestral_allele]
             imputed_af_1 = imputed_freqs[ref_derived_allele] if imputed_af_0 < 1.0 else 0.0
-            
+
             if imputed_af_1 < imputed_af_0:
                 imputed_ma_index = 1
                 imputed_ma_freq = imputed_af_1
@@ -182,6 +182,7 @@ def run_pipeline(
             iqs = measures.compute_iqs(
                 genotypes_true=v_compat.genotypes,
                 genotypes_imputed=v_imputed.genotypes,
+                ploidy=1
             )
 
             # line.shape = (1, 7)
