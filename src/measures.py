@@ -29,8 +29,9 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
     """
     assert isinstance(genotypes_true, np.ndarray), f"Not a numpy.array"
     assert isinstance(genotypes_imputed, np.ndarray), f"Not a numpy.array"
-    assert len(genotypes_true) == len(genotypes_imputed), \
-        f"Genotype arrays are of unequal length."
+    assert len(genotypes_true) == len(
+        genotypes_imputed
+    ), f"Genotype arrays are of unequal length."
 
     if allele_state != None:
         allele_match_bool = np.isin(genotypes_true, allele_state)
@@ -87,8 +88,9 @@ def compute_iqs_haploid(genotypes_true, genotypes_imputed):
     :return: IQS.
     :rtype: float
     """
-    assert len(genotypes_true) == len(genotypes_imputed), \
-        f"Arrays of genotype are not of the same length."
+    assert len(genotypes_true) == len(
+        genotypes_imputed
+    ), f"Arrays of genotype are not of the same length."
 
     # Allele 0 imputed correctly as allele 0
     n00 = np.sum([y == 0 for x, y in zip(genotypes_imputed, genotypes_true) if x == 0])
@@ -136,55 +138,55 @@ def compute_iqs_diploid(genotypes_true, genotypes_imputed):
     :return: IQS.
     :rtype: float
     """
-    assert len(genotypes_true) == len(genotypes_imputed), \
-        f"Arrays of genotype are not of the same length."
-    assert len(genotypes_true) % 2 == 0, \
-        f"Not all genotypes are from diploid genomes."
+    assert len(genotypes_true) == len(
+        genotypes_imputed
+    ), f"Arrays of genotype are not of the same length."
+    assert len(genotypes_true) % 2 == 0, f"Not all genotypes are from diploid genomes."
 
-    num_alleles = len(genotypes_true)
+    AA = [0, 0]  # shorthand, 1
+    AB = [0, 1]  # shorthand, 2
+    BA = [1, 0]  # shorthand, 3
+    BB = [1, 1]  # shorthand, 4
+    _POSSIBLE_GENOTYPES_ = [AA, AB, BA, BB]
+
+    num_individuals = int(len(genotypes_true) / 2)
+    genotypes_true_reshaped = np.reshape(genotypes_true, (num_individuals, 2))
+    genotypes_imputed_reshaped = np.reshape(genotypes_imputed, (num_individuals, 2))
 
     # A denotes an ancestral allele, and B an derived allele.
-    # Genotype AA correctly imputed as AA
-    n11 = None
-    # Genotype AA wrongly imputed as AB
-    n12 = None
-    # Genotype AA wrongly imputed as BB
-    n13 = None
-    # Genotype AB wrongly imputed as AA
-    n21 = None
-    # Genotype AB correctly imputed as AB
-    n22 = None
-    # Genotype AB wrongly imputed as BB
-    n23 = None
-    # Genotype BB wrongly imputed as AA
-    n31 = None
-    # Genotype BB wrongly imputed as AB
-    n32 = None
-    # Genotype BB correctly imputed as BB
-    n33 = None
-    
-    # Marginal counts
-    n_1 = n11 + n21 + n31 # Total number of cases having genotype AA
-    n_2 = n12 + n22 + n32 # Total number of cases having genotype AB
-    n_3 = n13 + n23 + n33 # Total number of cases having genotype BB
-    n1_ = n11 + n12 + n13 # Total number of cases imputed as genotype AA
-    n2_ = n21 + n22 + n23 # Total number of cases imputed as genotype AB
-    n3_ = n31 + n32 + n33 # Total number of cases imputed as genotype BB
-
-    assert n_1 + n_2 + n_3 == n1_ + n2_ + n3_, \
-        f"Marginal counts do not add up."
+    counts = []
+    for i, gt_true in enumerate(_POSSIBLE_GENOTYPES_):
+        for j, gt_imputed in enumerate(_POSSIBLE_GENOTYPES_):
+            counts[i * len(_POSSIBLE_GENOTYPES_) + j] = np.sum(
+                np.equal(
+                    np.equal(genotypes_true_reshaped, gt_true).all(axis=1),
+                    np.equal(genotypes_imputed_reshaped, gt_imputed).all(axis=1),
+                )
+            )
+    counts = np.reshape(
+        np.array(counts),
+        (
+            len(_POSSIBLE_GENOTYPES_),
+            len(_POSSIBLE_GENOTYPES_),
+        ),
+    )
 
     # Total count
-    n__ = n_1 + n_2 + n_3
+    n_t = np.sum(counts)
+
+    # Marginal counts
+    n_c = np.sum(counts, axis=0)
+    n_r = np.sum(counts, axis=1)
+    assert np.sum(n_c) == np.sum(n_r), f"Marginal counts do not add up."
 
     # Observed agreement (i.e. overall concordance)
-    Po = float(n11 + n22 + n33) / float(n__)
+    Po = float(np.sum(counts.diagonal())) / float(n_t)
 
     # Chance agreement
-    Pc = float(n1_ * n_1 + n2_ * n_2 + n3_ * n_3) / float(n__ * n__)
+    Pc = float(n_c.dot(n_r)) / float(n_t * n_t)
 
-    assert Po >= 0 and Po <= 1, f"Po {Po} is not a proportion."
-    assert Pc >= 0 and Pc <= 1, f"Pc {Pc} is not a proportion."
+    assert 0 <= Po <= 1, f"Po {Po} is not a proportion."
+    assert 0 <= Pc <= 1, f"Pc {Pc} is not a proportion."
 
     iqs = float("nan") if Pc == 1 else (Po - Pc) / (1 - Pc)
 
