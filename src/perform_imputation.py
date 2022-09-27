@@ -230,10 +230,10 @@ def run_pipeline(
     header_text += ",".join(
         [
             "position",
-            "ref_ma_index",
-            "ref_ma_freq",
-            "imputed_ma_index",
-            "imputed_ma_freq",
+            "ref_minor_allele_index",
+            "ref_minor_allele_freq",
+            "imputed_minor_allele_index",
+            "imputed_minor_allele_freq",
             "total_concordance",
             "iqs",
         ]
