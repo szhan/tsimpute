@@ -126,49 +126,47 @@ def compute_iqs_haploid(genotypes_true, genotypes_imputed):
     return iqs
 
 
-def compute_iqs_diploid(genotypes_true, genotypes_imputed):
+def compute_iqs_diploid(gt_true, gt_imputed):
     """
-    Calculate the IQS between `genotypes_true` and `genotypes_imputed`.
+    Calculate the IQS between `gt_true` and `gt_imputed`.
 
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in DIPLOID genomes.
 
     TODO: Generalize to handle multiallelic sites.
 
-    :param np.ndarray genotypes_true: A list of alleles from ground-truth genotypes.
-    :param np.ndarray genotypes_imputed: A list of alleles from imputed genotypes.
+    :param np.ndarray gt_true: A list of alleles from ground-truth genotypes.
+    :param np.ndarray gt_imputed: A list of alleles from imputed genotypes.
     :return: IQS.
     :rtype: float
     """
-    assert len(genotypes_true) == len(
-        genotypes_imputed
-    ), f"Genotype arrays differ in size."
-    assert len(genotypes_true) % 2 == 0, f"Not all genotypes are diploid."
+    assert len(gt_true) == len(gt_imputed), f"Genotype arrays differ in size."
+    assert len(gt_true) % 2 == 0, f"Not all genotypes are diploid."
 
     AA = [0, 0]  # shorthand, 1
     AB = [0, 1]  # shorthand, 2
     BA = [1, 0]  # shorthand, 3
     BB = [1, 1]  # shorthand, 4
-    _POSSIBLE_GENOTYPES_ = [AA, AB, BA, BB]
+    _POSSIBLE_GT_ = [AA, AB, BA, BB]
 
-    num_individuals = int(len(genotypes_true) / 2)
-    genotypes_true_reshaped = np.reshape(genotypes_true, (num_individuals, 2))
-    genotypes_imputed_reshaped = np.reshape(genotypes_imputed, (num_individuals, 2))
+    num_individuals = int(len(gt_true) / 2)
+    gt_true_reshaped = np.reshape(gt_true, (num_individuals, 2))
+    gt_imputed_reshaped = np.reshape(gt_imputed, (num_individuals, 2))
 
     # Ancestral allele is denoted by A, and derived allele by B.
-    counts = np.empty(len(_POSSIBLE_GENOTYPES_) ** 2)
-    for i, gt_true in enumerate(_POSSIBLE_GENOTYPES_):
-        for j, gt_imputed in enumerate(_POSSIBLE_GENOTYPES_):
-            k = i * len(_POSSIBLE_GENOTYPES_) + j
+    counts = np.empty(len(_POSSIBLE_GT_) ** 2)
+    for i, gt_i in enumerate(_POSSIBLE_GT_):
+        for j, gt_j in enumerate(_POSSIBLE_GT_):
+            k = i * len(_POSSIBLE_GT_) + j
             counts[k] = np.sum(
-                np.equal(genotypes_true_reshaped, gt_true).all(axis=1) &
-                np.equal(genotypes_imputed_reshaped, gt_imputed).all(axis=1)
+                np.equal(gt_true_reshaped, gt_i).all(axis=1) &
+                np.equal(gt_imputed_reshaped, gt_j).all(axis=1)
             )
     counts = np.reshape(
         counts,
         (
-            len(_POSSIBLE_GENOTYPES_),
-            len(_POSSIBLE_GENOTYPES_),
+            len(_POSSIBLE_GT_),
+            len(_POSSIBLE_GT_),
         ),
     )
 
