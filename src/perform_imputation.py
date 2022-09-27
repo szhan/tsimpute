@@ -185,7 +185,7 @@ def run_pipeline(
             iqs = measures.compute_iqs(
                 genotypes_true=v_compat.genotypes,
                 genotypes_imputed=v_imputed.genotypes,
-                ploidy=1,
+                ploidy=2,
             )
 
             # line.shape = (1, 7)
