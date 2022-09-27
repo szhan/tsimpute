@@ -161,6 +161,7 @@ def compute_iqs_diploid(gt_true, gt_imputed):
                 np.equal(gt_true_reshaped, gt_i).all(axis=1)
                 & np.equal(gt_imputed_reshaped, gt_j).all(axis=1)
             )
+    print(counts)
     counts = np.reshape(
         counts,
         (
