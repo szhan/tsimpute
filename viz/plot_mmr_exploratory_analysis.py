@@ -9,7 +9,7 @@ def parse_imputation_results_file(in_file):
     :rtype: float
     """
     df_full = pd.read_csv(in_file, comment="#")
-    df_full = df_full[df_full.notna()]
+    df_full = df_full[df_full["iqs"].notna()]
     df_subset = df_full[df_full["ref_minor_allele_freq"] == 0]
     assert df_subset.shape[0] == df_full.shape[0], \
         f"Some {df_subset.shape[0]} sites have no minor allele, " \
