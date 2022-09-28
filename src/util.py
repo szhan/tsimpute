@@ -214,18 +214,20 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
 
         sd_site_id = sd_v.site.id  # Site id in `sample_data`
 
-        # CHECK that all the sites in `ancestors_ts` are biallelic.
-        assert len(ts_site.alleles) == 2
+        assert len(ts_site.alleles) == 2, \
+            f"Site {ts_site.position} is non-biallelic."
 
         # Get the derived allele in `ancestors_ts` in nucleotide space
         ts_ancestral_allele = ts_site.ancestral_state
         ts_derived_allele = ts_site.alleles - {ts_ancestral_allele}
-        assert len(ts_derived_allele) == 1  # CHECK
+        assert len(ts_derived_allele) == 1, \
+            f"Multiple derived alleles at site {ts_site.position}."
         ts_derived_allele = tuple(ts_derived_allele)[0]
 
         # CHECK that the ancestral allele should be the same
         # in both `ancestors_ts` and `sample_data`.
-        assert ts_ancestral_allele == sd_v.alleles[0]
+        assert ts_ancestral_allele == sd_v.alleles[0], \
+            f"Ancestral alleles are different at site {ts_site.position}."
 
         if ts_derived_allele not in sd_v.alleles:
             # Case 1:
