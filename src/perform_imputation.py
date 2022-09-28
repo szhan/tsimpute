@@ -93,7 +93,7 @@ def run_pipeline(
     else:
         # The samples argument is not actually used.
         ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            samples=None, ts=ts_ref, remove_leaves=True
+            samples=None, ts=ts_ref, remove_leaves=remove_leaves
         )
 
     print("INFO: Making samples compatible with the ancestors tree sequence")

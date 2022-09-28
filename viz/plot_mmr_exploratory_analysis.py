@@ -1,5 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 
 
 def parse_imputation_results_file(in_file):
@@ -18,7 +17,7 @@ def parse_imputation_results_file(in_file):
     return mean_iqs
 
 
-in_dir = "../analysis/tuning/imputed/"
+in_dir = "../analysis/tuning/imputed_leaves_kept/"
 
 mmr_log10 = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]
 results = []
