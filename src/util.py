@@ -388,6 +388,8 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     # Case 2b:
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Align them by flipping the alleles in `sample_data`.
+                    print(f"2b {ts_site.alleles}")
+                    print(f"2b {sd_site_alleles}")
                     num_case_2b += 1
                     sd_site_gt = sample_data.sites_genotypes[sd_site_id]
                     new_gt = np.where(
