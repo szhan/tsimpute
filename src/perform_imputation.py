@@ -183,8 +183,8 @@ def run_pipeline(
                 genotypes_imputed=v_imputed.genotypes,
             )
             iqs = measures.compute_iqs(
-                genotypes_true=v_compat.genotypes,
-                genotypes_imputed=v_imputed.genotypes,
+                gt_true=v_compat.genotypes,
+                gt_imputed=v_imputed.genotypes,
                 ploidy=2,
             )
 

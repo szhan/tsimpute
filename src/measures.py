@@ -47,7 +47,7 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
     return concordance
 
 
-def compute_iqs(genotypes_true, genotypes_imputed, ploidy):
+def compute_iqs(gt_true, gt_imputed, ploidy):
     """
     Calculate the Imputation Quality Score (IQS) as proposed by Lin et al. (2010).
     https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0009697
@@ -60,8 +60,8 @@ def compute_iqs(genotypes_true, genotypes_imputed, ploidy):
     Two formulas are used to compute the IQS of imputed genotypes at biallelic sites,
     one for haploid genomes and the other for diploid genomes.
 
-    :param np.ndarray genotypes_true: A list of alleles from ground-truth genotypes.
-    :param np.ndarray genotypes_imputed: A list of alleles from imputed genotypes.
+    :param np.ndarray gt_true: A list of alleles from ground-truth genotypes.
+    :param np.ndarray gt_imputed: A list of alleles from imputed genotypes.
     :ploidy int: Ploidy (1 or 2).
     :return: IQS.
     :rtype: float
@@ -69,9 +69,9 @@ def compute_iqs(genotypes_true, genotypes_imputed, ploidy):
     assert ploidy in [1, 2], f"Ploidy {ploidy} is invalid."
 
     if ploidy == 1:
-        iqs = compute_iqs_haploid(genotypes_true, genotypes_imputed)
+        iqs = compute_iqs_haploid(gt_true, gt_imputed)
     else:
-        iqs = compute_iqs_diploid(genotypes_true, genotypes_imputed)
+        iqs = compute_iqs_diploid(gt_true, gt_imputed)
 
     return iqs
 
