@@ -198,7 +198,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     :return: A SampleData object compatible with the ancestors TreeSequence.
     :rtype: tsinfer.SampleData
     """
-    new_sample_data = sample_data.copy(path=None)
+    new_sample_data = sample_data.copy(path=path)
 
     # Iterate through the sites in `ancestors_ts` using one generator,
     # while iterating through the sites in `sample_data` using another generator,
