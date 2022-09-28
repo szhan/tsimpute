@@ -317,6 +317,12 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     sd_site_pos = sample_data.sites_position[:]
     all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
 
+    num_case_1 = 0
+    num_case_2a = 0
+    num_case_2b = 0
+    num_case_2c = 0
+    num_case_3 = 0
+
     with tsinfer.SampleData(sequence_length=ancestors_ts.sequence_length) as new_sd:
         # Add populations
         # TODO: Allow for more populations to be added.
@@ -336,6 +342,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 # Case 1:
                 # Site found in `ancestors_ts` but not `sample_data`
                 # Add the site to `new_sample_data` with all genotypes MISSING.
+                num_case_1 += 1
                 ts_site = ancestors_ts.site(position=pos)
                 assert (
                     len(ts_site.alleles) == 2
@@ -367,6 +374,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     # Case 2a:
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Already aligned, so no need to realign.
+                    num_case_2a += 1
                     new_sd.add_site(
                         position=pos,
                         genotypes=sample_data.sites_genotypes[sd_site_id],
@@ -376,6 +384,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     # Case 2b:
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Align them by flipping the alleles in `sample_data`.
+                    num_case_2b += 1
                     sd_site_gt = sample_data.sites_genotypes[sd_site_id]
                     new_gt = np.where(
                         sd_site_gt == tskit.MISSING_DATA,
@@ -392,6 +401,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     # The allele(s) present in `sample_data` but absent in `ancestor_ts`
                     # is always incorrectly imputed.
                     # It is best to ignore these sites when assess imputation performance.
+                    num_case_2c += 1
                     new_sd.add_site(
                         position=pos,
                         genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
@@ -401,6 +411,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 # Case 3:
                 # Site found in `sample_data` but not `ancestors_ts`
                 # Add the site to `new_sample_data` with the original genotypes from `sample_data`.
+                num_case_3 += 1
                 sd_site_id = sd_site_pos.tolist().index(pos)
                 sd_site_alleles = sample_data.sites_alleles[sd_site_id]
                 assert (
@@ -416,4 +427,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     f"Position {pos} must be in the tree sequence and/or sample data."
                 )
 
+    print(f"Case 1 : {num_case_1}")
+    print(f"Case 2a: {num_case_2a}")
+    print(f"Case 2b: {num_case_2b}")
+    print(f"Case 2c: {num_case_2c}")
+    print(f"Case 3 : {num_case_3}")
+    
     return new_sd
