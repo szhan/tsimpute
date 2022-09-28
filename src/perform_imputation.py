@@ -188,11 +188,6 @@ def run_pipeline(
                 ploidy=2,
             )
 
-            if 0 < float(np.sum(v_imputed.genotypes) / len(v_imputed.genotypes)) < 1:
-                print(v_compat.genotypes)
-                print(v_imputed.genotypes)
-                print(iqs)
-
             # line.shape = (1, 7)
             line = np.array(
                 [
