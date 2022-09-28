@@ -331,7 +331,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
             )
 
         # Add sites
-        for pos in tqdm(all_site_pos):
+        for pos in tqdm.tqdm(all_site_pos):
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1:
                 # Site found in `ancestors_ts` but not `sample_data`
