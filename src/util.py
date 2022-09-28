@@ -298,7 +298,7 @@ def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
 
 def make_compatible_sample_data(sample_data, ancestors_ts):
     """
-    Make an editable copy of a `sample_data` object, and edit it so that:
+    Make a new SampleData object from an existing SampleData object such that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
     (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
     (3) sites in `ancestors_ts` but not in `sample_data` are added to `new_sample_data` with all the genotypes MISSING.
@@ -310,7 +310,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
 
     :param tsinfer.SampleData sample_data:
     :param tskit.TreeSequence ancestors_ts:
-    :return: An edited copy of sample_data.
+    :return: A new SampleData object.
     :rtype: tsinfer.SampleData
     """
     ts_site_pos = ancestors_ts.sites_position
