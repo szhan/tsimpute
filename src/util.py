@@ -317,6 +317,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     sd_site_pos = sample_data.sites_position[:]
     all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
 
+    print(f"TS : {len(ts_site_pos)}")
+    print(f"SD : {len(sd_site_pos)}")
+    print(f"ALL: {len(all_site_pos)}")
+
     num_case_1 = 0
     num_case_2a = 0
     num_case_2b = 0
@@ -338,6 +342,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
 
         # Add sites
         for pos in tqdm.tqdm(all_site_pos):
+            print(pos)
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1:
                 # Site found in `ancestors_ts` but not `sample_data`
@@ -432,5 +437,5 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     print(f"Case 2b: {num_case_2b}")
     print(f"Case 2c: {num_case_2c}")
     print(f"Case 3 : {num_case_3}")
-    
+
     return new_sd
