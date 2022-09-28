@@ -179,8 +179,8 @@ def run_pipeline(
 
             # Assess imputation performance
             total_concordance = measures.compute_concordance(
-                genotypes_true=v_compat.genotypes,
-                genotypes_imputed=v_imputed.genotypes,
+                gt_true=v_compat.genotypes,
+                gt_imputed=v_imputed.genotypes,
             )
             iqs = measures.compute_iqs(
                 gt_true=v_compat.genotypes,
