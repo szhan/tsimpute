@@ -347,7 +347,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 # Site found in `ancestors_ts` but not `sample_data`
                 # Add the site to `new_sample_data` with all genotypes MISSING.
                 num_case_1 += 1
-                
+
                 ts_site = ancestors_ts.site(position=pos)
                 assert (
                     len(ts_site.alleles) == 2
@@ -378,7 +378,9 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     len(sd_site_alleles) == 2
                 ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}"
 
-                # Note: ts_site.alleles is an unordered set of alleles (without None).
+                # Notes
+                # ts_site.alleles is an unordered set of alleles (without None).
+                # sd_site_alleles is an ordered list of alleles.
                 if [ts_ancestral_state, ts_derived_state] == sd_site_alleles:
                     # Case 2a:
                     # Both alleles are in `ancestors_ts` and `sample_data`.
@@ -390,7 +392,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                         genotypes=sample_data.sites_genotypes[sd_site_id],
                         alleles=[ts_ancestral_state, ts_derived_state],
                     )
-                elif set(ts_site.alleles) == set(sd_site_alleles):
+                elif ts_site.alleles == set(sd_site_alleles):
                     # Case 2b:
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Align them by flipping the alleles in `sample_data`.
@@ -438,9 +440,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     alleles=sample_data.sites_alleles[sd_site_id],
                 )
             else:
-                raise ValueError(
-                    f"Site position {pos} must be in the ts and/or sd."
-                )
+                raise ValueError(f"Site position {pos} must be in the ts and/or sd.")
 
     print(f"Case 1 : {num_case_1}")
     print(f"Case 2a: {num_case_2a}")
