@@ -94,6 +94,7 @@ def run_pipeline(
         sd_compat.sites_position[:], chip_site_pos, assume_unique=True, invert=True
     )
     mask_site_pos = sd_compat.sites_position[:][sd_compat_sites_isnotin_chip]
+    print(mask_site_pos)
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
