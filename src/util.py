@@ -318,6 +318,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
 
     with tsinfer.SampleData(sequence_length=ancestors_ts.sequence_length) as new_sd:
+        # Add populations
+        # TODO: Allow for more populations to be added.
+        new_sd.add_population()
+
         # Add individuals
         for ind in sample_data.individuals():
             new_sd.add_individual(
