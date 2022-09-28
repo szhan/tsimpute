@@ -31,12 +31,5 @@ for i in mmr_log10:
         results.append((mmr_log10[i], mmr_log10[j], mean_iqs))
 
 results = pd.DataFrame(results, columns=["mmr_ancestors", "mmr_samples", "mean_iqs"])
-print(results)
 
-#grid_data = mean_vals.pivot("mismatch_ancestors", "mismatch_samples", "mean_iqs")
-#plt.contourf(grid_data.columns, grid_data.index, grid_data, 20, cmap='viridis')
-#plt.xscale("log")
-#plt.xlabel(grid_data.columns.name)
-#plt.yscale("log")
-#plt.ylabel(grid_data.index.name)
-#plt.show()
+results.to_csv("imputation.aggregated.csv")
