@@ -78,9 +78,7 @@ def check_site_positions_ts_issubset_sd(ts, sd):
         return False
 
 
-def compare_sites_sd_and_ts(
-    sd, ts, is_common, check_matching_ancestral_state=True
-):
+def compare_sites_sd_and_ts(sd, ts, is_common, check_matching_ancestral_state=True):
     """
     If `is_common` is set to True, then get the IDs and positions of the sites
     found in `sd` AND in `ts`.
@@ -157,10 +155,9 @@ def count_inference_sites(ts):
     :rtype: int
     """
     non_inference_sites = [
-        s.id for s in ts.sites()
-        if json.loads(s.metadata)["inference_type"] != "full"
+        s.id for s in ts.sites() if json.loads(s.metadata)["inference_type"] != "full"
     ]
-    
+
     return ts.num_sites - len(non_inference_sites)
 
 
@@ -173,18 +170,19 @@ def is_biallelic(ts_or_sd):
     :return: True if all sites are biallelic, otherwise False.
     :rtype: bool
     """
-    assert isinstance(ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData)), \
-        f"Object type is invalid."
+    assert isinstance(
+        ts_or_sd, (tskit.TreeSequence, tsinfer.SampleData)
+    ), f"Object type is invalid."
 
     for v in ts_or_sd.variants():
         num_alleles = len(set(v.alleles) - {None})
         if num_alleles != 2:
             return False
-    
+
     return True
 
 
-def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
+def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
     """
     Make an editable copy of a SampleData object, and edit it so that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
@@ -215,20 +213,21 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
 
         sd_site_id = sd_v.site.id  # Site id in `sample_data`
 
-        assert len(ts_site.alleles) == 2, \
-            f"Site {ts_site.position} is non-biallelic."
+        assert len(ts_site.alleles) == 2, f"Site {ts_site.position} is non-biallelic."
 
         # Get the derived allele in `ancestors_ts` in nucleotide space
         ts_ancestral_allele = ts_site.ancestral_state
         ts_derived_allele = ts_site.alleles - {ts_ancestral_allele}
-        assert len(ts_derived_allele) == 1, \
-            f"Multiple derived alleles at site {ts_site.position}."
+        assert (
+            len(ts_derived_allele) == 1
+        ), f"Multiple derived alleles at site {ts_site.position}."
         ts_derived_allele = tuple(ts_derived_allele)[0]
 
         # CHECK that the ancestral allele should be the same
         # in both `ancestors_ts` and `sample_data`.
-        assert ts_ancestral_allele == sd_v.alleles[0], \
-            f"Ancestral alleles are different at site {ts_site.position}."
+        assert (
+            ts_ancestral_allele == sd_v.alleles[0]
+        ), f"Ancestral alleles are different at site {ts_site.position}."
 
         if ts_derived_allele not in sd_v.alleles:
             # Case 1:
@@ -295,3 +294,122 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     new_sample_data.finalise()
 
     return new_sample_data
+
+
+def make_compatible_sample_data(sample_data, ancestors_ts):
+    """
+    Make an editable copy of a `sample_data` object, and edit it so that:
+    (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
+    (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
+    (3) sites in `ancestors_ts` but not in `sample_data` are added to `new_sample_data` with all the genotypes MISSING.
+
+    All the sites in `sample_data` and `ancestors_ts` must be biallelic.
+
+    Note. Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
+    which are not explained in the tsinfer API doc, are used to facilitate the editing.
+
+    :param tsinfer.SampleData sample_data:
+    :param tskit.TreeSequence ancestors_ts:
+    :return: An edited copy of sample_data.
+    :rtype: tsinfer.SampleData
+    """
+    ts_site_pos = ancestors_ts.sites_position
+    sd_site_pos = sample_data.sites_position[:]
+    all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
+
+    with tsinfer.SampleData(sequence_length=ancestors_ts.sequence_length) as new_sd:
+        # Add individuals
+        for ind in sample_data.individuals():
+            new_sd.add_individual(
+                ploidy=len(ind.samples),
+                population=ind.population,
+                metadata=ind.metadata,
+            )
+
+        # Add sites
+        for pos in tqdm(all_site_pos):
+            if pos in ts_site_pos and pos not in sd_site_pos:
+                # Case 1:
+                # Site found in `ancestors_ts` but not `sample_data`
+                # Add the site to `new_sample_data` with all genotypes MISSING.
+                ts_site = ancestors_ts.site(position=pos)
+                assert (
+                    len(ts_site.alleles) == 2
+                ), f"Non-biallelic site {ts_site.alleles}"
+                ts_ancestral_state = ts_site.ancestral_state
+                ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
+                new_sd.add_site(
+                    position=pos,
+                    genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
+                    alleles=[ts_ancestral_state, ts_derived_state],
+                )
+            elif pos in ts_site_pos and pos in sd_site_pos:
+                # Case 2:
+                # Site found in both `ancestors_ts` and `sample_data`
+                # Align the allele lists and genotypes if unaligned.
+                # Add the site to `new_sample_data` with (aligned) genotypes from `sample_data`.
+                ts_site = ancestors_ts.site(position=pos)
+                sd_site_id = sd_site_pos.tolist().index(pos)
+                sd_site_alleles = sample_data.sites_alleles[sd_site_id]
+                assert (
+                    len(ts_site.alleles) == 2
+                ), f"Non-biallelic site {ts_site.alleles}"
+                assert (
+                    len(set(sd_site_alleles) - {None}) == 2
+                ), f"Non-biallelic site {sd_site_alleles}"
+                ts_ancestral_state = ts_site.ancestral_state
+                ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
+                if list(ts_site.alleles) == sd_site_alleles:
+                    # Case 2a:
+                    # Both alleles are in `ancestors_ts` and `sample_data`.
+                    # Already aligned, so no need to realign.
+                    new_sd.add_site(
+                        position=pos,
+                        genotypes=sample_data.sites_genotypes[sd_site_id],
+                        alleles=[ts_ancestral_state, ts_derived_state],
+                    )
+                elif set(ts_site.alleles) == set(sd_site_alleles):
+                    # Case 2b:
+                    # Both alleles are in `ancestors_ts` and `sample_data`.
+                    # Align them by flipping the alleles in `sample_data`.
+                    sd_site_gt = sample_data.sites_genotypes[sd_site_id]
+                    new_gt = np.where(
+                        sd_site_gt == tskit.MISSING_DATA,
+                        tskit.MISSING_DATA,
+                        np.where(sd_site_gt == 0, 1, 0),  # Flip
+                    )
+                    new_sd.add_site(
+                        position=pos,
+                        genotypes=new_gt,
+                        alleles=[ts_ancestral_state, ts_derived_state],
+                    )
+                else:
+                    # Case 2c:
+                    # The allele(s) present in `sample_data` but absent in `ancestor_ts`
+                    # is always incorrectly imputed.
+                    # It is best to ignore these sites when assess imputation performance.
+                    new_sd.add_site(
+                        position=pos,
+                        genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
+                        alleles=[ts_ancestral_state, ts_derived_state],
+                    )
+            elif pos not in ts_site_pos and pos in sd_site_pos:
+                # Case 3:
+                # Site found in `sample_data` but not `ancestors_ts`
+                # Add the site to `new_sample_data` with the original genotypes from `sample_data`.
+                sd_site_id = sd_site_pos.tolist().index(pos)
+                sd_site_alleles = sample_data.sites_alleles[sd_site_id]
+                assert (
+                    len(set(sd_site_alleles) - {None}) == 2
+                ), f"Non-biallelic site {sd_site_alleles}"
+                new_sd.add_site(
+                    position=pos,
+                    genotypes=sample_data.sites_genotypes[sd_site_id],
+                    alleles=sample_data.sites_alleles[sd_site_id],
+                )
+            else:
+                raise ValueError(
+                    f"Position {pos} must be in the tree sequence and/or sample data."
+                )
+
+    return new_sd
