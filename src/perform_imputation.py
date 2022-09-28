@@ -188,7 +188,7 @@ def run_pipeline(
                 ploidy=2,
             )
 
-            if 0 <= np.sum(v_imputed.genotypes) <= 1:
+            if 0 < np.sum(v_imputed.genotypes) < 1:
                 print(v_compat.genotypes)
                 print(v_imputed.genotypes)
                 print(iqs)
