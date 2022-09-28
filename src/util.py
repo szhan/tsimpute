@@ -347,12 +347,14 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 # Site found in `ancestors_ts` but not `sample_data`
                 # Add the site to `new_sample_data` with all genotypes MISSING.
                 num_case_1 += 1
+                
                 ts_site = ancestors_ts.site(position=pos)
                 assert (
                     len(ts_site.alleles) == 2
-                ), f"Non-biallelic site {ts_site.alleles}"
+                ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
                 ts_ancestral_state = ts_site.ancestral_state
                 ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
+
                 new_sd.add_site(
                     position=pos,
                     genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
@@ -364,21 +366,25 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 # Align the allele lists and genotypes if unaligned.
                 # Add the site to `new_sample_data` with (aligned) genotypes from `sample_data`.
                 ts_site = ancestors_ts.site(position=pos)
+                assert (
+                    len(ts_site.alleles) == 2
+                ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
+                ts_ancestral_state = ts_site.ancestral_state
+                ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
+
                 sd_site_id = sd_site_pos.tolist().index(pos)
                 sd_site_alleles = sample_data.sites_alleles[sd_site_id]
                 assert (
-                    len(ts_site.alleles) == 2
-                ), f"Non-biallelic site {ts_site.alleles}"
-                assert (
-                    len(set(sd_site_alleles) - {None}) == 2
-                ), f"Non-biallelic site {sd_site_alleles}"
-                ts_ancestral_state = ts_site.ancestral_state
-                ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
-                if list(ts_site.alleles) == sd_site_alleles:
+                    len(sd_site_alleles) == 2
+                ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}"
+
+                # Note: ts_site.alleles is an unordered set of alleles (without None).
+                if [ts_ancestral_state, ts_derived_state] == sd_site_alleles:
                     # Case 2a:
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Already aligned, so no need to realign.
                     num_case_2a += 1
+
                     new_sd.add_site(
                         position=pos,
                         genotypes=sample_data.sites_genotypes[sd_site_id],
@@ -388,15 +394,15 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     # Case 2b:
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Align them by flipping the alleles in `sample_data`.
-                    print(f"2b {ts_site.alleles}")
-                    print(f"2b {sd_site_alleles}")
                     num_case_2b += 1
+
                     sd_site_gt = sample_data.sites_genotypes[sd_site_id]
                     new_gt = np.where(
                         sd_site_gt == tskit.MISSING_DATA,
                         tskit.MISSING_DATA,
                         np.where(sd_site_gt == 0, 1, 0),  # Flip
                     )
+
                     new_sd.add_site(
                         position=pos,
                         genotypes=new_gt,
@@ -408,6 +414,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                     # is always incorrectly imputed.
                     # It is best to ignore these sites when assess imputation performance.
                     num_case_2c += 1
+
                     new_sd.add_site(
                         position=pos,
                         genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
@@ -418,11 +425,13 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 # Site found in `sample_data` but not `ancestors_ts`
                 # Add the site to `new_sample_data` with the original genotypes from `sample_data`.
                 num_case_3 += 1
+
                 sd_site_id = sd_site_pos.tolist().index(pos)
                 sd_site_alleles = sample_data.sites_alleles[sd_site_id]
                 assert (
-                    len(set(sd_site_alleles) - {None}) == 2
-                ), f"Non-biallelic site {sd_site_alleles}"
+                    len(sd_site_alleles) == 2
+                ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}."
+
                 new_sd.add_site(
                     position=pos,
                     genotypes=sample_data.sites_genotypes[sd_site_id],
@@ -430,7 +439,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 )
             else:
                 raise ValueError(
-                    f"Position {pos} must be in the tree sequence and/or sample data."
+                    f"Site position {pos} must be in the ts and/or sd."
                 )
 
     print(f"Case 1 : {num_case_1}")
