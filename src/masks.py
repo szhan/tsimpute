@@ -74,6 +74,6 @@ def parse_site_position_file(in_file):
     with open(in_file, "rt") as f:
         for line in f:
             chr, pos = line.rstrip().split("\t")
-            site_pos.append(pos)
+            site_pos.append(int(pos))
     
     return np.array(site_pos)
