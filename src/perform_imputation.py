@@ -177,6 +177,8 @@ def run_pipeline(
                 imputed_ma_index = 0
                 imputed_ma_freq = imputed_af_0
 
+            assert np.sum(v_imputed.genotypes) == 0
+            
             # Assess imputation performance
             total_concordance = measures.compute_concordance(
                 genotypes_true=v_compat.genotypes,
