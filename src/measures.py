@@ -162,7 +162,7 @@ def compute_iqs_diploid(gt_true, gt_imputed):
                 np.equal(gt_true_reshaped, gt_i).all(axis=1)
                 & np.equal(gt_imputed_reshaped, gt_j).all(axis=1)
             )
-    print(counts)
+
     counts = np.reshape(
         counts,
         (
@@ -182,13 +182,9 @@ def compute_iqs_diploid(gt_true, gt_imputed):
 
     # Observed agreement (i.e. overall concordance)
     Po = float(np.sum(counts.diagonal())) / float(n_t)
-    print(f"Po {Po}")
 
     # Chance agreement
     Pc = float(n_c.dot(n_r)) / float(n_t**2)
-    print(n_c)
-    print(n_r)
-    print(f"Pc {Pc}")
 
     assert 0 <= Po <= 1, f"Po {Po} is not a proportion."
     assert 0 <= Pc <= 1, f"Pc {Pc} is not a proportion."
