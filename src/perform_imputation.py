@@ -88,12 +88,13 @@ def run_pipeline(
         )
 
     print("INFO: Making samples compatible with the ancestors tree sequence")
-    sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
+    sd_compat = util.make_compatible_sample_data(sd_target, ts_anc, path="sd_compat.samples")
 
     sd_compat_sites_isnotin_chip = np.isin(
         sd_compat.sites_position[:], chip_site_pos, assume_unique=True, invert=True
     )
     mask_site_pos = sd_compat.sites_position[:][sd_compat_sites_isnotin_chip]
+    print(chip_site_pos)
     print(mask_site_pos)
 
     assert (
