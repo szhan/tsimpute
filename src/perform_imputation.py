@@ -58,6 +58,12 @@ import util
     default=None,
     help="Mismatch ratio used when matching sample haplotypes",
 )
+@click.option(
+    "--remove_leaves",
+    type=bool,
+    default=False,
+    help="Remove leaves when generate an ancestors tree?",
+)
 @click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs.")
 def run_pipeline(
     in_reference_trees_file,
@@ -67,6 +73,7 @@ def run_pipeline(
     out_prefix,
     recombination_rate,
     mmr_samples,
+    remove_leaves,
     num_threads,
 ):
     print("INFO: START")
@@ -80,7 +87,9 @@ def run_pipeline(
 
     print("INFO: Making ancestors tree sequence")
     if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
+        ts_anc = tsinfer.eval_util.make_ancestors_ts(
+            ts=ts_ref, remove_leaves=remove_leaves
+        )
     else:
         # The samples argument is not actually used.
         ts_anc = tsinfer.eval_util.make_ancestors_ts(
