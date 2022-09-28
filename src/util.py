@@ -184,7 +184,7 @@ def is_biallelic(ts_or_sd):
     return True
 
 
-def make_compatible_sample_data(sample_data, ancestors_ts):
+def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     """
     Make an editable copy of a SampleData object, and edit it so that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
@@ -198,7 +198,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     :return: A SampleData object compatible with the ancestors TreeSequence.
     :rtype: tsinfer.SampleData
     """
-    new_sample_data = sample_data.copy()
+    new_sample_data = sample_data.copy(path=None)
 
     # Iterate through the sites in `ancestors_ts` using one generator,
     # while iterating through the sites in `sample_data` using another generator,
