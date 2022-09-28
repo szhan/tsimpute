@@ -4,16 +4,16 @@ Calculate various metrics to assess imputation performance.
 import numpy as np
 
 
-def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
+def compute_concordance(gt_true, gt_imputed, allele_state=None):
     """
     Calculate the total concordance (sometimes referred to as imputation accuracy) between
-    `genotypes_true` and `genotypes_imputed`.
+    `gt_true` and `gt_imputed`.
 
     Random agreement can inflate total concordance when MAF is low, so interpretation of
     total concordance should be done with caution.
 
     If `allele_state` is specified, then concordance is calculated based on the elements in
-    `genotypes_true` and `genotypes_imputed` where `genotypes_true` is equal to `allele_state`.
+    `gt_true` and `gt_imputed` where `gt_true` is equal to `allele_state`.
     For example, this can be used to calculate non-reference disconcordance.
 
     This metric may be suitable for sample-wise (per genome) or site-wise (across genomes)
@@ -21,30 +21,36 @@ def compute_concordance(genotypes_true, genotypes_imputed, allele_state=None):
 
     WARNING: This assumes haploid genomes.
 
-    :param np.ndarray genotypes_true: List of alleles from ground-truth genotypes.
-    :param np.ndarray genotypes_imputed: List of alleles from imputed genotypes.
-    :param allele: Specify allele state to consider (default = None).
-    :return: Tota concordance.
+    :param np.ndarray gt_true: List of alleles from ground-truth genotypes.
+    :param np.ndarray gt_imputed: List of alleles from imputed genotypes.
+    :param int allele_state: Specify allele state to consider (default = None).
+    :return: Total concordance.
     :rtype: float
     """
-    assert isinstance(genotypes_true, np.ndarray), f"Not a numpy.array"
-    assert isinstance(genotypes_imputed, np.ndarray), f"Not a numpy.array"
-    assert len(genotypes_true) == len(
-        genotypes_imputed
-    ), f"Genotype arrays are of unequal length."
+    assert isinstance(gt_true, np.ndarray), f"Not numpy.ndarray"
+    assert isinstance(gt_imputed, np.ndarray), f"Not numpy.ndarray"
+    assert len(gt_true) == len(gt_imputed), f"Genotype arrays differ in length."
 
     if allele_state != None:
-        allele_match_bool = np.isin(genotypes_true, allele_state)
+        allele_match_bool = np.isin(gt_true, allele_state)
         assert np.any(allele_match_bool)
-        genotypes_true = genotypes_true[allele_match_bool]
-        genotypes_imputed = genotypes_imputed[allele_match_bool]
+        gt_true = gt_true[allele_match_bool]
+        gt_imputed = gt_imputed[allele_match_bool]
 
-    genotypes_correct = np.sum(genotypes_true == genotypes_imputed)
-    genotypes_total = len(genotypes_true)
+    gt_correct = np.sum(gt_true == gt_imputed)
+    gt_total = len(gt_true)
 
-    concordance = float(genotypes_correct) / float(genotypes_total)
+    concordance = float(gt_correct) / float(gt_total)
 
     return concordance
+
+
+def compute_concordance_haploid(gt_true, gt_imputed, allele_state=None):
+    pass
+
+
+def compute_concordance_diploid(gt_true, gt_imputed, allele_state=None):
+    pass
 
 
 def compute_iqs(gt_true, gt_imputed, ploidy):
