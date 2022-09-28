@@ -96,8 +96,10 @@ def run_pipeline(
             samples=None, ts=ts_ref, remove_leaves=remove_leaves
         )
 
-    print("INFO: Making samples compatible with the ancestors tree sequence")
-    sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
+    print("INFO: Masking sites")
+    sd_masked = masks.mask_sites_in_sample_data(
+        sd_compat, sites=mask_site_pos, site_type="position"
+    )
 
     sd_compat_sites_isnotin_chip = np.isin(
         sd_compat.sites_position[:], chip_site_pos, assume_unique=True, invert=True
@@ -108,10 +110,8 @@ def run_pipeline(
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
     ), f"Chip and mask site positions are not mutually exclusive."
 
-    print("INFO: Masking sites")
-    sd_masked = masks.mask_sites_in_sample_data(
-        sd_compat, sites=mask_site_pos, site_type="position"
-    )
+    print("INFO: Making samples compatible with the ancestors tree sequence")
+    sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
 
     print("INFO: Imputing target samples")
     ts_imputed = tsinfer.match_samples(

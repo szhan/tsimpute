@@ -421,11 +421,11 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
                 assert (
                     len(set(sd_site_alleles) - {None}) == 2
                 ), f"Non-biallelic site {sd_site_alleles}"
-                new_sd.add_site(
-                    position=pos,
-                    genotypes=sample_data.sites_genotypes[sd_site_id],
-                    alleles=sample_data.sites_alleles[sd_site_id],
-                )
+                #new_sd.add_site(
+                #    position=pos,
+                #    genotypes=sample_data.sites_genotypes[sd_site_id],
+                #    alleles=sample_data.sites_alleles[sd_site_id],
+                #)
             else:
                 raise ValueError(
                     f"Position {pos} must be in the tree sequence and/or sample data."
