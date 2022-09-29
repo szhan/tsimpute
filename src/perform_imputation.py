@@ -100,16 +100,11 @@ def run_pipeline(
     print("INFO: Making samples compatible with the ancestors tree sequence")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
 
-    #warnings.warn("Defining masked site positions relative to the reference panel.")
-    # ts_anc_sites_isnotin_chip = np.isin(
-    #    ts_anc.sites_position, chip_site_pos, assume_unique=True, invert=True
-    # )
-    # mask_site_pos = ts_anc.sites_position[ts_anc_sites_isnotin_chip]
-    warnings.warn("Defining masked site positions relative to the query samples.")
-    sd_compat_sites_isnot_in_chip = np.isin(
-        sd_compat.sites_position[:], chip_site_pos, assume_unique=True, invert=True
+    warnings.warn("Defining masked site positions relative to the reference panel.")
+    ts_anc_sites_isnotin_chip = np.isin(
+        ts_anc.sites_position, chip_site_pos, assume_unique=True, invert=True
     )
-    mask_site_pos = sd_compat.sites_position[:][sd_compat_sites_isnot_in_chip]
+    mask_site_pos = ts_anc.sites_position[ts_anc_sites_isnotin_chip]
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
