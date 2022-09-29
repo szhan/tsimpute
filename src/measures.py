@@ -74,6 +74,13 @@ def compute_iqs(gt_true, gt_imputed, ploidy):
     """
     assert ploidy in [1, 2], f"Ploidy {ploidy} is invalid."
 
+    unique_alleles_true = np.all(np.sort(np.unique(gt_true)))
+    unique_alleles_imputed = np.all(np.sort(np.unique(gt_imputed)))
+    assert unique_alleles_true == [0, 1], \
+        f"Not all elements are 0 or 1 - {unique_alleles_true}."
+    assert unique_alleles_imputed == [0, 1], \
+        f"Not all elements are 0 or 1 - {unique_alleles_imputed}."
+
     if ploidy == 1:
         iqs = compute_iqs_haploid(gt_true, gt_imputed)
     else:
@@ -146,10 +153,6 @@ def compute_iqs_diploid(gt_true, gt_imputed):
     """
     assert len(gt_true) == len(gt_imputed), f"Genotype arrays differ in size."
     assert len(gt_true) % 2 == 0, f"Not all genotypes are diploid."
-    assert np.all(np.sort(np.unique(gt_true)) == [0, 1]), \
-        f"Not all elements are 0 or 1."
-    assert np.all(np.sort(np.unique(gt_imputed)) == [0, 1]), \
-        f"Not all elements are 0 or 1."
 
     AA = [0, 0]  # shorthand, 1
     AB = [0, 1]  # shorthand, 2
