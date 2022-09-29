@@ -7,7 +7,7 @@ in_chip_file="../data/fimm/chip_positions_chr20.txt"
 
 cpus="1"
 
-exponents=(-7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5)
+exponents=(-7 -6 -5 -4 -3 -2 -1 0 1 2 3 4)
 
 for i in ${exponents[@]}; do
     for j in ${exponents[@]}; do
