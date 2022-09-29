@@ -49,7 +49,7 @@ def aggregate_imputation_results(in_dir, out_file):
             mean_iqs = parse_imputation_results_file(in_file)
             results.append((mmr_log10[i], mmr_log10[j], mean_iqs))
     results = pd.DataFrame(
-        results, columns=["mmr_ancestors", "mmr_samples", "mean_iqs"], index=False
+        results, columns=["mmr_ancestors", "mmr_samples", "mean_iqs"]
     )
     results.to_csv(out_file)
 
