@@ -74,11 +74,11 @@ def compute_iqs(gt_true, gt_imputed, ploidy):
     """
     assert ploidy in [1, 2], f"Ploidy {ploidy} is invalid."
 
-    unique_alleles_true = np.all(np.sort(np.unique(gt_true)))
-    unique_alleles_imputed = np.all(np.sort(np.unique(gt_imputed)))
-    assert unique_alleles_true == [0, 1], \
+    unique_alleles_true = np.sort(np.unique(gt_true))
+    unique_alleles_imputed = np.sort(np.unique(gt_imputed))
+    assert np.all(unique_alleles_true == [0, 1]), \
         f"Not all elements are 0 or 1 - {unique_alleles_true}."
-    assert unique_alleles_imputed == [0, 1], \
+    assert np.all(unique_alleles_imputed == [0, 1]), \
         f"Not all elements are 0 or 1 - {unique_alleles_imputed}."
 
     if ploidy == 1:
