@@ -3,6 +3,7 @@ import numpy as np
 import tqdm
 import tskit
 import tsinfer
+import warnings
 
 
 def count_sites_by_type(ts_or_sd):
@@ -196,6 +197,8 @@ def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
     :return: A SampleData object compatible with the ancestors TreeSequence.
     :rtype: tsinfer.SampleData
     """
+    warnings.warn("Using a deprecated version of make_compatible_sample_data().")
+
     new_sample_data = sample_data.copy(path=path)
 
     # Iterate through the sites in `ancestors_ts` using one generator,
