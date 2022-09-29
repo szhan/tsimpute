@@ -146,6 +146,10 @@ def compute_iqs_diploid(gt_true, gt_imputed):
     """
     assert len(gt_true) == len(gt_imputed), f"Genotype arrays differ in size."
     assert len(gt_true) % 2 == 0, f"Not all genotypes are diploid."
+    assert np.all(np.sort(np.unique(gt_true)) == [0, 1]), \
+        f"Not all elements are 0 or 1."
+    assert np.all(np.sort(np.unique(gt_imputed)) == [0, 1]), \
+        f"Not all elements are 0 or 1."
 
     AA = [0, 0]  # shorthand, 1
     AB = [0, 1]  # shorthand, 2
