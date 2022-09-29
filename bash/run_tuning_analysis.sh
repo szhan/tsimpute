@@ -10,7 +10,7 @@ for i in ${exponents[@]}; do
     for j in ${exponents[@]}; do
         prefix="a"$i"s"$j".1Mb"
         out_file=${out_dir}${prefix}".inferred.trees"
-        if [ !-f ${out_file} ]; then
+        if [[ ! -f ${out_file} ]]; then
             echo "python $script_file -r 1e-8 -a 1e$i -s 1e$j -i $in_file -o $out_dir -p $prefix -t $cpus"
         fi
     done
