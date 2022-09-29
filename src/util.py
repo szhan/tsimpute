@@ -204,11 +204,9 @@ def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
     sd_variants = sample_data.variants()
     sd_v = next(sd_variants)
     for ts_site in tqdm.tqdm(ancestors_ts.sites()):
-        print(ts_site.position)
         while sd_v.site.position != ts_site.position:
             # Sites in `samples_data` but not in `ancestors_ts` are not imputed.
             # Also, leave them as is in the `sample_data`, but keep track of them.
-            print(sd_v.site.position)
             sd_v = next(sd_variants)
 
         sd_site_id = sd_v.site.id  # Site id in `sample_data`
