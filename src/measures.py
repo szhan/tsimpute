@@ -152,7 +152,7 @@ def compute_iqs_diploid(gt_true, gt_imputed):
     BA = [1, 0]  # shorthand, 3
     BB = [1, 1]  # shorthand, 4
     _POSSIBLE_GT_ = [AA, AB, BA, BB]
-    num_possible_gt = 4
+    num_possible_gt = len(_POSSIBLE_GT_)
 
     num_individuals = int(len(gt_true) / 2)
     gt_true_reshaped = np.reshape(gt_true, (num_individuals, 2))
