@@ -5,9 +5,9 @@ script_file="./src/perform_imputation.py"
 in_target_file="../analysis/tuning/out.region.query.samples"
 in_chip_file="../data/fimm/chip_positions_chr20.txt"
 
-cpus="16"
+cpus="1"
 
-exponents=(-5 -4 -3 -2 -1 0 1 2 3 4)
+exponents=(-7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7)
 
 for i in ${exponents[@]}; do
     for j in ${exponents[@]}; do
