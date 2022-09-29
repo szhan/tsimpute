@@ -74,12 +74,10 @@ def compute_iqs(gt_true, gt_imputed, ploidy):
     """
     assert ploidy in [1, 2], f"Ploidy {ploidy} is invalid."
 
-    unique_alleles_true = np.sort(np.unique(gt_true))
-    unique_alleles_imputed = np.sort(np.unique(gt_imputed))
-    assert np.all(unique_alleles_true == [0, 1]), \
-        f"Not all elements are 0 or 1 - {unique_alleles_true}."
-    assert np.all(unique_alleles_imputed == [0, 1]), \
-        f"Not all elements are 0 or 1 - {unique_alleles_imputed}."
+    assert np.all(np.isin(np.unique(gt_true), [0, 1])), \
+        f"Not all elements are 0 or 1 - {np.unique(gt_true)}."
+    assert np.all(np.isin(np.unique(gt_imputed), [0, 1])), \
+        f"Not all elements are 0 or 1 - {np.unique(gt_imputed)}."
 
     if ploidy == 1:
         iqs = compute_iqs_haploid(gt_true, gt_imputed)
