@@ -7,13 +7,14 @@ def parse_imputation_results_file(in_file):
     :return: IQS averaged across sites.
     :rtype: float
     """
-    df_full = pd.read_csv(in_file, comment="#")
-    df_full = df_full[df_full["iqs"].notna()]
-    df_subset = df_full[df_full["ref_minor_allele_freq"] == 0]
+    df = pd.read_csv(in_file, comment="#")
+    df = df[df["iqs"].notna()]
+    df_subset = df[df["ref_minor_allele_freq"] == 0]
+    print(f"DF: {df_subset.shape[0]}")
     assert df_subset.shape[0] == 0, \
         f"Some {df_subset.shape[0]} sites have no minor allele, " \
-        f"but {df_full.shape[0]} sites should have a minor allele."
-    mean_iqs = df_full["iqs"].mean(skipna=True)
+        f"but {df.shape[0]} sites should have a minor allele."
+    mean_iqs = df["iqs"].mean(skipna=True)
     return mean_iqs
 
 
