@@ -37,7 +37,7 @@ def parse_imputation_results_file(in_file):
     help="Input directory containing imputation result CSV files.",
 )
 @click.option(
-    "--out_file", type=click.Path(exists=True), required=True, help="Output CSV file."
+    "--out_file", type=click.Path(exists=False), required=True, help="Output CSV file."
 )
 def aggregate_imputation_results(in_dir, out_file):
     mmr_log10 = np.arange(-7, 5)
