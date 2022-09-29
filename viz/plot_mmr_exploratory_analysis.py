@@ -9,11 +9,16 @@ def parse_imputation_results_file(in_file):
     """
     df = pd.read_csv(in_file, comment="#")
     df = df[df["iqs"].notna()]
-    df_subset = df[df["ref_minor_allele_freq"] == 0]
-    print(f"DF: {df.shape[0]}")
-    assert df_subset.shape[0] == 0, \
-        f"Some {df_subset.shape[0]} sites have no minor allele, " \
+
+    df_subset_0 = df[df["ref_minor_allele_freq"] == 0]
+    df_subset_1 = df[df["ref_minor_allele_freq"] == 1]
+    assert df_subset_0.shape[0] == 0, \
+        f"Some {df_subset_0.shape[0]} sites have no minor allele, " \
         f"but {df.shape[0]} sites should have a minor allele."
+    assert df_subset_1.shape[0] == 0, \
+        f"Some {df_subset_1.shape[0]} sites have no minor allele, " \
+        f"but {df.shape[0]} sites should have a minor allele."
+        
     mean_iqs = df["iqs"].mean(skipna=True)
     return mean_iqs
 
