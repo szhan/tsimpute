@@ -1,6 +1,5 @@
 import click
 import sys
-import inspect
 import tqdm
 import numpy as np
 import tskit
@@ -109,9 +108,6 @@ def evaluate_imputation(
         while v_ts_anc.site.position != pos:
             v_ts_anc = next(vars_ts_anc)
         
-        print(inspect.getfile(v_ts_imputed.__class__))
-        print(inspect.getfile(v_sd_true.__class__))
-
         # Variant objects have ordered lists of alleles.
         ref_ancestral_allele = v_ts_ref.alleles[0]  # Denoted by 0
         ref_derived_allele = v_ts_ref.alleles[1]    # Denoted by 1
@@ -131,18 +127,6 @@ def evaluate_imputation(
         else:
             imputed_ma_index = 0
             imputed_ma_freq = imputed_af_0
-
-        # Get Minor Allele index and frequency from `sd_true`.
-        true_freqs = v_sd_true.frequencies(remove_missing=True)
-        true_af_0 = true_freqs[ref_ancestral_allele]
-        true_af_1 = true_freqs[ref_derived_allele]
-
-        if true_af_1 < true_af_0:
-            true_ma_index = 1
-            true_ma_freq = true_af_1
-        else:
-            true_ma_index = 0
-            true_ma_freq = true_af_0
 
         # Get Minor Allele index and frequency from `ts_ref`.
         ref_freqs = v_ts_ref.frequencies(remove_missing=True)
