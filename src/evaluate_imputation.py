@@ -1,5 +1,6 @@
 import click
 import sys
+import inspect
 import tqdm
 import numpy as np
 import tskit
@@ -108,6 +109,9 @@ def evaluate_imputation(
         while v_ts_anc.site.position != pos:
             v_ts_anc = next(vars_ts_anc)
         
+        print(inspect.getfile(v_ts_imputed.__class__))
+        print(inspect.getfile(v_sd_true.__class__))
+
         # Variant objects have ordered lists of alleles.
         ref_ancestral_allele = v_ts_ref.alleles[0]  # Denoted by 0
         ref_derived_allele = v_ts_ref.alleles[1]    # Denoted by 1
