@@ -194,6 +194,7 @@ def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
 
     :param tsinfer.SampleData sample_data:
     :param tskit.TreeSequence ancestors_ts:
+    :param str path: Output samples file (default = None).
     :return: A SampleData object compatible with the ancestors TreeSequence.
     :rtype: tsinfer.SampleData
     """
@@ -297,7 +298,7 @@ def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
     return new_sample_data
 
 
-def make_compatible_sample_data(sample_data, ancestors_ts):
+def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     """
     Make a new SampleData object from an existing SampleData object such that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
@@ -311,6 +312,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
 
     :param tsinfer.SampleData sample_data:
     :param tskit.TreeSequence ancestors_ts:
+    :param str path: Output samples file (default = None).
     :return: A new SampleData object.
     :rtype: tsinfer.SampleData
     """
@@ -328,7 +330,9 @@ def make_compatible_sample_data(sample_data, ancestors_ts):
     num_case_2c = 0
     num_case_3 = 0
 
-    with tsinfer.SampleData(sequence_length=ancestors_ts.sequence_length) as new_sd:
+    with tsinfer.SampleData(
+        sequence_length=ancestors_ts.sequence_length, path=path
+    ) as new_sd:
         # Add populations
         # TODO: Allow for more populations to be added.
         new_sd.add_population()
