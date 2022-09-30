@@ -119,9 +119,7 @@ def evaluate_imputation(
         # Get Minor Allele index and frequency from `ts_imputed`.
         imputed_freqs = v_ts_imputed.frequencies(remove_missing=True)
         imputed_af_0 = imputed_freqs[ref_ancestral_allele]
-        imputed_af_1 = (
-            imputed_freqs[ref_derived_allele] if imputed_af_0 < 1.0 else 0.0
-        )
+        imputed_af_1 = imputed_freqs[ref_derived_allele]
 
         if imputed_af_1 < imputed_af_0:
             imputed_ma_index = 1
