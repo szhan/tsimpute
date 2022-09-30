@@ -50,7 +50,10 @@ import simulate_ts
     help="Population of query genomes. Used only if model ten_pop is set.",
 )
 @click.option(
-    "--out_prefix", type=str, default="sim", help="Prefix of the output file."
+    "--out_dir", "-o", type=click.Path(exists=True), help="Output directory"
+)
+@click.option(
+    "--out_prefix", "-p", type=str, default="sim", help="Prefix of the output file."
 )
 @click.option(
     "--num_threads", "-t",
@@ -67,10 +70,11 @@ def run_pipeline(
     index,
     time_query,
     prop_mask_sites,
-    out_prefix,
     model,
     pop_ref,
     pop_query,
+    out_dir,
+    out_prefix,
     num_threads,
     verbose,
 ):
@@ -248,7 +252,7 @@ def run_pipeline(
     print(f"INFO: END {end_datetime}")
 
     ### Write results to file
-    out_csv_file = out_prefix + "_" + str(index) + ".csv"
+    out_csv_file = out_dir + "/" + out_prefix + "_" + str(index) + ".csv"
 
     ### Get parameter values from provenances
     prov = [p for p in ts_full.provenances()]
