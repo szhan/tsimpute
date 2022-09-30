@@ -1,3 +1,4 @@
+from distutils.log import error
 import click
 from datetime import datetime
 import sys
@@ -9,7 +10,6 @@ import tsinfer
 
 sys.path.append("./src")
 import masks
-import measures
 import util
 
 
@@ -77,8 +77,8 @@ def run_pipeline(
     remove_leaves,
     num_threads,
 ):
-    print("INFO: START")
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: START {start_datetime}")
 
     print("INFO: Loading input files")
     ts_ref = tskit.load(in_reference_trees_file)
@@ -124,143 +124,16 @@ def run_pipeline(
         num_threads=num_threads,
     )
 
-    assert (
-        ts_ref.num_sites
-        == sd_compat.num_sites
-        == sd_masked.num_sites
-        == ts_imputed.num_sites
-    ), f"Different number of sites in the tree sequences and sample data."
+    out_trees_file = out_dir + "/" + out_prefix + ".imputed.trees"
+    ts_imputed.dump(out_trees_file)
 
-    print("INFO: Evaluating imputation performance")
-    results = None
-    num_non_biallelic_masked_sites = 0
-
-    for v_ref, v_compat, v_masked, v_imputed in tqdm.tqdm(
-        zip(
-            ts_ref.variants(),  # Reference genomes from which to get the minor allele and MAF
-            sd_compat.variants(),  # Query genomes BEFORE site masking
-            sd_masked.variants(),  # Query genomes AFTER site masking
-            ts_imputed.variants(),  # Query genomes with imputed sites
-        )
-    ):
-        if v_imputed.site.position in mask_site_pos:
-            if len(set(v_ref.alleles) - {None}) != 2:
-                num_non_biallelic_masked_sites += 1
-                continue
-
-            ref_ancestral_allele = v_ref.alleles[0]
-            ref_derived_allele = v_ref.alleles[1]
-
-            # CHECK that ancestral states are identical.
-            assert ref_ancestral_allele == sd_compat.sites_alleles[v_compat.site.id][0]
-            assert ref_ancestral_allele == sd_masked.sites_alleles[v_masked.site.id][0]
-            assert ref_ancestral_allele == v_imputed.alleles[0]
-
-            assert set(v_masked.genotypes) == set([-1])
-            assert not np.any(v_imputed.genotypes == -1)
-
-            # Get Minor Allele index and frequency from `ts_ref`.
-            # Definition of a minor allele: MAF < 0.50.
-            ref_freqs = v_ref.frequencies(
-                remove_missing=True
-            )  # Dict: allele -> frequency
-            ref_af_0 = ref_freqs[ref_ancestral_allele]
-            ref_af_1 = ref_freqs[ref_derived_allele]
-
-            if ref_af_1 < ref_af_0:
-                ref_ma_index = 1
-                ref_ma_freq = ref_af_1
-            else:
-                ref_ma_index = 0
-                ref_ma_freq = ref_af_0
-
-            # Get Minor Allele index and frequency from `ts_imputed`.
-            imputed_freqs = v_imputed.frequencies(remove_missing=True)
-            imputed_af_0 = imputed_freqs[ref_ancestral_allele]
-            imputed_af_1 = (
-                imputed_freqs[ref_derived_allele] if imputed_af_0 < 1.0 else 0.0
-            )
-
-            if imputed_af_1 < imputed_af_0:
-                imputed_ma_index = 1
-                imputed_ma_freq = imputed_af_1
-            else:
-                imputed_ma_index = 0
-                imputed_ma_freq = imputed_af_0
-
-            # Assess imputation performance
-            total_concordance = measures.compute_concordance(
-                gt_true=v_compat.genotypes,
-                gt_imputed=v_imputed.genotypes,
-            )
-            iqs = measures.compute_iqs(
-                gt_true=v_compat.genotypes,
-                gt_imputed=v_imputed.genotypes,
-                ploidy=2,
-            )
-
-            # line.shape = (1, 7)
-            line = np.array(
-                [
-                    [
-                        int(v_ref.site.position),
-                        int(ref_ma_index),
-                        ref_ma_freq,
-                        int(imputed_ma_index),
-                        imputed_ma_freq,
-                        total_concordance,
-                        iqs,
-                    ],
-                ]
-            )
-
-            results = line if results is None else np.append(results, line, axis=0)
+    error_msg = f"Different number of sites in the tree sequences and sample data."
+    assert ts_ref.num_sites == sd_compat.num_sites, error_msg
+    assert ts_ref.num_sites == sd_masked.num_sites, error_msg
+    assert ts_ref.num_sites == ts_imputed.num_sites, error_msg
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
-    print("INFO: Writing results to file")
-    out_file = out_dir + "/" + out_prefix + ".imputation.csv"
-
-    header_text = (
-        "\n".join(
-            [
-                "#" + "start_timestamp" + "=" + f"{start_datetime}",
-                "#" + "end_timestamp" + "=" + f"{end_datetime}",
-                "#" + "tskit" + "=" + f"{tskit.__version__}",
-                "#" + "tsinfer" + "=" + f"{tsinfer.__version__}",
-                "#" + "size_ref" + "=" + f"{ts_ref.num_samples}",
-                "#" + "size_query" + "=" + f"{sd_compat.num_samples}",
-                "#" + "masked_sites" + "=" + f"{len(mask_site_pos)}",
-                "#"
-                + "non_biallelic_masked_sites"
-                + "="
-                + f"{num_non_biallelic_masked_sites}",
-            ]
-        )
-        + "\n"
-    )
-
-    header_text += ",".join(
-        [
-            "position",
-            "ref_minor_allele_index",
-            "ref_minor_allele_freq",
-            "imputed_minor_allele_index",
-            "imputed_minor_allele_freq",
-            "total_concordance",
-            "iqs",
-        ]
-    )
-
-    np.savetxt(
-        out_file,
-        results,
-        fmt="%.10f",
-        delimiter=",",
-        newline="\n",
-        comments="",
-        header=header_text,
-    )
+    print(f"INFO: END {end_datetime}")
 
 
 if __name__ == "__main__":
