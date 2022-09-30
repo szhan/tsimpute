@@ -121,24 +121,16 @@ def evaluate_imputation(
         imputed_af_0 = imputed_freqs[ref_ancestral_allele]
         imputed_af_1 = imputed_freqs[ref_derived_allele] if ref_derived_allele in imputed_freqs else 0.0
 
-        if imputed_af_1 < imputed_af_0:
-            imputed_ma_index = 1
-            imputed_ma_freq = imputed_af_1
-        else:
-            imputed_ma_index = 0
-            imputed_ma_freq = imputed_af_0
+        imputed_ma_index = 1 if imputed_af_1 < imputed_af_0 else 0
+        imputed_ma_freq = imputed_af_1 if imputed_af_1 < imputed_af_0 else imputed_af_0
 
         # Get Minor Allele index and frequency from `ts_ref`.
         ref_freqs = v_ts_ref.frequencies(remove_missing=True)
         ref_af_0 = ref_freqs[ref_ancestral_allele]
         ref_af_1 = ref_freqs[ref_derived_allele]
 
-        if ref_af_1 < ref_af_0:
-            ref_ma_index = 1
-            ref_ma_freq = ref_af_1
-        else:
-            ref_ma_index = 0
-            ref_ma_freq = ref_af_0
+        ref_ma_index = 1 if ref_af_1 < ref_af_0 else 0
+        ref_ma_freq = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
 
         # Calculate imputation performance metrics
         iqs = measures.compute_iqs(
