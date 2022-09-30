@@ -225,7 +225,7 @@ def run_pipeline(
 
             # Get MAF from `ts_ref`
             ma_index = 1 if ref_af_1 < ref_af_0 else 0
-            maf = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
+            ma_freq = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
 
             # Assess imputation performance
             iqs = measures.compute_iqs(
@@ -234,7 +234,7 @@ def run_pipeline(
                 ploidy=1,
             )
 
-            line = np.array([[pos, ma_index, maf, iqs]])
+            line = np.array([[pos, ma_index, ma_freq, iqs]])
             results = line if results is None else np.append(results, line, axis=0)
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -286,7 +286,7 @@ def run_pipeline(
         + "\n"
     )
 
-    header_text += ",".join(["position", "ma_index", "maf", "iqs"])
+    header_text += ",".join(["position", "minor_allel_index", "minor_allel_freq", "iqs"])
 
     np.savetxt(
         out_csv_file,
