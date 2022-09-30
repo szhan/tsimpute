@@ -31,7 +31,7 @@ def pick_mask_sites_random(sites, prop_mask_sites, seed=None):
     return mask_sites
 
 
-def mask_sites_in_sample_data(sd, sites, site_type):
+def mask_sites_in_sample_data(sample_data, sites, site_type):
     """
     Create a `SampleData` object from an existing `SampleData` object,
     which contains mask sites (all genotypes marked as missing) specified by
@@ -45,7 +45,7 @@ def mask_sites_in_sample_data(sd, sites, site_type):
     """
     assert site_type in ["id", "position"], f"Site type {site_type} is invalid."
 
-    new_sd = sd.copy()
+    new_sd = sample_data.copy()
 
     for v in sd.variants():
         site_ref = v.site.id if site_type == "id" else v.site.position
