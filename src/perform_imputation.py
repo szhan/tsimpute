@@ -1,10 +1,8 @@
-from distutils.log import error
 import click
 from datetime import datetime
 import sys
 import warnings
 import numpy as np
-import tqdm
 import tskit
 import tsinfer
 
