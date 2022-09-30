@@ -56,6 +56,7 @@ def evaluate_imputation(
     in_imputed_file,
     in_true_samples_file,
     in_reference_trees_file,
+    remove_leaves,
     in_chip_file,
     out_csv_file,
 ):
@@ -66,12 +67,12 @@ def evaluate_imputation(
 
     if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
         ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            ts=ts_ref, remove_leaves=False
+            ts=ts_ref, remove_leaves=remove_leaves
         )
     else:
         # The samples argument is not actually used.
         ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            samples=None, ts=ts_ref, remove_leaves=False
+            samples=None, ts=ts_ref, remove_leaves=remove_leaves
     )
 
     ts_imputed_site_pos = ts_imputed.sites_position # Mask sites and chip sites
