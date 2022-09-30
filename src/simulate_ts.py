@@ -148,7 +148,7 @@ def get_ts_ten_pop(pop_ref, pop_query):
     :param str pop_ref:
     :param str pop_query:
     :return:
-    :rtypee: list
+    :rtype: list
     """
     yaml_file = "./assets/demes/jacobs_2019.yaml"
     ooa_graph = demes.load(yaml_file)
@@ -161,6 +161,8 @@ def get_ts_ten_pop(pop_ref, pop_query):
     sequence_length = 1e6
     ploidy_level = 1
 
+    # See https://tskit.dev/msprime/docs/stable/api.html?highlight=sampleset#msprime.SampleSet
+    # population "May be either a string name or integer ID"
     sample_set = [
         msprime.SampleSet(
             num_samples=size_ref, population=pop_ref, ploidy=ploidy_level, time=0
