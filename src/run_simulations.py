@@ -53,7 +53,7 @@ import simulate_ts
     "--out_dir", "-o", type=click.Path(exists=True), help="Output directory"
 )
 @click.option(
-    "--out_prefix", "-p", type=str, default="sim", help="Prefix of the output file."
+    "--out_prefix", type=str, default="sim", help="Prefix of the output file."
 )
 @click.option(
     "--num_threads", "-t",
