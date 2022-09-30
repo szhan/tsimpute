@@ -28,7 +28,7 @@ def parse_imputation_results_file(in_file):
     mean_iqs = df["iqs"].mean()
     median_iqs = df["iqs"].median()
     perc_et_100_iqs = float(np.sum(df["iqs"] == 1)) / float(df.shape[0])
-    perc_gt_90_iqs = float(np.sum(df["iqs" >= 0.90])) / float(df.shape[0])
+    perc_gt_90_iqs = float(np.sum(df["iqs"] >= 0.90)) / float(df.shape[0])
     perc_gt_80_iqs = float(np.sum(df["iqs"] >= 0.80)) / float(df.shape[0])
     perc_gt_70_iqs = float(np.sum(df["iqs"] >= 0.70)) / float(df.shape[0])
 
