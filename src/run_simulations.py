@@ -17,8 +17,8 @@ import simulate_ts
 @click.command()
 @click.option("--index", "-i", type=int, required=True, help="Replicate index.")
 @click.option(
-    "--time_query",
-    "-t",
+    "--sampling_time",
+    "-s",
     type=float,
     required=True,
     help="Time to sample query genomes.",
@@ -68,7 +68,7 @@ import simulate_ts
 )
 def run_pipeline(
     index,
-    time_query,
+    sampling_time,
     prop_mask_sites,
     model,
     pop_ref,
@@ -85,7 +85,7 @@ def run_pipeline(
         ts_full, _, samples_ref, inds_query, _ = simulate_ts.get_ts_toy()
     elif model == "simple":
         ts_full, _, samples_ref, inds_query, _ = simulate_ts.get_ts_single_panmictic(
-            time_query=time_query
+            time_query=sampling_time
         )
     elif model == "ten_pop":
         assert pop_ref is not None and pop_query is not None
