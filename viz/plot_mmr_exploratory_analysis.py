@@ -59,10 +59,39 @@ def aggregate_imputation_results(in_dir, out_file):
         for j in mmr_log10:
             prefix = "a" + str(mmr_log10[i]) + "s" + str(mmr_log10[j])
             in_file = in_dir + "/" + prefix + ".1Mb.imputation.csv"
-            mean_iqs = parse_imputation_results_file(in_file)
-            results.append((mmr_log10[i], mmr_log10[j], mean_iqs))
+            (
+                mean_iqs,
+                median_iqs,
+                perc_et_100_iqs,
+                perc_gt_90_iqs,
+                perc_gt_80_iqs,
+                perc_gt_70_iqs,
+            ) = parse_imputation_results_file(in_file)
+            results.append(
+                (
+                    mmr_log10[i],
+                    mmr_log10[j],
+                    mean_iqs,
+                    median_iqs,
+                    perc_et_100_iqs,
+                    perc_gt_90_iqs,
+                    perc_gt_80_iqs,
+                    perc_gt_70_iqs,
+                )
+            )
     results = pd.DataFrame(
-        results, columns=["mmr_ancestors", "mmr_samples", "mean_iqs"]
+        results,
+        columns=[
+            "index",
+            "mmr_ancestors",
+            "mmr_samples",
+            "mean_iqs",
+            "median_iqs",
+            "perc_et_100_iqs",
+            "perc_gt_90_iqs",
+            "perc_gt_80_iqs",
+            "perc_gt_70_iqs",
+        ],
     )
     results.to_csv(out_file)
 
