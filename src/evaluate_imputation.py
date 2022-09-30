@@ -147,15 +147,12 @@ def evaluate_imputation(
             ploidy=2,
         )
 
-        # line.shape = (1, 8)
         line = np.array(
             [
                 [
                     pos,
                     ref_ma_index,
                     ref_ma_freq,
-                    true_ma_index,
-                    true_ma_freq,
                     imputed_ma_index,
                     imputed_ma_freq,
                     iqs,
@@ -188,8 +185,6 @@ def evaluate_imputation(
             "position",
             "ref_minor_allele_index",
             "ref_minor_allele_freq",
-            "true_minor_allele_index",
-            "true_minor_allele_freq",
             "imputed_minor_allele_index",
             "imputed_minor_allele_freq",
             "iqs",
