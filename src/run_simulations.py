@@ -160,9 +160,7 @@ def run_pipeline(
         site_ids=shared_site_ids,
         prop_mask_sites=prop_mask_sites,
     )
-    mask_site_pos = [
-        s.position for s in sd_query_true.sites(ids=mask_site_ids)
-    ]
+    mask_site_pos = sd_query_true.sites_position[:][mask_site_ids]
 
     if verbose:
         print(f"INFO: mask sites {len(mask_site_ids)}")
@@ -194,9 +192,9 @@ def run_pipeline(
     results = None
     for v_ref, v_query_true, v_query_mask, v_query_imputed in zip(
         ts_ref.variants(),  # Reference genomes from which to get the minor allele and MAF
-        sd_query_true.variants(),  # Query genomes before site masking
-        sd_query_mask.variants(),  # Query genomes with masked sites
-        ts_imputed.variants(),  # Query genomes with masked sites imputed
+        sd_query_true.variants(),  # Query genomes BEFORE masking sites
+        sd_query_mask.variants(),  # Query genomes AFTER masking sites
+        ts_imputed.variants(),  # Query genomes with mask sites imputed
     ):
         pos = v_ref.site.position
         if pos in mask_site_pos:
