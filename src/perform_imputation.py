@@ -110,7 +110,7 @@ def run_pipeline(
 
     print("INFO: Masking sites")
     sd_masked = masks.mask_sites_in_sample_data(
-        sd_compat, sites=mask_site_pos, site_type="position"
+        sample_data=sd_compat, sites=mask_site_pos, site_type="position"
     )
 
     print("INFO: Imputing target samples")
