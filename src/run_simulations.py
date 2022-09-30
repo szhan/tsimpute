@@ -49,18 +49,11 @@ import simulate_ts
     default=None,
     help="Population of query genomes. Used only if model ten_pop is set.",
 )
-@click.option(
-    "--out_dir", "-o", type=click.Path(exists=True), help="Output directory"
-)
+@click.option("--out_dir", "-o", type=click.Path(exists=True), help="Output directory")
 @click.option(
     "--out_prefix", type=str, default="sim", help="Prefix of the output file."
 )
-@click.option(
-    "--num_threads", "-t",
-    type=int,
-    default=1,
-    help="Number of CPUs."
-)
+@click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs.")
 @click.option(
     "--verbose",
     is_flag=True,
@@ -112,14 +105,12 @@ def run_pipeline(
     # Sites which are biallelic in the full sample set but monoallelic in the ref. sample set are removed.
     # So, only biallelic sites are retained in the ancestor ts.
     if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            ts=ts_ref, remove_leaves=True
-        )
+        ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
     else:
         # The samples argument is not actually used.
         ts_anc = tsinfer.eval_util.make_ancestors_ts(
             samples=None, ts=ts_ref, remove_leaves=True
-    )
+        )
 
     if verbose:
         print(f"INFO: TS anc genomes {ts_anc.num_samples}")
@@ -168,7 +159,7 @@ def run_pipeline(
     # Select mask sites in `ts_anc` to impute.
     # This is a subset of 'shared_site_ids'
     mask_site_ids = masks.pick_mask_sites_random(
-        site_ids=shared_site_ids,
+        sites=shared_site_ids,
         prop_mask_sites=prop_mask_sites,
     )
     mask_site_pos = sd_query_true.sites_position[:][mask_site_ids]
@@ -180,11 +171,13 @@ def run_pipeline(
     assert set(mask_site_pos).issubset(set(shared_site_pos))
 
     sd_query_mask = masks.mask_sites_in_sample_data(
-        sd_query_true, mask_sites=mask_site_ids
+        sample_data=sd_query_true, sites=mask_site_pos, site_type="position"
     )
 
     ### Impute the query genomes
-    ts_imputed = tsinfer.match_samples(sample_data=sd_query_mask, ancestors_ts=ts_anc, num_threads=num_threads)
+    ts_imputed = tsinfer.match_samples(
+        sample_data=sd_query_mask, ancestors_ts=ts_anc, num_threads=num_threads
+    )
 
     ### Evaluate imputation performance
     ts_ref_site_pos = ts_ref.sites_position
@@ -213,8 +206,14 @@ def run_pipeline(
             ref_ancestral_allele = v_ref.alleles[0]
             ref_derived_allele = v_ref.alleles[1]
 
-            assert ref_ancestral_allele == sd_query_true.sites_alleles[v_query_true.site.id][0]
-            assert ref_ancestral_allele == sd_query_mask.sites_alleles[v_query_mask.site.id][0]
+            assert (
+                ref_ancestral_allele
+                == sd_query_true.sites_alleles[v_query_true.site.id][0]
+            )
+            assert (
+                ref_ancestral_allele
+                == sd_query_mask.sites_alleles[v_query_mask.site.id][0]
+            )
             assert ref_ancestral_allele == v_query_imputed.alleles[0]
 
             # TODO:
@@ -282,7 +281,7 @@ def run_pipeline(
                 "#" + "index" + "=" + f"{index}",
                 "#" + "size_ref" + "=" + f"{ts_ref.num_samples}",
                 "#" + "size_query" + "=" + f"{sd_query.num_samples}",
-                "#" + "time_query" + "=" + f"{time_query}",
+                "#" + "sampling_time" + "=" + f"{sampling_time}",
                 "#" + "prop_missing_sites" + "=" + f"{prop_mask_sites}",
                 "#" + "eff_pop_size" + "=" + f"{eff_pop_size}",
                 "#" + "recombination_rate" + "=" + f"{recombination_rate}",
@@ -297,7 +296,9 @@ def run_pipeline(
         + "\n"
     )
 
-    header_text += ",".join(["position", "minor_allel_index", "minor_allel_freq", "iqs"])
+    header_text += ",".join(
+        ["position", "minor_allel_index", "minor_allel_freq", "iqs"]
+    )
 
     np.savetxt(
         out_csv_file,
