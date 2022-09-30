@@ -82,7 +82,6 @@ def aggregate_imputation_results(in_dir, out_file):
     results = pd.DataFrame(
         results,
         columns=[
-            "index",
             "mmr_ancestors",
             "mmr_samples",
             "mean_iqs",
