@@ -53,6 +53,12 @@ import simulate_ts
     "--out_prefix", type=str, default="sim", help="Prefix of the output file."
 )
 @click.option(
+    "--num_threads", "-t",
+    type=int,
+    default=1,
+    help="Number of CPUs."
+)
+@click.option(
     "--verbose",
     is_flag=True,
     help="Print out site information after each processing step.",
@@ -65,6 +71,7 @@ def run_pipeline(
     model,
     pop_ref,
     pop_query,
+    num_threads,
     verbose,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -173,7 +180,7 @@ def run_pipeline(
     )
 
     ### Impute the query genomes
-    ts_imputed = tsinfer.match_samples(sample_data=sd_query_mask, ancestors_ts=ts_anc)
+    ts_imputed = tsinfer.match_samples(sample_data=sd_query_mask, ancestors_ts=ts_anc, num_threads=num_threads)
 
     ### Evaluate imputation performance
     ts_ref_site_pos = ts_ref.sites_position
