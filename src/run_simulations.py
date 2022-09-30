@@ -6,7 +6,6 @@ import numpy as np
 import msprime
 import tskit
 import tsinfer
-from tsinfer import make_ancestors_ts
 
 sys.path.append("./src")
 import masks
@@ -25,7 +24,7 @@ import simulate_ts
     help="Time to sample query genomes.",
 )
 @click.option(
-    "--prop_missing_sites",
+    "--prop_mask_sites",
     "-p",
     type=float,
     required=True,
@@ -61,7 +60,7 @@ import simulate_ts
 def run_pipeline(
     index,
     time_query,
-    prop_missing_sites,
+    prop_mask_sites,
     out_prefix,
     model,
     pop_ref,
@@ -69,6 +68,7 @@ def run_pipeline(
     verbose,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: START {start_datetime}")
 
     if model == "test":
         ts_full, _, samples_ref, inds_query, _ = simulate_ts.get_ts_toy()
@@ -83,32 +83,38 @@ def run_pipeline(
         )
 
     if verbose:
-        print("TS full")
+        print("INFO: TS full")
         util.count_sites_by_type(ts_full)
 
     ### Create an ancestor ts from the reference genomes
-    # Remove all the branches leading to the query genomes
+    # Remove all the branches leading to the query genomes.
     ts_ref = ts_full.simplify(samples_ref, filter_sites=False)
 
     if verbose:
-        print(
-            f"TS ref has {ts_ref.num_samples} sample genomes ({ts_ref.sequence_length} bp)"
-        )
-        print(f"TS ref has {ts_ref.num_sites} sites and {ts_ref.num_trees} trees")
-        print("TS ref")
+        print(f"INFO: TS ref genomes {ts_ref.num_samples}")
+        print(f"INFO: TS ref sites {ts_ref.num_sites}")
+        print(f"INFO: TS ref trees {ts_ref.num_trees}")
+        print(f"INFO: TS ref stats")
         util.count_sites_by_type(ts_ref)
 
     # Multiallelic sites are automatically removed when generating an ancestor ts.
     # Sites which are biallelic in the full sample set but monoallelic in the ref. sample set are removed.
     # So, only biallelic sites are retained in the ancestor ts.
-    ts_anc = make_ancestors_ts(ts=ts_ref, remove_leaves=True)
+    if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
+        ts_anc = tsinfer.eval_util.make_ancestors_ts(
+            ts=ts_ref, remove_leaves=True
+        )
+    else:
+        # The samples argument is not actually used.
+        ts_anc = tsinfer.eval_util.make_ancestors_ts(
+            samples=None, ts=ts_ref, remove_leaves=True
+    )
 
     if verbose:
-        print(
-            f"TS anc has {ts_anc.num_samples} sample genomes ({ts_anc.sequence_length} bp)"
-        )
-        print(f"TS anc has {ts_anc.num_sites} sites and {ts_anc.num_trees} trees")
-        print("TS anc")
+        print(f"INFO: TS anc genomes {ts_anc.num_samples}")
+        print(f"INFO: TS anc sites {ts_anc.num_sites}")
+        print(f"INFO: TS anc trees {ts_anc.num_trees}")
+        print(f"INFO: TS anc stats")
         util.count_sites_by_type(ts_anc)
 
     ### Create a SampleData object holding the query genomes
@@ -116,11 +122,9 @@ def run_pipeline(
     sd_query = sd_full.subset(inds_query)
 
     if verbose:
-        print(
-            f"SD query has {sd_query.num_samples} sample genomes ({sd_query.sequence_length} bp)"
-        )
-        print(f"SD query has {sd_query.num_sites} sites")
-        print("SD query")
+        print(f"INFO: SD query genomes {sd_query.num_samples}")
+        print(f"INFO: SD query sites {sd_query.num_sites}")
+        print(f"INFO: SD query stats")
         util.count_sites_by_type(sd_query)
 
     assert util.check_site_positions_ts_issubset_sd(ts_anc, sd_query)
@@ -130,82 +134,79 @@ def run_pipeline(
     )
 
     ### Create a SampleData object with masked sites
-    # Identify sites in both `sd_query` and `ts_anc`.
+    # Identify sites which are in both `ts_anc` and `sd_query`.
     # This is a superset of the sites in `sd_query` to be masked and imputed.
-    shared_site_ids, shared_site_positions = util.compare_sites_sd_and_ts(
+    shared_site_ids, shared_site_pos = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=True
     )
 
     if verbose:
-        print(f"Shared sites: {len(shared_site_ids)}")
+        print(f"INFO: shared sites {len(shared_site_ids)}")
 
     # Identify sites in `sd_query` but not in `ts_anc`, which are not to be imputed.
-    exclude_site_ids, exclude_site_positions = util.compare_sites_sd_and_ts(
+    exclude_site_ids, exclude_site_pos = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=False
     )
 
     if verbose:
-        print(f"Exclude sites: {len(exclude_site_ids)}")
+        print(f"INFO: exclude sites {len(exclude_site_ids)}")
 
-    assert len(set(shared_site_ids).intersection(set(exclude_site_ids))) == 0
-    assert (
-        len(set(shared_site_positions).intersection(set(exclude_site_positions))) == 0
-    )
+    assert len(set(shared_site_ids) & set(exclude_site_ids)) == 0
+    assert len(set(shared_site_pos) & set(exclude_site_pos)) == 0
 
-    # Select sites in `sd_query` to mask and impute.
+    # Select mask sites in `ts_anc` to impute.
     # This is a subset of 'shared_site_ids'
-    masked_site_ids = masks.pick_masked_sites_random(
+    mask_site_ids = masks.pick_mask_sites_random(
         site_ids=shared_site_ids,
-        prop_masked_sites=prop_missing_sites,
+        prop_mask_sites=prop_mask_sites,
     )
-    masked_site_positions = [
-        s.position for s in sd_query_true.sites(ids=masked_site_ids)
+    mask_site_pos = [
+        s.position for s in sd_query_true.sites(ids=mask_site_ids)
     ]
 
     if verbose:
-        print(f"Masked sites: {len(masked_site_ids)}")
+        print(f"INFO: mask sites {len(mask_site_ids)}")
 
-    assert set(masked_site_ids).issubset(set(shared_site_ids))
-    assert set(masked_site_positions).issubset(set(shared_site_positions))
+    assert set(mask_site_ids).issubset(set(shared_site_ids))
+    assert set(mask_site_pos).issubset(set(shared_site_pos))
 
-    sd_query_masked = masks.mask_sites_in_sample_data(
-        sd_query_true, masked_sites=masked_site_ids
+    sd_query_mask = masks.mask_sites_in_sample_data(
+        sd_query_true, mask_sites=mask_site_ids
     )
 
     ### Impute the query genomes
-    ts_imputed = tsinfer.match_samples(sample_data=sd_query_masked, ancestors_ts=ts_anc)
+    ts_imputed = tsinfer.match_samples(sample_data=sd_query_mask, ancestors_ts=ts_anc)
 
     ### Evaluate imputation performance
-    ts_ref_site_positions = [s.position for s in ts_ref.sites()]
-    sd_query_true_site_positions = [s.position for s in sd_query_true.sites()]
-    sd_query_masked_site_positions = [s.position for s in sd_query_masked.sites()]
-    ts_imputed_site_positions = [s.position for s in ts_imputed.sites()]
+    ts_ref_site_pos = ts_ref.sites_position
+    sd_query_true_site_pos = sd_query_true.sites_position[:]
+    sd_query_mask_site_pos = sd_query_mask.sites_position[:]
+    ts_imputed_site_pos = ts_imputed.sites_position
 
-    assert len(ts_ref_site_positions) == len(sd_query_true_site_positions)
-    assert len(ts_ref_site_positions) == len(sd_query_masked_site_positions)
-    assert len(ts_ref_site_positions) == len(ts_imputed_site_positions)
+    assert len(ts_ref_site_pos) == len(sd_query_true_site_pos)
+    assert len(ts_ref_site_pos) == len(sd_query_mask_site_pos)
+    assert len(ts_ref_site_pos) == len(ts_imputed_site_pos)
 
-    assert set(ts_ref_site_positions) == set(sd_query_true_site_positions)
-    assert set(ts_ref_site_positions) == set(sd_query_masked_site_positions)
-    assert set(ts_ref_site_positions) == set(ts_imputed_site_positions)
+    assert set(ts_ref_site_pos) == set(sd_query_true_site_pos)
+    assert set(ts_ref_site_pos) == set(sd_query_mask_site_pos)
+    assert set(ts_ref_site_pos) == set(ts_imputed_site_pos)
 
     results = None
-    for v_ref, v_query_true, v_query_masked, v_query_imputed in zip(
+    for v_ref, v_query_true, v_query_mask, v_query_imputed in zip(
         ts_ref.variants(),  # Reference genomes from which to get the minor allele and MAF
         sd_query_true.variants(),  # Query genomes before site masking
-        sd_query_masked.variants(),  # Query genomes with masked sites
+        sd_query_mask.variants(),  # Query genomes with masked sites
         ts_imputed.variants(),  # Query genomes with masked sites imputed
     ):
-        if v_query_imputed.site.position in masked_site_positions:
+        pos = v_ref.site.position
+        if pos in mask_site_pos:
             # CHECK that ancestral states are identical.
-            assert (
-                v_ref.alleles[0] == sd_query_true.sites_alleles[v_query_true.site.id][0]
-            )
-            assert (
-                v_ref.alleles[0]
-                == sd_query_masked.sites_alleles[v_query_masked.site.id][0]
-            )
-            assert v_ref.alleles[0] == v_query_imputed.alleles[0]
+            ref_ancestral_allele = v_ref.alleles[0]
+            ref_derived_allele = v_ref.alleles[1]
+
+            assert ref_ancestral_allele == sd_query_true.sites_alleles[v_query_true.site.id][0]
+            assert ref_ancestral_allele == sd_query_mask.sites_alleles[v_query_mask.site.id][0]
+            assert ref_ancestral_allele == v_query_imputed.alleles[0]
 
             # TODO:
             #   Why doesn't `v.num_alleles` always reflect the number of genotypes
@@ -216,48 +217,33 @@ def run_pipeline(
                 continue
 
             assert v_ref.num_alleles == 2
-            assert set(v_query_masked.genotypes) == set([-1])
+            assert set(v_query_mask.genotypes) == set([-1])
             assert not np.any(v_query_imputed.genotypes == -1)
 
             # Note: A minor allele in `ts_ref` may be a major allele in `sd_query`
-            freqs_ref = v_ref.frequencies()
-            af_0 = freqs_ref[v_ref.alleles[0]]
-            af_1 = freqs_ref[v_ref.alleles[1]]
+            ref_freqs = v_ref.frequencies()
+            ref_af_0 = ref_freqs[ref_ancestral_allele]
+            ref_af_1 = ref_freqs[ref_derived_allele]
 
             # Get MAF from `ts_ref`
-            # Definition of a minor allele: < 0.50
-            if af_1 < af_0:
-                minor_allele_index = 1
-                maf = af_1
-            else:
-                minor_allele_index = 0
-                maf = af_0
+            ma_index = 1 if ref_af_1 < ref_af_0 else 0
+            maf = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
 
             # Assess imputation performance
-            total_concordance = measures.compute_concordance(
-                genotypes_true=v_query_true.genotypes,
-                genotypes_imputed=v_query_imputed.genotypes,
-            )
             iqs = measures.compute_iqs(
-                genotypes_true=v_query_true.genotypes,
-                genotypes_imputed=v_query_imputed.genotypes,
+                gt_true=v_query_true.genotypes,
+                gt_imputed=v_query_imputed.genotypes,
+                ploidy=1,
             )
 
-            # line.shape = (1, 4)
-            line = np.array(
-                [
-                    [v_ref.site.position, maf, total_concordance, iqs],
-                ]
-            )
-            if results is None:
-                results = line
-            else:
-                results = np.append(results, line, axis=0)
+            line = np.array([[pos, ma_index, maf, iqs]])
+            results = line if results is None else np.append(results, line, axis=0)
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: END {end_datetime}")
 
-    ### Write results
-    out_results_file = out_prefix + "_" + str(index) + ".csv"
+    ### Write results to file
+    out_csv_file = out_prefix + "_" + str(index) + ".csv"
 
     ### Get parameter values from provenances
     prov = [p for p in ts_full.provenances()]
@@ -288,7 +274,7 @@ def run_pipeline(
                 "#" + "size_ref" + "=" + f"{ts_ref.num_samples}",
                 "#" + "size_query" + "=" + f"{sd_query.num_samples}",
                 "#" + "time_query" + "=" + f"{time_query}",
-                "#" + "prop_missing_sites" + "=" + f"{prop_missing_sites}",
+                "#" + "prop_missing_sites" + "=" + f"{prop_mask_sites}",
                 "#" + "eff_pop_size" + "=" + f"{eff_pop_size}",
                 "#" + "recombination_rate" + "=" + f"{recombination_rate}",
                 "#" + "mutation_rate" + "=" + f"{mutation_rate}",
@@ -302,10 +288,10 @@ def run_pipeline(
         + "\n"
     )
 
-    header_text += ",".join(["position", "maf", "total_concordance", "iqs"])
+    header_text += ",".join(["position", "ma_index", "maf", "iqs"])
 
     np.savetxt(
-        out_results_file,
+        out_csv_file,
         results,
         fmt="%.10f",
         delimiter=",",
@@ -313,6 +299,8 @@ def run_pipeline(
         comments="",
         header=header_text,
     )
+
+    print("INFO: Finished writing results to file")
 
 
 if __name__ == "__main__":
