@@ -334,8 +334,8 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
         sequence_length=ancestors_ts.sequence_length, path=path
     ) as new_sd:
         # Add populations
-        # TODO: Allow for more populations to be added.
-        new_sd.add_population()
+        for pop in sample_data.populations():
+            new_sd.add_population(metadata=pop.metadata)
 
         # Add individuals
         for ind in sample_data.individuals():
