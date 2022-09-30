@@ -47,7 +47,7 @@ def mask_sites_in_sample_data(sample_data, sites, site_type):
 
     new_sd = sample_data.copy()
 
-    for v in sd.variants():
+    for v in sample_data.variants():
         site_ref = v.site.id if site_type == "id" else v.site.position
         if site_ref in sites:
             new_sd.sites_genotypes[v.site.id] = np.full_like(
