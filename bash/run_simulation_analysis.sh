@@ -12,6 +12,6 @@ out_dir=$base_dir"/ten_${pop_ref}_${pop_query}_t${sampling_time}_p${perc_mask_si
 
 mkdir -p $base_dir
 
-for i in {1..50}; do
+for i in {1..100}; do
     echo "python ${script_file} -i ${i} -s ${sampling_time} -p 0.${perc_mask_sites} -m ten_pop --pop_ref ${pop_ref} --pop_query ${pop_query} -o ${out_dir}"
 done
