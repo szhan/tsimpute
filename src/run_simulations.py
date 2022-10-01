@@ -297,7 +297,7 @@ def run_pipeline(
     )
 
     header_text += ",".join(
-        ["position", "minor_allel_index", "minor_allel_freq", "iqs"]
+        ["position", "ref_minor_allele_index", "ref_minor_allele_freq", "iqs"]
     )
 
     np.savetxt(
