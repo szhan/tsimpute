@@ -81,7 +81,9 @@ def evaluate_imputation(
     ts_anc_site_pos = ts_anc.sites_position # Mask sites and chip sites
 
     # Define mask site positions relative to the ancestors ts of the ref. panel.
-    chip_site_pos = masks.parse_site_position_file(in_chip_file)
+    all_chip_site_pos = masks.parse_site_position_file(in_chip_file)
+    chip_site_pos = np.sort(list(set(ts_anc_site_pos) & set(all_chip_site_pos)))
+    print(f"Chip sites in anc ts: {len(chip_site_pos)}")
     mask_site_pos = np.sort(list(set(ts_anc_site_pos) - set(chip_site_pos)))
     print(f"Mask sites in anc ts: {len(mask_site_pos)}")
     mask_site_pos = np.sort(list(set(mask_site_pos) & set(sd_true_site_pos)))
