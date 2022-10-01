@@ -23,7 +23,7 @@ import measures
     "--in_file_type",
     type=click.Choice(["trees", "samples"]),
     required=True,
-    help="Does the input file contain 'trees' or 'samples'?"
+    help="Does the input file contain 'trees' or 'samples'?",
 )
 @click.option(
     "--in_true_samples_file",
@@ -43,7 +43,7 @@ import measures
     "--remove_leaves",
     type=bool,
     required=True,
-    help="Remove leaves when making ancestors tree sequence."
+    help="Remove leaves when making ancestors tree sequence.",
 )
 @click.option(
     "--in_chip_file",
@@ -68,7 +68,11 @@ def evaluate_imputation(
     in_chip_file,
     out_csv_file,
 ):
-    data_imputed = tskit.load(in_imputed_file) if in_file_type == "trees" else tsinfer.load(in_imputed_file)
+    data_imputed = (
+        tskit.load(in_imputed_file)
+        if in_file_type == "trees"
+        else tsinfer.load(in_imputed_file)
+    )
     sd_true = tsinfer.load(in_true_samples_file)
     ts_ref = tskit.load(in_reference_trees_file)
 
@@ -80,9 +84,13 @@ def evaluate_imputation(
         # The samples argument is not actually used.
         ts_anc = tsinfer.eval_util.make_ancestors_ts(
             samples=None, ts=ts_ref, remove_leaves=remove_leaves
-    )
+        )
 
-    data_imputed_site_pos = data_imputed.sites_position if in_file_type == "trees" else data_imputed.sites_position[:]
+    data_imputed_site_pos = (
+        data_imputed.sites_position
+        if in_file_type == "trees"
+        else data_imputed.sites_position[:]
+    )
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
     ts_anc_site_pos = ts_anc.sites_position
@@ -118,10 +126,10 @@ def evaluate_imputation(
             v_ts_ref = next(vars_ts_ref)
         while v_ts_anc.site.position != pos:
             v_ts_anc = next(vars_ts_anc)
-        
+
         # Variant objects have ordered lists of alleles.
         ref_ancestral_allele = v_ts_ref.alleles[0]  # Denoted by 0
-        ref_derived_allele = v_ts_ref.alleles[1]    # Denoted by 1
+        ref_derived_allele = v_ts_ref.alleles[1]  # Denoted by 1
 
         # CHECK that ancestral alleles are identical.
         assert ref_ancestral_allele == v_data_imputed.site.ancestral_state
@@ -131,9 +139,15 @@ def evaluate_imputation(
         if in_file_type == "trees":
             imputed_freqs = v_data_imputed.frequencies(remove_missing=True)
             imputed_af_0 = imputed_freqs[ref_ancestral_allele]
-            imputed_af_1 = imputed_freqs[ref_derived_allele] if ref_derived_allele in imputed_freqs else 0.0
+            imputed_af_1 = (
+                imputed_freqs[ref_derived_allele]
+                if ref_derived_allele in imputed_freqs
+                else 0.0
+            )
             imputed_ma_index = 1 if imputed_af_1 < imputed_af_0 else 0
-            imputed_ma_freq = imputed_af_1 if imputed_af_1 < imputed_af_0 else imputed_af_0
+            imputed_ma_freq = (
+                imputed_af_1 if imputed_af_1 < imputed_af_0 else imputed_af_0
+            )
         else:
             # Variant objects from SampleData do not yet have frequencies().
             # TODO: Update when they do have such functionality.
@@ -167,8 +181,7 @@ def evaluate_imputation(
             ]
         )
 
-        results = line if results is None else np.append(
-            results, line, axis=0)
+        results = line if results is None else np.append(results, line, axis=0)
 
     # Write results to file
     header_text = (
@@ -189,8 +202,8 @@ def evaluate_imputation(
                 "#" + "num_sites_ts_ref" + "=" + f"{len(ts_ref_site_pos)}",
                 "#" + "num_sites_ts_anc" + "=" + f"{len(ts_anc_site_pos)}",
                 "#" + "num_chip_sites_all" + "=" + f"{len(chip_site_pos_all)}",
-                "#" + "num_chip_sites" + "=" + f"{len(chip_site_pos)}", # in ts_anc
-                "#" + "num_mask_sites" + "=" + f"{len(mask_site_pos)}", # in ts_anc
+                "#" + "num_chip_sites" + "=" + f"{len(chip_site_pos)}",  # in ts_anc
+                "#" + "num_mask_sites" + "=" + f"{len(mask_site_pos)}",  # in ts_anc
             ]
         )
         + "\n"

@@ -13,16 +13,18 @@ import util
 
 @click.command()
 @click.option(
-    "--in_trees_file", "-i",
+    "--in_trees_file",
+    "-i",
     type=click.Path(exists=True),
     required=True,
-    help="Input trees file"
+    help="Input trees file",
 )
 @click.option(
-    "--out_csv_file", "-o",
+    "--out_csv_file",
+    "-o",
     type=click.Path(exists=False),
     required=True,
-    help="Output CSV file containing the statistics"
+    help="Output CSV file containing the statistics",
 )
 def main(in_trees_file, out_csv_file):
     """
@@ -41,7 +43,7 @@ def main(in_trees_file, out_csv_file):
     stats["num_edges"] = ts.num_edges
     stats["num_mutations"] = ts.num_mutations
     stats["num_singletons"] = util.count_singletons(ts)
-    stats["num_inference_sites"]= util.count_inference_sites(ts)
+    stats["num_inference_sites"] = util.count_inference_sites(ts)
 
     with open(out_csv_file, "w") as f:
         w = csv.writer(f)

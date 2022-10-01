@@ -13,8 +13,7 @@ def pick_mask_sites_random(sites, prop_mask_sites, seed=None):
     :return: A list of site IDs.
     :rtype: np.ndarray
     """
-    assert 0 <= prop_mask_sites <= 1, \
-        f"{prop_mask_sites} is not a proportion."
+    assert 0 <= prop_mask_sites <= 1, f"{prop_mask_sites} is not a proportion."
 
     rng = np.random.default_rng(seed=seed)
 
@@ -71,10 +70,10 @@ def parse_site_position_file(in_file):
     :rtype: np.array
     """
     site_pos = []
-    
+
     with open(in_file, "rt") as f:
         for line in f:
             chr, pos = line.rstrip().split("\t")
             site_pos.append(int(pos))
-    
+
     return np.array(site_pos)

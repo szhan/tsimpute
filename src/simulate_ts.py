@@ -123,9 +123,7 @@ def get_ts_single_panmictic(time_query):
 
     sample_set = [
         msprime.SampleSet(num_samples=size_ref, ploidy=ploidy_level, time=0),
-        msprime.SampleSet(
-            num_samples=size_query, ploidy=ploidy_level, time=time_query
-        ),
+        msprime.SampleSet(num_samples=size_query, ploidy=ploidy_level, time=time_query),
     ]
 
     ts = simulate_ts(

@@ -122,8 +122,9 @@ def get_sequence_length(vcf, seq_name):
     :return: Sequence length.
     :rtype: int
     """
-    assert len(vcf.seqnames) == len(vcf.seqlens),\
-        f"Number of sequence names different than number of sequence length."
+    assert len(vcf.seqnames) == len(
+        vcf.seqlens
+    ), f"Number of sequence names different than number of sequence length."
     for seqname, seqlen in zip(vcf.seqnames, vcf.seqlens):
         if seqname == seq_name:
             return seqlen
@@ -182,7 +183,13 @@ def add_individuals(vcf, sample_data, ploidy_level, populations):
 
 
 def add_sites(
-    vcf_iter, sample_data, ploidy_level, *, ancestral_alleles=None, show_warnings=False, help_debug=False
+    vcf_iter,
+    sample_data,
+    ploidy_level,
+    *,
+    ancestral_alleles=None,
+    show_warnings=False,
+    help_debug=False,
 ):
     """
     Add sites from a generator over a `VCF` object to an existing `SampleData` object,
@@ -206,7 +213,7 @@ def add_sites(
         ploidy_level == 1 or ploidy_level == 2
     ), f"Ploidy {ploidy_level} is not recognized."
 
-    num_sites_with_aa = 0 # Number of sites with a matched ancestral allele
+    num_sites_with_aa = 0  # Number of sites with a matched ancestral allele
 
     pos = 0
     for v in tqdm(vcf_iter):
@@ -240,7 +247,7 @@ def add_sites(
 
         # Create an index mapping from VCF (old) to SampleData (new).
         allele_index_map = {
-            old_index: new_allele_list.index(allele) # new_index
+            old_index: new_allele_list.index(allele)  # new_index
             for old_index, allele in enumerate(old_allele_list)
         }
 
@@ -266,13 +273,21 @@ def add_sites(
             print(f"OLD_GT: {v.genotypes}")
             print(f"NEW_GT: {new_genotypes}")
 
-        sample_data.add_site(position=pos, genotypes=new_genotypes, alleles=new_allele_list)
+        sample_data.add_site(
+            position=pos, genotypes=new_genotypes, alleles=new_allele_list
+        )
 
     return num_sites_with_aa
 
 
 def create_sample_data_from_vcf_file(
-    vcf_file, samples_file, ploidy_level, seq_name, *, ancestral_alleles=None, num_threads=1
+    vcf_file,
+    samples_file,
+    ploidy_level,
+    seq_name,
+    *,
+    ancestral_alleles=None,
+    num_threads=1,
 ):
     """
     Create a `SampleData` object from a VCF file and store it in a `.samples` file.
@@ -305,19 +320,21 @@ def create_sample_data_from_vcf_file(
 
     vcf_iter = vcf(seq_name)
 
-    with tsinfer.SampleData(
-        path=samples_file, sequence_length=seq_len
-    ) as sample_data:
+    with tsinfer.SampleData(path=samples_file, sequence_length=seq_len) as sample_data:
         populations = add_populations(vcf, sample_data)
         add_individuals(vcf, sample_data, ploidy_level, populations)
-        num_sites_with_aa = add_sites(vcf_iter, sample_data, ploidy_level, ancestral_alleles=ancestral_alleles)
+        num_sites_with_aa = add_sites(
+            vcf_iter, sample_data, ploidy_level, ancestral_alleles=ancestral_alleles
+        )
 
     print(f"DATA: Sites with matched AA {num_sites_with_aa}")
 
     return sample_data
 
 
-def extract_ancestral_alleles_from_vcf_file(vcf_file, *, seq_name_prefix=None, num_threads=1, show_warnings=False):
+def extract_ancestral_alleles_from_vcf_file(
+    vcf_file, *, seq_name_prefix=None, num_threads=1, show_warnings=False
+):
     """
     Extract ancestral alleles from a VCF file.
     Ancestral alleles (AA) should be provided in the INFO field. Note there may be indels.
@@ -355,7 +372,7 @@ def extract_ancestral_alleles_from_vcf_file(vcf_file, *, seq_name_prefix=None, n
 
         if v.INFO.get("AA"):
             stats["num_sites_aa"] += 1
-            chr_pos = str(v.CHROM) + ":" + str(int(pos)) # e.g. 20:123456
+            chr_pos = str(v.CHROM) + ":" + str(int(pos))  # e.g. 20:123456
             if seq_name_prefix is not None:
                 chr_pos = seq_name_prefix + chr_pos
             map_aa[chr_pos] = v.INFO.get("AA")

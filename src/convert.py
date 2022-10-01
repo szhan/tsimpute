@@ -44,8 +44,7 @@ def run_multiprocessing(args, function):
     num_processes = args.num_threads
     if num_processes > 1:
         # Split the VCF into chunks
-        callset = allel.read_vcf(
-            vcf_fn, fields=["variants/CHROM", "variants/POS"])
+        callset = allel.read_vcf(vcf_fn, fields=["variants/CHROM", "variants/POS"])
         pos_list = callset["variants/POS"]
         chroms = callset["variants/CHROM"]
         assert np.all(chroms == chroms[0])
@@ -61,8 +60,7 @@ def run_multiprocessing(args, function):
                         (
                             args,
                             args.output_file + str(index),
-                            (chrom + ":" + str(lst[i]) +
-                             "-" + str(lst[i + n])),
+                            (chrom + ":" + str(lst[i]) + "-" + str(lst[i + n])),
                         )
                     )
                 else:
@@ -238,8 +236,7 @@ class Converter(object):
         self.ancestral_states = ancestral_states
         self.samples = samples
         if target_samples is not None:
-            self.target_sites_pos = set(
-                tsinfer.load(target_samples).sites_position[:])
+            self.target_sites_pos = set(tsinfer.load(target_samples).sites_position[:])
         else:
             self.target_sites_pos = None
         self.num_samples = -1
@@ -361,9 +358,7 @@ class VcfConverter(Converter):
 
     def process_sites(self, vcf_subset=None, show_progress=False, max_sites=None):
         num_data_sites = int(
-            subprocess.check_output(
-                ["bcftools", "index", "--nrecords", self.data_file]
-            )
+            subprocess.check_output(["bcftools", "index", "--nrecords", self.data_file])
         )
 
         progress = tqdm.tqdm(total=num_data_sites, disable=not show_progress)
@@ -407,13 +402,12 @@ class GenericConverter(VcfConverter):
     """
     TODO
     """
+
     def process_metadata(self, metadata_file, show_progress=False):
         """
         Add population and individuals without metadata.
         """
-        populations = [
-            ["generic", "generic", "generic"]
-        ]
+        populations = [["generic", "generic", "generic"]]
 
         population_id_map = {}
         for pop in populations:
@@ -428,9 +422,7 @@ class GenericConverter(VcfConverter):
         self.num_samples = len(individual_names) * 2
         # Add in the metadata rows in the order of the VCF.
         for index, name in enumerate(individual_names):
-            self.samples.add_individual(
-                metadata={"name": name}, population=0, ploidy=2
-            )
+            self.samples.add_individual(metadata={"name": name}, population=0, ploidy=2)
 
 
 class ThousandGenomesConverter(VcfConverter):
@@ -487,8 +479,7 @@ class ThousandGenomesConverter(VcfConverter):
         with open(metadata_file, "r") as ped_file:
             # Parse the individual metadata out of the ped file.
             columns = next(ped_file).split("\t")
-            sane_names = [col.replace(" ", "_").lower().strip()
-                          for col in columns]
+            sane_names = [col.replace(" ", "_").lower().strip() for col in columns]
             metadata = {}
             populations = {}
             for line in ped_file:

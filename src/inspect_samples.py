@@ -8,7 +8,7 @@ import tsinfer
     "-i",
     type=click.Path(exists=True),
     required=True,
-    help="Input samples file"
+    help="Input samples file",
 )
 def get_variant_statistics_from_samples_file(in_samples_file):
     # Multiallelic sites
