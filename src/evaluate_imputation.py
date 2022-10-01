@@ -77,15 +77,17 @@ def evaluate_imputation(
 
     ts_imputed_site_pos = ts_imputed.sites_position # Mask sites and chip sites
     sd_true_site_pos = sd_true.sites_position[:]
-    #ts_ref_site_pos = ts_ref.sites_position
+    ts_ref_site_pos = ts_ref.sites_position
     ts_anc_site_pos = ts_anc.sites_position # Mask sites and chip sites
-
-    assert set(ts_anc_site_pos).issubset(set(ts_imputed_site_pos))
-    assert set(ts_anc_site_pos).issubset(set(sd_true_site_pos))
 
     # Define mask site positions relative to the ancestors ts of the ref. panel.
     chip_site_pos = masks.parse_site_position_file(in_chip_file)
     mask_site_pos = np.sort(list(set(ts_anc_site_pos) - set(chip_site_pos)))
+
+    assert set(mask_site_pos).issubset(set(ts_imputed_site_pos))
+    assert set(mask_site_pos).issubset(set(sd_true_site_pos))
+    assert set(mask_site_pos).issubset(set(ts_ref_site_pos))
+    assert set(mask_site_pos).issubset(set(ts_anc_site_pos))
 
     vars_ts_imputed = ts_imputed.variants()
     vars_sd_true = sd_true.variants()
