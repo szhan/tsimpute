@@ -98,8 +98,11 @@ def evaluate_imputation(
     # Define chip and mask sites relative to the ancestors ts from the reference ts.
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file)
     chip_site_pos = np.sort(list(set(ts_anc_site_pos) & set(chip_site_pos_all)))
-    mask_site_pos = set(ts_anc_site_pos) - set(chip_site_pos)
-    mask_site_pos = np.sort(list(mask_site_pos & set(sd_true_site_pos)))
+    mask_site_pos = set(ts_anc_site_pos) - set(chip_site_pos)  # Must NOT be in chip set
+    mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in ground-truth set
+    mask_site_pos = np.sort(
+        list(mask_site_pos & set(data_imputed_site_pos))
+    )  # Must be in imputed set
 
     assert set(mask_site_pos).issubset(set(data_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
@@ -203,7 +206,10 @@ def evaluate_imputation(
                 "#" + "num_sites_ts_anc" + "=" + f"{len(ts_anc_site_pos)}",
                 "#" + "num_chip_sites_all" + "=" + f"{len(chip_site_pos_all)}",
                 "#" + "num_chip_sites" + "=" + f"{len(chip_site_pos)}",  # in ts_anc
-                "#" + "num_mask_sites" + "=" + f"{len(mask_site_pos)}",  # in ts_anc
+                "#"
+                + "num_mask_sites"
+                + "="
+                + f"{len(mask_site_pos)}",  # in ts_anc and data_imputed
             ]
         )
         + "\n"
