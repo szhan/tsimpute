@@ -80,14 +80,11 @@ def evaluate_imputation(
     ts_ref_site_pos = ts_ref.sites_position
     ts_anc_site_pos = ts_anc.sites_position # Mask sites and chip sites
 
-    # Define mask site positions relative to the ancestors ts of the ref. panel.
-    all_chip_site_pos = masks.parse_site_position_file(in_chip_file)
-    chip_site_pos = np.sort(list(set(ts_anc_site_pos) & set(all_chip_site_pos)))
-    print(f"Chip sites in anc ts: {len(chip_site_pos)}")
-    mask_site_pos = np.sort(list(set(ts_anc_site_pos) - set(chip_site_pos)))
-    print(f"Mask sites in anc ts: {len(mask_site_pos)}")
-    mask_site_pos = np.sort(list(set(mask_site_pos) & set(sd_true_site_pos)))
-    print(f"Mask sites in sd true: {len(mask_site_pos)}")
+    # Define chip and mask sites relative to the ancestors ts of the ref. panel.
+    chip_site_pos_all = masks.parse_site_position_file(in_chip_file)
+    chip_site_pos = np.sort(list(set(ts_anc_site_pos) & set(chip_site_pos_all)))
+    mask_site_pos = set(ts_anc_site_pos) - set(chip_site_pos)
+    mask_site_pos = np.sort(list(mask_site_pos & set(sd_true_site_pos)))
 
     assert set(mask_site_pos).issubset(set(ts_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
@@ -166,14 +163,23 @@ def evaluate_imputation(
     header_text = (
         "\n".join(
             [
+                # Run information
                 "#" + "tskit" + "=" + f"{tskit.__version__}",
                 "#" + "tsinfer" + "=" + f"{tsinfer.__version__}",
                 "#" + "in_imputed_file" + "=" + f"{in_imputed_file}",
                 "#" + "in_true_samples_file" + "=" + f"{in_true_samples_file}",
                 "#" + "in_reference_trees_file" + "=" + f"{in_reference_trees_file}",
+                "#" + "remove_leaves" + "=" + f"{remove_leaves}",
                 "#" + "in_chip_file" + "=" + f"{in_chip_file}",
-                "#" + "num_chip_sites" + "=" + f"{len(chip_site_pos)}",
-                "#" + "num_mask_sites" + "=" + f"{len(mask_site_pos)}",
+                "#" + "out_csv_file" + "=" + f"{out_csv_file}",
+                # Site statistics
+                "#" + "num_sites_ts_imputed" + "=" + f"{len(ts_imputed_site_pos)}",
+                "#" + "num_sites_sd_true" + "=" + f"{len(sd_true_site_pos)}",
+                "#" + "num_sites_ts_ref" + "=" + f"{len(ts_ref_site_pos)}",
+                "#" + "num_sites_ts_anc" + "=" + f"{len(ts_anc_site_pos)}",
+                "#" + "num_chip_sites_all" + "=" + f"{len(chip_site_pos_all)}",
+                "#" + "num_chip_sites" + "=" + f"{len(chip_site_pos)}", # in ts_anc
+                "#" + "num_mask_sites" + "=" + f"{len(mask_site_pos)}", # in ts_anc
             ]
         )
         + "\n"
