@@ -1,3 +1,4 @@
+from cmath import nan
 import click
 import sys
 import tqdm
@@ -17,6 +18,12 @@ import measures
     type=click.Path(exists=True),
     required=True,
     help="Input trees or samples file with imputed genotypes.",
+)
+@click.option(
+    "--in_file_type",
+    type=click.Choice(["trees", "samples"]),
+    required=True,
+    help="Does the input file contain 'trees' or 'samples'?"
 )
 @click.option(
     "--in_true_samples_file",
@@ -54,14 +61,14 @@ import measures
 )
 def evaluate_imputation(
     in_imputed_file,
+    in_file_type,
     in_true_samples_file,
     in_reference_trees_file,
     remove_leaves,
     in_chip_file,
     out_csv_file,
 ):
-    # TODO: Take in samples file as well.
-    ts_imputed = tskit.load(in_imputed_file)
+    data_imputed = tskit.load(in_imputed_file) if in_file_type == "trees" else tsinfer.load(in_imputed_file)
     sd_true = tsinfer.load(in_true_samples_file)
     ts_ref = tskit.load(in_reference_trees_file)
 
@@ -75,7 +82,7 @@ def evaluate_imputation(
             samples=None, ts=ts_ref, remove_leaves=remove_leaves
     )
 
-    ts_imputed_site_pos = ts_imputed.sites_position
+    data_imputed_site_pos = data_imputed.sites_position if in_file_type == "trees" else data_imputed.sites_position[:]
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
     ts_anc_site_pos = ts_anc.sites_position
@@ -86,25 +93,25 @@ def evaluate_imputation(
     mask_site_pos = set(ts_anc_site_pos) - set(chip_site_pos)
     mask_site_pos = np.sort(list(mask_site_pos & set(sd_true_site_pos)))
 
-    assert set(mask_site_pos).issubset(set(ts_imputed_site_pos))
+    assert set(mask_site_pos).issubset(set(data_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
     assert set(mask_site_pos).issubset(set(ts_ref_site_pos))
     assert set(mask_site_pos).issubset(set(ts_anc_site_pos))
 
-    vars_ts_imputed = ts_imputed.variants()
+    vars_data_imputed = data_imputed.variants()
     vars_sd_true = sd_true.variants()
     vars_ts_ref = ts_ref.variants()
     vars_ts_anc = ts_anc.variants()
 
-    v_ts_imputed = next(vars_ts_imputed)
+    v_data_imputed = next(vars_data_imputed)
     v_sd_true = next(vars_sd_true)
     v_ts_ref = next(vars_ts_ref)
     v_ts_anc = next(vars_ts_anc)
 
     results = None
     for pos in tqdm.tqdm(mask_site_pos):
-        while v_ts_imputed.site.position != pos:
-            v_ts_imputed = next(vars_ts_imputed)
+        while v_data_imputed.site.position != pos:
+            v_data_imputed = next(vars_data_imputed)
         while v_sd_true.site.position != pos:
             v_sd_true = next(vars_sd_true)
         while v_ts_ref.site.position != pos:
@@ -117,29 +124,33 @@ def evaluate_imputation(
         ref_derived_allele = v_ts_ref.alleles[1]    # Denoted by 1
 
         # CHECK that ancestral alleles are identical.
-        assert ref_ancestral_allele == v_ts_imputed.site.ancestral_state
+        assert ref_ancestral_allele == v_data_imputed.site.ancestral_state
         assert ref_ancestral_allele == v_sd_true.site.ancestral_state
 
-        # Get Minor Allele index and frequency from `ts_imputed`.
-        imputed_freqs = v_ts_imputed.frequencies(remove_missing=True)
-        imputed_af_0 = imputed_freqs[ref_ancestral_allele]
-        imputed_af_1 = imputed_freqs[ref_derived_allele] if ref_derived_allele in imputed_freqs else 0.0
-
-        imputed_ma_index = 1 if imputed_af_1 < imputed_af_0 else 0
-        imputed_ma_freq = imputed_af_1 if imputed_af_1 < imputed_af_0 else imputed_af_0
+        # Get Minor Allele index and frequency from `data_imputed`.
+        if in_file_type == "trees":
+            imputed_freqs = v_data_imputed.frequencies(remove_missing=True)
+            imputed_af_0 = imputed_freqs[ref_ancestral_allele]
+            imputed_af_1 = imputed_freqs[ref_derived_allele] if ref_derived_allele in imputed_freqs else 0.0
+            imputed_ma_index = 1 if imputed_af_1 < imputed_af_0 else 0
+            imputed_ma_freq = imputed_af_1 if imputed_af_1 < imputed_af_0 else imputed_af_0
+        else:
+            # Variant objects from SampleData do not yet have frequencies().
+            # TODO: Update when they do have such functionality.
+            imputed_ma_index = float("nan")
+            imputed_ma_freq = float("nan")
 
         # Get Minor Allele index and frequency from `ts_ref`.
         ref_freqs = v_ts_ref.frequencies(remove_missing=True)
         ref_af_0 = ref_freqs[ref_ancestral_allele]
         ref_af_1 = ref_freqs[ref_derived_allele]
-
         ref_ma_index = 1 if ref_af_1 < ref_af_0 else 0
         ref_ma_freq = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
 
         # Calculate imputation performance metrics
         iqs = measures.compute_iqs(
             gt_true=v_sd_true.genotypes,
-            gt_imputed=v_ts_imputed.genotypes,
+            gt_imputed=v_data_imputed.genotypes,
             ploidy=2,
         )
 
@@ -173,7 +184,7 @@ def evaluate_imputation(
                 "#" + "in_chip_file" + "=" + f"{in_chip_file}",
                 "#" + "out_csv_file" + "=" + f"{out_csv_file}",
                 # Site statistics
-                "#" + "num_sites_ts_imputed" + "=" + f"{len(ts_imputed_site_pos)}",
+                "#" + "num_sites_data_imputed" + "=" + f"{len(data_imputed_site_pos)}",
                 "#" + "num_sites_sd_true" + "=" + f"{len(sd_true_site_pos)}",
                 "#" + "num_sites_ts_ref" + "=" + f"{len(ts_ref_site_pos)}",
                 "#" + "num_sites_ts_anc" + "=" + f"{len(ts_anc_site_pos)}",
