@@ -83,6 +83,9 @@ def evaluate_imputation(
     # Define mask site positions relative to the ancestors ts of the ref. panel.
     chip_site_pos = masks.parse_site_position_file(in_chip_file)
     mask_site_pos = np.sort(list(set(ts_anc_site_pos) - set(chip_site_pos)))
+    print(f"Mask sites in anc ts: {len(mask_site_pos)}")
+    mask_site_pos = np.sort(list(set(mask_site_pos) & set(sd_true_site_pos)))
+    print(f"Mask sites in sd true: {len(mask_site_pos)}")
 
     assert set(mask_site_pos).issubset(set(ts_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
