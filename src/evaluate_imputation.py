@@ -75,12 +75,12 @@ def evaluate_imputation(
             samples=None, ts=ts_ref, remove_leaves=remove_leaves
     )
 
-    ts_imputed_site_pos = ts_imputed.sites_position # Mask sites and chip sites
+    ts_imputed_site_pos = ts_imputed.sites_position
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
-    ts_anc_site_pos = ts_anc.sites_position # Mask sites and chip sites
+    ts_anc_site_pos = ts_anc.sites_position
 
-    # Define chip and mask sites relative to the ancestors ts of the ref. panel.
+    # Define chip and mask sites relative to the ancestors ts from the reference ts.
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file)
     chip_site_pos = np.sort(list(set(ts_anc_site_pos) & set(chip_site_pos_all)))
     mask_site_pos = set(ts_anc_site_pos) - set(chip_site_pos)
@@ -116,7 +116,7 @@ def evaluate_imputation(
         ref_ancestral_allele = v_ts_ref.alleles[0]  # Denoted by 0
         ref_derived_allele = v_ts_ref.alleles[1]    # Denoted by 1
 
-        # CHECK that ancestral states are identical.
+        # CHECK that ancestral alleles are identical.
         assert ref_ancestral_allele == v_ts_imputed.site.ancestral_state
         assert ref_ancestral_allele == v_sd_true.site.ancestral_state
 
