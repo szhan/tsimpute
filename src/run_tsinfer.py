@@ -5,6 +5,7 @@ in both the ancestors and samples matching steps.
 See https://tsinfer.readthedocs.io/en/latest/index.html
 """
 import click
+import msprime
 import tskit
 import tsinfer
 
@@ -33,6 +34,13 @@ import tsinfer
     help="Uniform recombination rate",
 )
 @click.option(
+    "--genetic_map",
+    "-g",
+    type=click.Path(exists=True),
+    default=None,
+    help="Genetic map file in HapMap3 format"
+)
+@click.option(
     "--mmr_ancestors",
     "-a",
     type=float,
@@ -52,6 +60,7 @@ def run_standard_tsinfer_pipeline(
     out_dir,
     out_prefix,
     recombination_rate,
+    genetic_map,
     mmr_ancestors,
     mmr_samples,
     num_threads,
@@ -61,6 +70,7 @@ def run_standard_tsinfer_pipeline(
     :param str out_dir: Output directory.
     :param str out_prefix: Prefix of output filenames.
     :param float recombination_rate: Uniform genome-wide recombination rate (default = None).
+    :param str genetic_map: Genetic map file for msprime input (default = None).
     :param float mmr_ancestors: Mismatch ratio used when matching ancestors (default = None).
     :param float mmr_samples: Mismatch ratio used when matching samples (default = None).
     :param int num_threads: Number of CPUs (default = 1).
@@ -75,6 +85,11 @@ def run_standard_tsinfer_pipeline(
 
     print("INFO: Loading samples file")
     sample_data = tsinfer.load(in_samples_file)
+
+    if genetic_map is not None:
+        print("INFO: Loading genetic map")
+        print("WARN: Using this instead of recombination rate")
+        recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
 
     print("INFO: Generating ancestors")
     ancestor_data = tsinfer.generate_ancestors(
