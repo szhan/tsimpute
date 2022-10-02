@@ -2,6 +2,8 @@ import click
 from datetime import datetime
 import sys
 import numpy as np
+from git import Repo
+
 import msprime
 import tskit
 import tsinfer
@@ -85,6 +87,13 @@ def perform_imputation(
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"INFO: START {start_datetime}")
+
+    print(f"DEPS: msprime {msprime.__version__}")
+    print(f"DEPS: tskit {tskit.__version__}")
+    print(f"DEPS: tsinfer {tsinfer.__version__}")
+    repo = Repo(search_parent_directories=True)
+    print(f"DEPS: tsimpute URL {repo.remotes.origin.url}")
+    print(f"DEPS: tsimpute SHA {repo.head.object.hexsha}")
 
     print(f"INFO: Loading trees file containing reference panel")
     ts_ref = tskit.load(in_reference_trees_file)
