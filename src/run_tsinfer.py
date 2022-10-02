@@ -5,6 +5,9 @@ in both the ancestors and samples matching steps.
 See https://tsinfer.readthedocs.io/en/latest/index.html
 """
 import click
+from datetime import datetime
+from git import Repo
+
 import msprime
 import tskit
 import tsinfer
@@ -55,7 +58,7 @@ import tsinfer
     help="Mismatch ratio used when matching sample haplotypes",
 )
 @click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs")
-def run_standard_tsinfer_pipeline(
+def run_tsinfer(
     in_samples_file,
     out_dir,
     out_prefix,
@@ -75,13 +78,14 @@ def run_standard_tsinfer_pipeline(
     :param float mmr_samples: Mismatch ratio used when matching samples (default = None).
     :param int num_threads: Number of CPUs (default = 1).
     """
-    out_ancestors_file = out_dir + "/" + out_prefix + ".ancestors"
-    out_ancestors_ts_file = out_dir + "/" + out_prefix + ".ancestors.trees"
-    out_inferred_ts_file = out_dir + "/" + out_prefix + ".inferred.trees"
+    start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: START {start_datetime}")
 
-    print("INFO: START")
     print(f"DEPS: tskit {tskit.__version__}")
     print(f"DEPS: tsinfer {tsinfer.__version__}")
+    repo = Repo(search_parent_directories=True)
+    print(f"DEPS: tsimpute URL {repo.remotes.origin.url}")
+    print(f"DEPS: tsimpute SHA {repo.head.object.hexsha}")
 
     print("INFO: Loading samples file")
     sample_data = tsinfer.load(in_samples_file)
@@ -90,6 +94,11 @@ def run_standard_tsinfer_pipeline(
         print("INFO: Loading genetic map")
         print("WARN: Using this instead of recombination rate")
         recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
+
+    # Output files
+    out_ancestors_file = out_dir + "/" + out_prefix + ".ancestors"
+    out_ancestors_ts_file = out_dir + "/" + out_prefix + ".ancestors.trees"
+    out_inferred_ts_file = out_dir + "/" + out_prefix + ".inferred.trees"
 
     print("INFO: Generating ancestors")
     ancestor_data = tsinfer.generate_ancestors(
@@ -116,8 +125,9 @@ def run_standard_tsinfer_pipeline(
     )
     inferred_ts.dump(out_inferred_ts_file)
 
-    print("INFO: END")
+    end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: END {end_datetime}")
 
 
 if __name__ == "__main__":
-    run_standard_tsinfer_pipeline()
+    run_tsinfer()
