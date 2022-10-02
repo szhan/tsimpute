@@ -1,8 +1,8 @@
 import click
 from datetime import datetime
 import sys
-import warnings
 import numpy as np
+import msprime
 import tskit
 import tsinfer
 
@@ -51,6 +51,13 @@ import util
     help="Uniform recombination rate",
 )
 @click.option(
+    "--genetic_map",
+    "-g",
+    type=click.Path(exists=True),
+    default=None,
+    help="Genetic map file in HapMap3 format"
+)
+@click.option(
     "--mmr_samples",
     "-s",
     type=float,
@@ -64,13 +71,14 @@ import util
     help="Remove leaves when generate an ancestors tree?",
 )
 @click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs.")
-def run_pipeline(
+def perform_imputation(
     in_reference_trees_file,
     in_target_samples_file,
     in_chip_file,
     out_dir,
     out_prefix,
     recombination_rate,
+    genetic_map,
     mmr_samples,
     remove_leaves,
     num_threads,
@@ -78,13 +86,21 @@ def run_pipeline(
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"INFO: START {start_datetime}")
 
-    print("INFO: Loading input files")
+    print(f"INFO: Loading trees file containing reference panel")
     ts_ref = tskit.load(in_reference_trees_file)
+
+    print(f"INFO: Loading smaples file containing target samples")
     sd_target = tsinfer.load(in_target_samples_file)
 
+    if genetic_map is not None:
+        print("INFO: Loading genetic map")
+        print("WARN: Using these recombination rates instead of a uniform rate")
+        recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
+
+    print(f"INFO: Loading chip position file")
     chip_site_pos = masks.parse_site_position_file(in_chip_file)
 
-    print("INFO: Making ancestors tree sequence")
+    print(f"INFO: Making ancestors trees from the reference panel")
     if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
         ts_anc = tsinfer.eval_util.make_ancestors_ts(
             ts=ts_ref, remove_leaves=remove_leaves
@@ -95,10 +111,10 @@ def run_pipeline(
             samples=None, ts=ts_ref, remove_leaves=remove_leaves
         )
 
-    print("INFO: Making samples compatible with the ancestors tree sequence")
+    print("INFO: Making samples compatible with the ancestors trees")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
 
-    warnings.warn("Defining masked site positions relative to the reference panel.")
+    print("INFO: Defining mask sites relative to the ancestors trees")
     ts_anc_sites_isnotin_chip = np.isin(
         ts_anc.sites_position, chip_site_pos, assume_unique=True, invert=True
     )
@@ -108,12 +124,12 @@ def run_pipeline(
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
     ), f"Chip and mask site positions are not mutually exclusive."
 
-    print("INFO: Masking sites")
+    print("INFO: Masking sites in target samples")
     sd_masked = masks.mask_sites_in_sample_data(
         sample_data=sd_compat, sites=mask_site_pos, site_type="position"
     )
 
-    print("INFO: Imputing target samples")
+    print("INFO: Imputing into target samples")
     ts_imputed = tsinfer.match_samples(
         sample_data=sd_masked,
         ancestors_ts=ts_anc,
@@ -135,4 +151,4 @@ def run_pipeline(
 
 
 if __name__ == "__main__":
-    run_pipeline()
+    perform_imputation()
