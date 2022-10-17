@@ -20,20 +20,20 @@ import tsinfer
 )
 @click.option("--end", type=int, required=True, help="Right coordinate (1-based)")
 @click.option(
-    "--sequence_length",
+    "--seq_len",
     type=float,
     default=None,
     help="Set sequence length manually. If None, then set to 1 + end.",
 )
-def extract_samples_by_coordinates(in_samples_file, out_samples_file, end, sequence_length):
+def extract_samples_by_coordinates(in_samples_file, out_samples_file, end, seq_len):
     """
     TODO: Subset using start coordinate.
 
     :return: Subsetted samples.
     :rtype: tsinfer.SampleData
     """
-    if sequence_length is not None:
-        assert end < sequence_length
+    if seq_len is not None:
+        assert end < seq_len
 
     sd = tsinfer.load(in_samples_file)
 
@@ -41,7 +41,7 @@ def extract_samples_by_coordinates(in_samples_file, out_samples_file, end, seque
 
     sd_subset = sd.subset(
         sites=np.arange(len(sd_subset_site_pos)),
-        sequence_length=sequence_length,
+        sequence_length=seq_len,
         path=out_samples_file,
     )
 
