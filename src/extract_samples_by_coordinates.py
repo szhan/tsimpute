@@ -33,7 +33,7 @@ def extract_samples_by_coordinates(in_samples_file, out_samples_file, end, seq_l
     :rtype: tsinfer.SampleData
     """
     if seq_len is not None:
-        assert end < seq_len
+        assert end <= seq_len
 
     sd = tsinfer.load(in_samples_file)
 
