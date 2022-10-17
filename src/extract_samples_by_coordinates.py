@@ -25,7 +25,7 @@ import tsinfer
     default=None,
     help="Set sequence length manually. If None, then set to 1 + end.",
 )
-def extract_sites_by_coordinates(in_samples_file, out_samples_file, end, sequence_length):
+def extract_samples_by_coordinates(in_samples_file, out_samples_file, end, sequence_length):
     """
     TODO: Subset using start coordinate.
 
@@ -47,4 +47,4 @@ def extract_sites_by_coordinates(in_samples_file, out_samples_file, end, sequenc
 
 
 if __name__ == "__main__":
-    extract_sites_by_coordinates()
+    extract_samples_by_coordinates()
