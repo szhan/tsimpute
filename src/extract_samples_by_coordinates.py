@@ -23,7 +23,7 @@ import tsinfer
     "--seq_len",
     type=float,
     default=None,
-    help="Set sequence length manually. If None, then set to 1 + end.",
+    help="Set sequence length manually. If None, keep the sequence length in the original samples file",
 )
 def extract_samples_by_coordinates(in_samples_file, out_samples_file, end, seq_len):
     """
