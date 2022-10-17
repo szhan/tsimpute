@@ -1,25 +1,33 @@
 import demes
 import msprime
 import tskit
+import tsinfer
 import numpy as np
 
 
-# TODO: Use a HapMap recombination rate map
-
+# TODO: Use a HapMap genetic map.
 
 def simulate_ts(
     sample_set, demography, mutation_rate, recombination_rate, sequence_length
 ):
     """
-    TODO
+    Simulate a tree sequence using `msprime` under a specified demographic model
+    with genome-wide uniform mutation rate and recombination rate.
+
+    :param msprime.Sample sample_set:
+    :param msprime.Demography demography: If None, it defaults to a single population with constant size 1.
+    :param float mutation_rate:
+    :param float recombination_rate:
+    :param float sequence_length:
+    :return: A simulated tree sequence.
+    :rtype: tskit.TreeSequence
     """
-    ### Simulate genealogy and genetic variation
-    # Uniform recombination rate
+    # Set uniform recombination rate
     recomb_rate_map = msprime.RateMap.uniform(
         sequence_length=sequence_length, rate=recombination_rate
     )
 
-    # Uniform mutation rate
+    # Set uniform mutation rate
     mut_rate_map = msprime.RateMap.uniform(
         sequence_length=sequence_length, rate=mutation_rate
     )
@@ -30,7 +38,7 @@ def simulate_ts(
         msprime.sim_ancestry(
             samples=sample_set,
             demography=demography,
-            model="hudson",
+            model="hudson", # TODO: Standard coalescent with recombination.
             recombination_rate=recomb_rate_map,
             discrete_genome=True,
         ),
@@ -39,8 +47,8 @@ def simulate_ts(
     )
 
     # Remove multi-allelic sites
-    non_biallelic_sites = [v.site.id for v in ts.variants() if v.num_alleles != 2]
-    ts = ts.delete_sites(site_ids=non_biallelic_sites)
+    multiallelic_sites = [v.site.id for v in ts.variants() if v.num_alleles > 2]
+    ts = ts.delete_sites(site_ids=multiallelic_sites)   # Topology unaffected
 
     # Remove populations
     tables = ts.dump_tables()
