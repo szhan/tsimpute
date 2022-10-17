@@ -32,14 +32,16 @@ def extract_samples_by_coordinates(in_samples_file, out_samples_file, end, seque
     :return: Subsetted samples.
     :rtype: tsinfer.SampleData
     """
+    if sequence_length is not None:
+        assert end < sequence_length
+
     sd = tsinfer.load(in_samples_file)
 
     sd_subset_site_pos = sd.sites_position[:][sd.sites_position[:] < end]
-    seq_len = end + 1 if sequence_length is None else sequence_length
 
     sd_subset = sd.subset(
         sites=np.arange(len(sd_subset_site_pos)),
-        sequence_length=seq_len,
+        sequence_length=sequence_length,
         path=out_samples_file,
     )
 
