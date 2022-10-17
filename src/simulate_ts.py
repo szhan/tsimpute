@@ -14,31 +14,38 @@ def simulate_ts(
     Simulate a tree sequence using `msprime` under a specified demographic model
     with genome-wide uniform mutation rate and recombination rate.
 
-    :param msprime.Sample sample_set:
+    The standard coalescent with recombination is used (i.e. Hudson).
+
+    Processing steps before returning the `TreeSequence` object include:
+    1. All multi-allelic sites are deleted.
+    2. All populations are cleared.
+
+    :param list sample_set: A list of msprime.SampleSet object.
     :param msprime.Demography demography: If None, it defaults to a single population with constant size 1.
-    :param float mutation_rate:
-    :param float recombination_rate:
-    :param float sequence_length:
+    :param float mutation_rate: Uniform mutation rate.
+    :param float recombination_rate: Uniform recombination rate.
+    :param float sequence_length: Sequence length input to get msprime.RateMap objects.
     :return: A simulated tree sequence.
     :rtype: tskit.TreeSequence
     """
-    # Set uniform recombination rate
+    # Set rate maps
+    # Uniform recombination rate
     recomb_rate_map = msprime.RateMap.uniform(
         sequence_length=sequence_length, rate=recombination_rate
     )
 
-    # Set uniform mutation rate
+    # Uniform mutation rate
     mut_rate_map = msprime.RateMap.uniform(
         sequence_length=sequence_length, rate=mutation_rate
     )
 
-    # A simulated tree sequence does not contain any monoallelic sites,
-    # but there may be multiallelic sites.
+    # Simulate a tree sequence.
+    # Note a simulated ts contains no mono-allelic sites, but there may be multi-allelic sites.
     ts = msprime.sim_mutations(
         msprime.sim_ancestry(
             samples=sample_set,
             demography=demography,
-            model="hudson", # TODO: Standard coalescent with recombination.
+            model="hudson",
             recombination_rate=recomb_rate_map,
             discrete_genome=True,
         ),
@@ -55,6 +62,10 @@ def simulate_ts(
     tables.populations.clear()
     tables.nodes.population = np.full_like(tables.nodes.population, tskit.NULL)
     ts = tables.tree_sequence()
+
+    # Check
+    assert np.all(np.array([v.num_alleles for v in ts.variants()]) == 2)
+    assert ts.num_populations == 0
 
     return ts
 
