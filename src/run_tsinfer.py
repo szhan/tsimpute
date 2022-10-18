@@ -41,7 +41,7 @@ import tsinfer
     "-g",
     type=click.Path(exists=True),
     default=None,
-    help="Genetic map file in HapMap3 format"
+    help="Genetic map file in HapMap3 format",
 )
 @click.option(
     "--mmr_ancestors",
@@ -57,6 +57,12 @@ import tsinfer
     default=None,
     help="Mismatch ratio used when matching sample haplotypes",
 )
+@click.option(
+    "--truncate_ancestors",
+    type=bool,
+    default=False,
+    help="Truncate ancestors before matching ancestors?",
+)
 @click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs")
 def run_tsinfer(
     in_samples_file,
@@ -66,6 +72,7 @@ def run_tsinfer(
     genetic_map,
     mmr_ancestors,
     mmr_samples,
+    truncate_ancestors,
     num_threads,
 ):
     """
@@ -76,6 +83,7 @@ def run_tsinfer(
     :param str genetic_map: Genetic map file for msprime input (default = None).
     :param float mmr_ancestors: Mismatch ratio used when matching ancestors (default = None).
     :param float mmr_samples: Mismatch ratio used when matching samples (default = None).
+    :param bool truncate_ancestors: Truncate ancestors before matching ancestors? (default = False).
     :param int num_threads: Number of CPUs (default = 1).
     """
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -95,7 +103,6 @@ def run_tsinfer(
         print("WARN: Using this instead of recombination rate")
         recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
 
-    # Output files
     out_ancestors_file = out_dir + "/" + out_prefix + ".ancestors"
     out_ancestors_ts_file = out_dir + "/" + out_prefix + ".ancestors.trees"
     out_inferred_ts_file = out_dir + "/" + out_prefix + ".inferred.trees"
@@ -104,6 +111,13 @@ def run_tsinfer(
     ancestor_data = tsinfer.generate_ancestors(
         sample_data=sample_data, path=out_ancestors_file, num_threads=num_threads
     )
+
+    if truncate_ancestors:
+        print("INFO: Truncating ancestral haplotypes")
+        # TODO: Allow user to specify lower and upper time bounds.
+        ancestor_data = ancestor_data.truncate_ancestors(
+            lower_time_bound=0.4, upper_time_bound=0.6
+        )
 
     print("INFO: Matching ancestors")
     ancestors_ts = tsinfer.match_ancestors(
