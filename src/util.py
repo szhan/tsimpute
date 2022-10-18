@@ -397,7 +397,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                         genotypes=sample_data.sites_genotypes[sd_site_id],
                         alleles=[ts_ancestral_state, ts_derived_state],
                     )
-                elif ts_site.alleles == set(sd_site_alleles):
+                elif [ts_derived_state, ts_ancestral_state] == sd_site_alleles:
                     # Case 2b: Unaligned target markers
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Align them by flipping the alleles in `sample_data`.
