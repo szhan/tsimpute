@@ -320,9 +320,9 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     sd_site_pos = sample_data.sites_position[:]
     all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
 
-    print(f"TS : {len(ts_site_pos)}")
-    print(f"SD : {len(sd_site_pos)}")
-    print(f"ALL: {len(all_site_pos)}")
+    print(f"INFO: sites in TS = {len(ts_site_pos)}")
+    print(f"INFO: sites in SD = {len(sd_site_pos)}")
+    print(f"INFO: sites in ALL: {len(all_site_pos)}")
 
     num_case_1 = 0
     num_case_2a = 0
@@ -348,8 +348,8 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
         # Add sites
         for pos in tqdm.tqdm(all_site_pos):
             if pos in ts_site_pos and pos not in sd_site_pos:
-                # Case 1:
-                # Site found in `ancestors_ts` but not `sample_data`
+                # Case 1: Reference markers
+                # Site in `ancestors_ts` (ref. panel) but not `sample_data` (target samples).
                 # Add the site to `new_sample_data` with all genotypes MISSING.
                 num_case_1 += 1
 
@@ -366,8 +366,8 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                     alleles=[ts_ancestral_state, ts_derived_state],
                 )
             elif pos in ts_site_pos and pos in sd_site_pos:
-                # Case 2:
-                # Site found in both `ancestors_ts` and `sample_data`
+                # Case 2: Target markers
+                # Site in both `ancestors_ts` (ref. panel) and `sample_data` (target samples).
                 # Align the allele lists and genotypes if unaligned.
                 # Add the site to `new_sample_data` with (aligned) genotypes from `sample_data`.
                 ts_site = ancestors_ts.site(position=pos)
@@ -387,7 +387,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                 # ts_site.alleles is an unordered set of alleles (without None).
                 # sd_site_alleles is an ordered list of alleles.
                 if [ts_ancestral_state, ts_derived_state] == sd_site_alleles:
-                    # Case 2a:
+                    # Case 2a: Aligned target markers
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Already aligned, so no need to realign.
                     num_case_2a += 1
@@ -398,7 +398,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                         alleles=[ts_ancestral_state, ts_derived_state],
                     )
                 elif ts_site.alleles == set(sd_site_alleles):
-                    # Case 2b:
+                    # Case 2b: Unaligned target markers
                     # Both alleles are in `ancestors_ts` and `sample_data`.
                     # Align them by flipping the alleles in `sample_data`.
                     num_case_2b += 1
@@ -416,7 +416,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                         alleles=[ts_ancestral_state, ts_derived_state],
                     )
                 else:
-                    # Case 2c:
+                    # Case 2c: TODO
                     # The allele(s) present in `sample_data` but absent in `ancestor_ts`
                     # is always incorrectly imputed.
                     # It is best to ignore these sites when assess imputation performance.
@@ -428,8 +428,8 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                         alleles=[ts_ancestral_state, ts_derived_state],
                     )
             elif pos not in ts_site_pos and pos in sd_site_pos:
-                # Case 3:
-                # Site found in `sample_data` but not `ancestors_ts`
+                # Case 3: Unused markers
+                # Site not in `ancestors_ts` but in `sample_data`.
                 # Add the site to `new_sample_data` with the original genotypes from `sample_data`.
                 num_case_3 += 1
 
@@ -447,10 +447,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
             else:
                 raise ValueError(f"Site position {pos} must be in the ts and/or sd.")
 
-    print(f"Case 1 : {num_case_1}")
-    print(f"Case 2a: {num_case_2a}")
-    print(f"Case 2b: {num_case_2b}")
-    print(f"Case 2c: {num_case_2c}")
-    print(f"Case 3 : {num_case_3}")
+    print(f"INFO: case 1  = {num_case_1}")
+    print(f"INFO: case 2a = {num_case_2a}")
+    print(f"INFO: case 2b = {num_case_2b}")
+    print(f"INFO: case 2c = {num_case_2c}")
+    print(f"INFO: case 3  = {num_case_3}")
 
     return new_sd
