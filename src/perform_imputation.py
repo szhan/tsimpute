@@ -110,15 +110,9 @@ def perform_imputation(
     chip_site_pos = masks.parse_site_position_file(in_chip_file)
 
     print(f"INFO: Making ancestors trees from the reference panel")
-    if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            ts=ts_ref, remove_leaves=remove_leaves
-        )
-    else:
-        # The samples argument is not actually used.
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            samples=None, ts=ts_ref, remove_leaves=remove_leaves
-        )
+    ts_anc = tsinfer.eval_util.make_ancestors_ts(
+        ts=ts_ref, remove_leaves=remove_leaves
+    )
 
     print("INFO: Making samples compatible with the ancestors trees")
     sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
