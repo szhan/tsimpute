@@ -59,7 +59,7 @@ import tsinfer
 )
 @click.option(
     "--truncate_ancestors",
-    type=bool,
+    is_flag=True,
     default=False,
     help="Truncate ancestors before matching ancestors?",
 )
