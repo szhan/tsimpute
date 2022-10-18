@@ -302,8 +302,8 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     """
     Make a new SampleData object from an existing SampleData object such that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
-    (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
-    (3) sites in `ancestors_ts` but not in `sample_data` are added to `new_sample_data` with all the genotypes MISSING.
+    (2) the allele list in `new_sd` corresponds to the allele list in `ancestors_ts`.
+    (3) sites in `ancestors_ts` but not in `sample_data` are added to `new_sd` with all the genotypes MISSING.
 
     All the sites in `sample_data` and `ancestors_ts` must be biallelic.
 
@@ -350,7 +350,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1: Reference markers
                 # Site in `ancestors_ts` (ref. panel) but not `sample_data` (target samples).
-                # Add the site to `new_sample_data` with all genotypes MISSING.
+                # Add the site to `new_sd` with all genotypes MISSING.
                 num_case_1 += 1
 
                 ts_site = ancestors_ts.site(position=pos)
@@ -369,7 +369,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                 # Case 2: Target markers
                 # Site in both `ancestors_ts` (ref. panel) and `sample_data` (target samples).
                 # Align the allele lists and genotypes if unaligned.
-                # Add the site to `new_sample_data` with (aligned) genotypes from `sample_data`.
+                # Add the site to `new_sd` with (aligned) genotypes from `sample_data`.
                 ts_site = ancestors_ts.site(position=pos)
                 assert (
                     len(ts_site.alleles) == 2
@@ -419,7 +419,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                     # Case 2c: TODO
                     # The allele(s) present in `sample_data` but absent in `ancestor_ts`
                     # is always incorrectly imputed.
-                    # It is best to ignore these sites when assess imputation performance.
+                    # It is best to ignore these sites when assessing imputation performance.
                     num_case_2c += 1
 
                     new_sd.add_site(
@@ -430,7 +430,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
             elif pos not in ts_site_pos and pos in sd_site_pos:
                 # Case 3: Unused markers
                 # Site not in `ancestors_ts` but in `sample_data`.
-                # Add the site to `new_sample_data` with the original genotypes from `sample_data`.
+                # Add the site to `new_sd` with the original genotypes from `sample_data`.
                 num_case_3 += 1
 
                 sd_site_id = sd_site_pos.tolist().index(pos)
@@ -445,7 +445,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                     alleles=sample_data.sites_alleles[sd_site_id],
                 )
             else:
-                raise ValueError(f"Site position {pos} must be in the ts and/or sd.")
+                raise ValueError(f"Site at {pos} must be in the ts and/or sd.")
 
     print(f"INFO: case 1  = {num_case_1}")
     print(f"INFO: case 2a = {num_case_2a}")
