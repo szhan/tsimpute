@@ -70,6 +70,12 @@ import measures
     default=None
     help="Minimum threshold on IQS, which can be negative."
 )
+@click.option(
+    "--flip_alleles",
+    is_flag=True,
+    default=False,
+    help="Flip ancestral alleles and derived alleles in imputed genotypes before computing IQS."
+)
 def evaluate_imputation(
     in_imputed_file,
     in_file_type,
@@ -80,6 +86,7 @@ def evaluate_imputation(
     out_csv_file,
     min_maf,
     min_iqs,
+    flip_alleles,
 ):
     data_imputed = (
         tskit.load(in_imputed_file)
@@ -178,10 +185,16 @@ def evaluate_imputation(
             imputed_ma_index = float("nan")
             imputed_ma_freq = float("nan")
 
+        # Flip alleles before computing IQS.
+        # This is useful for checking whether the ancestral allele is wrong.
+        imputed_genotypes = v_data_imputed.genotypes
+        if flip_alleles:
+            imputed_genotypes = np.where(imputed_genotypes == 0, 1, 0)
+
         # Calculate imputation performance metrics.
         iqs = measures.compute_iqs(
             gt_true=v_sd_true.genotypes,
-            gt_imputed=v_data_imputed.genotypes,
+            gt_imputed=imputed_genotypes,
             ploidy=2,
         )
 
