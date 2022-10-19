@@ -112,6 +112,9 @@ def evaluate_imputation(
     v_ts_ref = next(vars_ts_ref)
     v_ts_anc = next(vars_ts_anc)
 
+    # Get a simplified ts for arity calculations.
+    ts_ref_simp = ts_ref.simplify()
+
     results = None
     for pos in tqdm.tqdm(mask_site_pos):
         while v_data_imputed.site.position != pos:
@@ -165,10 +168,13 @@ def evaluate_imputation(
         )
 
         # Get information about the site
-        # TODO: Mean arity of the tree.
         # TODO: map_mutations
         # TODO: Confidence level of the ancestral allele.
         num_muts = np.sum(v_ts_ref.mutations_site == v_ts_ref.site.id)
+
+        tree = ts_ref_simp.at(pos)
+        parent_id, count = np.unique(tree.parent_array[tree.preorder()], return_counts=True)
+        tree_arity = count[parent_id != tskit.NULL].mean()
 
         line = np.array(
             [
@@ -180,6 +186,7 @@ def evaluate_imputation(
                     imputed_ma_freq,
                     iqs,
                     num_muts,
+                    tree_arity,
                 ],
             ]
         )
@@ -224,6 +231,7 @@ def evaluate_imputation(
             "imputed_minor_allele_freq",
             "iqs",
             "num_muts",
+            "tree_arity",
         ]
     )
 
