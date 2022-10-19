@@ -64,6 +64,12 @@ import measures
     default=0,
     help="Minimum threshold on MAF in the reference samples."
 )
+@click.option(
+    "--min_iqs",
+    type=float,
+    default=None
+    help="Minimum threshold on IQS, which can be negative."
+)
 def evaluate_imputation(
     in_imputed_file,
     in_file_type,
@@ -73,6 +79,7 @@ def evaluate_imputation(
     in_chip_file,
     out_csv_file,
     min_maf,
+    min_iqs,
 ):
     data_imputed = (
         tskit.load(in_imputed_file)
@@ -148,7 +155,7 @@ def evaluate_imputation(
         ref_ma_index = 1 if ref_af_1 < ref_af_0 else 0
         ref_ma_freq = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
 
-        # Skip sites that fail the following criteria.
+        # Skip sites with a MAF too low.
         if ref_ma_freq < min_maf:
             continue
 
@@ -171,12 +178,16 @@ def evaluate_imputation(
             imputed_ma_index = float("nan")
             imputed_ma_freq = float("nan")
 
-        # Calculate imputation performance metrics
+        # Calculate imputation performance metrics.
         iqs = measures.compute_iqs(
             gt_true=v_sd_true.genotypes,
             gt_imputed=v_data_imputed.genotypes,
             ploidy=2,
         )
+
+        # Skip sites with an IQS too low.
+        if iqs < min_iqs:
+            continue
 
         # Get information about the site
         # TODO: map_mutations
