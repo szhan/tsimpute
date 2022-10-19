@@ -62,19 +62,19 @@ import measures
     "--min_maf",
     type=float,
     default=0,
-    help="Minimum threshold on MAF in the reference samples."
+    help="Minimum threshold on MAF in the reference samples.",
 )
 @click.option(
     "--min_iqs",
     type=float,
     default=None,
-    help="Minimum threshold on IQS, which can be negative."
+    help="Minimum threshold on IQS, which can be negative.",
 )
 @click.option(
     "--flip_alleles",
     is_flag=True,
     default=False,
-    help="Flip ancestral alleles and derived alleles in imputed genotypes before computing IQS."
+    help="Flip ancestral alleles and derived alleles in imputed genotypes before computing IQS.",
 )
 def evaluate_imputation(
     in_imputed_file,
@@ -96,9 +96,7 @@ def evaluate_imputation(
     sd_true = tsinfer.load(in_true_samples_file)
     ts_ref = tskit.load(in_reference_trees_file)
 
-    ts_anc = tsinfer.eval_util.make_ancestors_ts(
-        ts=ts_ref, remove_leaves=remove_leaves
-    )
+    ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=remove_leaves)
 
     data_imputed_site_pos = (
         data_imputed.sites_position
@@ -151,7 +149,7 @@ def evaluate_imputation(
         ref_ancestral_allele = v_ts_ref.alleles[0]  # Denoted by 0
         ref_derived_allele = v_ts_ref.alleles[1]  # Denoted by 1
 
-        # CHECK that ancestral alleles are identical.
+        # Check ancestral alleles are identical.
         assert ref_ancestral_allele == v_data_imputed.site.ancestral_state
         assert ref_ancestral_allele == v_sd_true.site.ancestral_state
 
@@ -204,11 +202,12 @@ def evaluate_imputation(
 
         # Get information about the site
         # TODO: map_mutations
-        # TODO: Confidence level of the ancestral allele.
         num_muts = np.sum(v_ts_ref.mutations_site == v_ts_ref.site.id)
 
         tree = ts_ref_simp.at(pos)
-        parent_id, count = np.unique(tree.parent_array[tree.preorder()], return_counts=True)
+        parent_id, count = np.unique(
+            tree.parent_array[tree.preorder()], return_counts=True
+        )
         tree_arity = count[parent_id != tskit.NULL].mean()
 
         line = np.array(
