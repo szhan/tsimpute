@@ -1,4 +1,3 @@
-from cmath import nan
 import click
 import sys
 import tqdm
@@ -76,15 +75,9 @@ def evaluate_imputation(
     sd_true = tsinfer.load(in_true_samples_file)
     ts_ref = tskit.load(in_reference_trees_file)
 
-    if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            ts=ts_ref, remove_leaves=remove_leaves
-        )
-    else:
-        # The samples argument is not actually used.
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            samples=None, ts=ts_ref, remove_leaves=remove_leaves
-        )
+    ts_anc = tsinfer.eval_util.make_ancestors_ts(
+        ts=ts_ref, remove_leaves=remove_leaves
+    )
 
     data_imputed_site_pos = (
         data_imputed.sites_position
