@@ -67,7 +67,7 @@ import measures
 @click.option(
     "--min_iqs",
     type=float,
-    default=None
+    default=None,
     help="Minimum threshold on IQS, which can be negative."
 )
 @click.option(
