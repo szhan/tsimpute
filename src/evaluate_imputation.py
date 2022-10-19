@@ -58,6 +58,12 @@ import measures
     required=True,
     help="Output CSV file.",
 )
+@click.option(
+    "--min_maf",
+    type=float,
+    default=0,
+    help="Minimum threshold on MAF in the reference samples."
+)
 def evaluate_imputation(
     in_imputed_file,
     in_file_type,
@@ -66,6 +72,7 @@ def evaluate_imputation(
     remove_leaves,
     in_chip_file,
     out_csv_file,
+    min_maf,
 ):
     data_imputed = (
         tskit.load(in_imputed_file)
@@ -134,6 +141,17 @@ def evaluate_imputation(
         assert ref_ancestral_allele == v_data_imputed.site.ancestral_state
         assert ref_ancestral_allele == v_sd_true.site.ancestral_state
 
+        # Get Minor Allele index and frequency from `ts_ref`.
+        ref_freqs = v_ts_ref.frequencies(remove_missing=True)
+        ref_af_0 = ref_freqs[ref_ancestral_allele]
+        ref_af_1 = ref_freqs[ref_derived_allele]
+        ref_ma_index = 1 if ref_af_1 < ref_af_0 else 0
+        ref_ma_freq = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
+
+        # Skip sites that fail the following criteria.
+        if ref_ma_freq < min_maf:
+            continue
+
         # Get Minor Allele index and frequency from `data_imputed`.
         if in_file_type == "trees":
             imputed_freqs = v_data_imputed.frequencies(remove_missing=True)
@@ -152,13 +170,6 @@ def evaluate_imputation(
             # TODO: Update when they do have such functionality.
             imputed_ma_index = float("nan")
             imputed_ma_freq = float("nan")
-
-        # Get Minor Allele index and frequency from `ts_ref`.
-        ref_freqs = v_ts_ref.frequencies(remove_missing=True)
-        ref_af_0 = ref_freqs[ref_ancestral_allele]
-        ref_af_1 = ref_freqs[ref_derived_allele]
-        ref_ma_index = 1 if ref_af_1 < ref_af_0 else 0
-        ref_ma_freq = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
 
         # Calculate imputation performance metrics
         iqs = measures.compute_iqs(
