@@ -164,6 +164,12 @@ def evaluate_imputation(
             ploidy=2,
         )
 
+        # Get information about the site
+        # TODO: Mean arity of the tree.
+        # TODO: map_mutations
+        # TODO: Confidence level of the ancestral allele.
+        num_muts = np.sum(v_ts_ref.mutations_site == v_ts_ref.site.id)
+
         line = np.array(
             [
                 [
@@ -173,6 +179,7 @@ def evaluate_imputation(
                     imputed_ma_index,
                     imputed_ma_freq,
                     iqs,
+                    num_muts,
                 ],
             ]
         )
@@ -216,6 +223,7 @@ def evaluate_imputation(
             "imputed_minor_allele_index",
             "imputed_minor_allele_freq",
             "iqs",
+            "num_muts",
         ]
     )
 
