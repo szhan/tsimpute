@@ -219,6 +219,13 @@ def evaluate_imputation(
         )
         tree_arity = count[parent_id != tskit.NULL].mean()
 
+        # TODO: Check if an inferred ts stores site metadata in samples.
+        sd_ref_site_id = sd_ref.sites(ids=np.where(sd_ref.sites_position[:] == pos)[0][0])
+        sd_ref_site = next(sd_ref.sites(ids=[sd_ref_site_id]))
+        assert sd_ref_site.ancestral_state == ref_ancestral_allele
+        assert "REF" in sd_ref_site.metadata
+        is_aa_ref = 1 if sd_ref_site.metadata["REF"] == ref_ancestral_allele else 0
+
         line = np.array(
             [
                 [
@@ -229,6 +236,7 @@ def evaluate_imputation(
                     imputed_ma_freq,
                     iqs,
                     num_muts,
+                    is_aa_ref,
                     tree_arity,
                 ],
             ]
@@ -274,6 +282,7 @@ def evaluate_imputation(
             "imputed_minor_allele_freq",
             "iqs",
             "num_muts",
+            "is_aa_ref",
             "tree_arity",
         ]
     )
