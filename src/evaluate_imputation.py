@@ -43,7 +43,7 @@ import measures
     "-r2",
     type=click.Path(exists=True),
     required=True,
-    help="Input samples files with reference samples."
+    help="Input samples files with reference samples.",
 )
 @click.option(
     "--remove_leaves",
@@ -192,10 +192,10 @@ def evaluate_imputation(
             imputed_ma_index = float("nan")
             imputed_ma_freq = float("nan")
 
-        # Flip alleles before computing IQS.
-        # This is useful for checking whether the ancestral allele is wrong.
         imputed_genotypes = v_data_imputed.genotypes
         if flip_alleles:
+            # Flip alleles before computing IQS.
+            # This is useful for checking whether the ancestral allele is wrong.
             imputed_genotypes = np.where(imputed_genotypes == 0, 1, 0)
 
         # Calculate imputation performance metrics.
@@ -209,18 +209,15 @@ def evaluate_imputation(
         if iqs < min_iqs:
             continue
 
-        # Get information about the site
-        # TODO: map_mutations
+        # Obtain site information.
+        # Get the mutations at this site.
         num_muts = np.sum(v_ts_ref.mutations_site == v_ts_ref.site.id)
 
-        tree = ts_ref_simp.at(pos)
-        parent_id, count = np.unique(
-            tree.parent_array[tree.preorder()], return_counts=True
-        )
-        tree_arity = count[parent_id != tskit.NULL].mean()
-
+        # Check whether the ancestral allele used to build the `ts_ref` is REF.
         # TODO: Check if an inferred ts stores site metadata in samples.
-        sd_ref_site_id = sd_ref.sites(ids=np.where(sd_ref.sites_position[:] == pos)[0][0])
+        sd_ref_site_id = sd_ref.sites(
+            ids=np.where(sd_ref.sites_position[:] == pos)[0][0]
+        )
         sd_ref_site = next(sd_ref.sites(ids=[sd_ref_site_id]))
         assert sd_ref_site.ancestral_state == ref_ancestral_allele
         assert "REF" in sd_ref_site.metadata
@@ -232,8 +229,17 @@ def evaluate_imputation(
         ts_ref_var = tskit.Variant(ts_ref)
         ts_ref_var.decode(site_id=ts_ref_site.id)
         ts_ref_tree = ts_ref.at(position=pos)
-        inferred_aa, _ = ts_ref_tree.map_mutations(genotypes=ts_ref_var.genotypes, alleles=ts_ref_var.alleles)
+        inferred_aa, _ = ts_ref_tree.map_mutations(
+            genotypes=ts_ref_var.genotypes, alleles=ts_ref_var.alleles
+        )
         is_aa_parsimonious = 1 if ref_ancestral_allele == inferred_aa else 0
+
+        # Calculate the mean arity of the tree covering this site position.
+        tree = ts_ref_simp.at(pos)  # Exclude unary nodes
+        parent_id, count = np.unique(
+            tree.parent_array[tree.preorder()], return_counts=True
+        )
+        tree_arity = count[parent_id != tskit.NULL].mean()
 
         line = np.array(
             [
