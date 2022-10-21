@@ -226,6 +226,15 @@ def evaluate_imputation(
         assert "REF" in sd_ref_site.metadata
         is_aa_ref = 1 if sd_ref_site.metadata["REF"] == ref_ancestral_allele else 0
 
+        # Check whether the ancestral allele used to build the `ts_ref`
+        # is best explained by parsimony using the inferred tree and observed genotypes.
+        ts_ref_site = ts_ref.site(position=pos)
+        ts_ref_var = tskit.Variant(ts_ref)
+        ts_ref_var.decode(site_id=ts_ref_site.id)
+        ts_ref_tree = ts_ref.at(position=pos)
+        inferred_aa, _ = ts_ref_tree.map_mutations(genotypes=ts_ref_var.genotypes, alleles=ts_ref_var.alleles)
+        is_aa_parsimonious = 1 if ref_ancestral_allele == inferred_aa else 0
+
         line = np.array(
             [
                 [
@@ -237,6 +246,7 @@ def evaluate_imputation(
                     iqs,
                     num_muts,
                     is_aa_ref,
+                    is_aa_parsimonious,
                     tree_arity,
                 ],
             ]
@@ -283,6 +293,7 @@ def evaluate_imputation(
             "iqs",
             "num_muts",
             "is_aa_ref",
+            "is_aa_parsimonious",
             "tree_arity",
         ]
     )
