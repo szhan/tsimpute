@@ -33,10 +33,17 @@ import measures
 )
 @click.option(
     "--in_reference_trees_file",
-    "-r",
+    "-r1",
     type=click.Path(exists=True),
     required=True,
     help="Input tree sequence file with reference samples.",
+)
+@click.option(
+    "--in_reference_samples-file",
+    "-r2",
+    type=click.Path(exists=True),
+    required=True,
+    help="Input samples files with reference samples."
 )
 @click.option(
     "--remove_leaves",
@@ -81,6 +88,7 @@ def evaluate_imputation(
     in_file_type,
     in_true_samples_file,
     in_reference_trees_file,
+    in_reference_samples_file,
     remove_leaves,
     in_chip_file,
     out_csv_file,
@@ -95,6 +103,7 @@ def evaluate_imputation(
     )
     sd_true = tsinfer.load(in_true_samples_file)
     ts_ref = tskit.load(in_reference_trees_file)
+    sd_ref = tsinfer.load(in_reference_samples_file)
 
     ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=remove_leaves)
 
