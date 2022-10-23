@@ -215,15 +215,14 @@ def evaluate_imputation(
         num_muts = np.sum(ts_ref.mutations_site == v_ts_ref.site.id)
 
         # Check whether the ancestral allele used to build the `ts_ref` is REF.
-        ts_ref_site = ts_ref.site(position=pos)
-        ts_ref_site_metadata = json.loads(ts_ref_site.metadata)
+        ts_ref_site_metadata = json.loads(v_ts_ref.site.metadata)
         assert "REF" in ts_ref_site_metadata
         is_aa_ref = 1 if ts_ref_site_metadata["REF"] == ref_ancestral_allele else 0
 
         # Check whether the ancestral allele used to build the `ts_ref`
         # is best explained by parsimony using the inferred tree and observed genotypes.
         ts_ref_var = tskit.Variant(ts_ref)
-        ts_ref_var.decode(site_id=ts_ref_site.id)
+        ts_ref_var.decode(site_id=v_ts_ref.site.id)
         ts_ref_tree = ts_ref.at(position=pos)
         inferred_aa, _ = ts_ref_tree.map_mutations(
             genotypes=ts_ref_var.genotypes, alleles=ts_ref_var.alleles
