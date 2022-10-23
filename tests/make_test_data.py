@@ -88,3 +88,33 @@ def make_simple_sample_data():
         # Position 9. Unused marker in anc ts, which is only in target.
         sd.add_site(position=9, genotypes=[1, 0, 1, 0], alleles=['A', 'T'])
     return(sd)
+
+
+def make_simple_sample_data_with_multiallelic_site():
+    """
+    Create samples with two diploid genomes with a multiallelic site.
+    
+    :param: None
+    :return: Samples with a multiallelic site.
+    :rtype: tsinfer.SampleData
+    """
+    with tsinfer.SampleData(sequence_length=10) as sd:
+        for _ in range(2):
+            sd.add_individual(ploidy=2)
+        sd.add_site(position=1, genotypes=[0, 1, 0, 2], alleles=['A', 'C', 'G'])
+    return(sd)
+
+
+def make_simple_sample_data_with_wrong_sequence_length():
+    """
+    Create samples with two diploid genomes and a sequence length of 6.
+
+    :param: None
+    :return: Samples with a multiallelic site.
+    :rtype: tsinfer.SampleData
+    """
+    with tsinfer.SampleData(sequence_length=6) as sd:
+        for _ in range(2):
+            sd.add_individual(ploidy=2)
+        sd.add_site(position=1, genotype=[0, 1, 0, 1], alleles=['A', 'C'])
+    return(sd)
