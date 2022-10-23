@@ -2,6 +2,7 @@
 Make toy tree sequences and samples for testing.
 """
 import tskit
+import tsinfer
 
 
 def make_simple_ts():
@@ -59,3 +60,31 @@ def make_simple_ts():
     # Create tree sequence.
     ts = tb.tree_sequence()
     return(ts)
+
+
+def make_simple_sd():
+    """
+    Create samples with two diploid genomes.
+
+    This is intended to be used to test `util.make_compatible_sample_data()`
+    with `make_simple_ts()`.
+
+    :param: None
+    :return: Samples.
+    :rtype: tsinfer.SampleData
+    """
+    with tsinfer.SampleData(sequence_length=10) as sd:
+        for _ in range(2):
+            sd.add_individual(ploidy=2)
+        # Position 1. Ref. marker and target marker aligned.
+        sd.add_site(position=1, genotypes=[0, 1, 0, 1], alleles=['A', 'C'])
+        # Position 3. Ref. marker and target marker unaligned.
+        sd.add_site(position=3, genotypes=[0, 1, 0, 1], alleles=['G', 'C'])
+        # Position 5. No variant site here, but there is in ref.
+        # Position 7. Derive allele is not in ref.
+        sd.add_site(position=7, genotypes=[1, 0, 1, 0], alleles=['T', 'G'])
+        # Position 8. Unused marker in ts and anc ts, which is only in target.
+        sd.add_site(position=8, genotypes=[1, 0, 1, 0], alleles=['A', 'T'])
+        # Position 9. Unused marker in anc ts, which is only in target.
+        sd.add_site(position=9, genotypes=[1, 0, 1, 0], alleles=['A', 'T'])
+    return(sd)
