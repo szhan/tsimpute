@@ -5,9 +5,9 @@ import tskit
 import tsinfer
 
 
-def make_simple_ts():
+def make_simple_tree_sequence():
     """
-    Create a simple tree sequence that has:
+    Create a simple tree sequence with three diploid ganomes and the following:
     a) 1 tree (binary);
     b) 6 sample nodes (5 non-sample internal nodes);
     c) 5 variant sites; and
@@ -62,7 +62,7 @@ def make_simple_ts():
     return(ts)
 
 
-def make_simple_sd():
+def make_simple_sample_data():
     """
     Create samples with two diploid genomes.
 
