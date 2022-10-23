@@ -118,5 +118,5 @@ def make_simple_sample_data_with_wrong_sequence_length():
     with tsinfer.SampleData(sequence_length=6) as sd:
         for _ in range(2):
             sd.add_individual(ploidy=2)
-        sd.add_site(position=1, genotype=[0, 1, 0, 1], alleles=["A", "C"])
+        sd.add_site(position=1, genotypes=[0, 1, 0, 1], alleles=["A", "C"])
     return sd
