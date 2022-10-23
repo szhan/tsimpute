@@ -7,9 +7,9 @@ import tsinfer
 
 def make_simple_ts():
     """
-    Create a simple tree sequence with the following properties:
+    Create a simple tree sequence that has:
     a) 1 tree (binary);
-    b) 5 sample nodes (4 non-sample internal nodes);
+    b) 6 sample nodes (5 non-sample internal nodes);
     c) 5 variant sites; and
     d) 5 mutations.
 
