@@ -318,6 +318,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     :return: A new SampleData object.
     :rtype: tsinfer.SampleData
     """
+    assert sample_data.sequence_length == ancestors_ts.sequence_length, \
+        f"Samples has sequence length of {sample_data.sequence_length}, " + \
+        f"whereas ancestors ts has {ancestors_ts.sequence_length}."
+
     ts_site_pos = ancestors_ts.sites_position
     sd_site_pos = sample_data.sites_position[:]
     all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
