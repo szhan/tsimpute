@@ -212,7 +212,7 @@ def evaluate_imputation(
 
         # Obtain site information.
         # Get the mutations at this site.
-        num_muts = np.sum(v_ts_ref.mutations_site == v_ts_ref.site.id)
+        num_muts = np.sum(ts_ref.mutations_site == v_ts_ref.site.id)
 
         # Check whether the ancestral allele used to build the `ts_ref` is REF.
         ts_ref_site = ts_ref.site(position=pos)
