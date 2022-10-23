@@ -7,7 +7,9 @@ import tsinfer
 
 def make_simple_tree_sequence():
     """
-    Create a simple tree sequence with three diploid ganomes and the following:
+    Create a tree sequence with 3 diploid genomes having only biallelic sites.
+
+    It has the following:
     a) 1 tree (binary);
     b) 6 sample nodes (5 non-sample internal nodes);
     c) 5 variant sites; and
@@ -46,25 +48,25 @@ def make_simple_tree_sequence():
     tb.edges.add_row(left=0, right=10, parent=10, child=6)
     tb.edges.add_row(left=0, right=10, parent=10, child=9)
     # Add sites.
-    tb.sites.add_row(position=1, ancestral_state='A')
-    tb.sites.add_row(position=3, ancestral_state='C')
-    tb.sites.add_row(position=5, ancestral_state='G')
-    tb.sites.add_row(position=7, ancestral_state='T')
-    tb.sites.add_row(position=9, ancestral_state='A')
+    tb.sites.add_row(position=1, ancestral_state="A")
+    tb.sites.add_row(position=3, ancestral_state="C")
+    tb.sites.add_row(position=5, ancestral_state="G")
+    tb.sites.add_row(position=7, ancestral_state="T")
+    tb.sites.add_row(position=9, ancestral_state="A")
     # Add mutations.
-    tb.mutations.add_row(site=0, node=6, derived_state='C')
-    tb.mutations.add_row(site=1, node=7, derived_state='G')
-    tb.mutations.add_row(site=2, node=8, derived_state='T')
-    tb.mutations.add_row(site=3, node=9, derived_state='A')
-    tb.mutations.add_row(site=4, node=4, derived_state='C')
+    tb.mutations.add_row(site=0, node=6, derived_state="C")
+    tb.mutations.add_row(site=1, node=7, derived_state="G")
+    tb.mutations.add_row(site=2, node=8, derived_state="T")
+    tb.mutations.add_row(site=3, node=9, derived_state="A")
+    tb.mutations.add_row(site=4, node=4, derived_state="C")
     # Create tree sequence.
     ts = tb.tree_sequence()
-    return(ts)
+    return ts
 
 
 def make_simple_sample_data():
     """
-    Create samples with two diploid genomes.
+    Create samples with 2 diploid genomes having only biallelic sites.
 
     This is intended to be used to test `util.make_compatible_sample_data()`
     with `make_simple_ts()`.
@@ -77,23 +79,23 @@ def make_simple_sample_data():
         for _ in range(2):
             sd.add_individual(ploidy=2)
         # Position 1. Ref. marker and target marker aligned.
-        sd.add_site(position=1, genotypes=[0, 1, 0, 1], alleles=['A', 'C'])
+        sd.add_site(position=1, genotypes=[0, 1, 0, 1], alleles=["A", "C"])
         # Position 3. Ref. marker and target marker unaligned.
-        sd.add_site(position=3, genotypes=[0, 1, 0, 1], alleles=['G', 'C'])
+        sd.add_site(position=3, genotypes=[0, 1, 0, 1], alleles=["G", "C"])
         # Position 5. No variant site here, but there is in ref.
         # Position 7. Derive allele is not in ref.
-        sd.add_site(position=7, genotypes=[1, 0, 1, 0], alleles=['T', 'G'])
+        sd.add_site(position=7, genotypes=[1, 0, 1, 0], alleles=["T", "G"])
         # Position 8. Unused marker in ts and anc ts, which is only in target.
-        sd.add_site(position=8, genotypes=[1, 0, 1, 0], alleles=['A', 'T'])
+        sd.add_site(position=8, genotypes=[1, 0, 1, 0], alleles=["A", "T"])
         # Position 9. Unused marker in anc ts, which is only in target.
-        sd.add_site(position=9, genotypes=[1, 0, 1, 0], alleles=['A', 'T'])
-    return(sd)
+        sd.add_site(position=9, genotypes=[1, 0, 1, 0], alleles=["A", "T"])
+    return sd
 
 
 def make_simple_sample_data_with_multiallelic_site():
     """
-    Create samples with two diploid genomes with a multiallelic site.
-    
+    Create samples with 2 diploid genomes with a multiallelic site.
+
     :param: None
     :return: Samples with a multiallelic site.
     :rtype: tsinfer.SampleData
@@ -101,13 +103,13 @@ def make_simple_sample_data_with_multiallelic_site():
     with tsinfer.SampleData(sequence_length=10) as sd:
         for _ in range(2):
             sd.add_individual(ploidy=2)
-        sd.add_site(position=1, genotypes=[0, 1, 0, 2], alleles=['A', 'C', 'G'])
-    return(sd)
+        sd.add_site(position=1, genotypes=[0, 1, 0, 2], alleles=["A", "C", "G"])
+    return sd
 
 
 def make_simple_sample_data_with_wrong_sequence_length():
     """
-    Create samples with two diploid genomes and a sequence length of 6.
+    Create samples with 2 diploid genomes and a sequence length of 6.
 
     :param: None
     :return: Samples with a multiallelic site.
@@ -116,5 +118,5 @@ def make_simple_sample_data_with_wrong_sequence_length():
     with tsinfer.SampleData(sequence_length=6) as sd:
         for _ in range(2):
             sd.add_individual(ploidy=2)
-        sd.add_site(position=1, genotype=[0, 1, 0, 1], alleles=['A', 'C'])
-    return(sd)
+        sd.add_site(position=1, genotype=[0, 1, 0, 1], alleles=["A", "C"])
+    return sd
