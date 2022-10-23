@@ -301,13 +301,15 @@ def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
 def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     """
     Make a new SampleData object from an existing SampleData object such that:
-    (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
-    (2) the allele list in `new_sd` corresponds to the allele list in `ancestors_ts`.
-    (3) sites in `ancestors_ts` but not in `sample_data` are added to `new_sd` with all the genotypes MISSING.
+    a) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
+    b) the allele list in `new_sd` corresponds to the allele list in `ancestors_ts`.
+    c) sites in `ancestors_ts` but not in `sample_data` are added to `new_sd` with all the genotypes MISSING.
 
-    All the sites in `sample_data` and `ancestors_ts` must be biallelic.
+    These assumptions must be met:
+    a) All the sites in `sample_data` and `ancestors_ts` must be biallelic.
+    b) `sample_data` and `ancestors_ts` must have the same sequence length.
 
-    Note. Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
+    Note: Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
     which are not explained in the tsinfer API doc, are used to facilitate the editing.
 
     :param tsinfer.SampleData sample_data:
