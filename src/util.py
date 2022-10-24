@@ -183,8 +183,10 @@ def is_biallelic(ts_or_sd):
     return True
 
 
-def make_compatible_sample_data_old(sample_data, ancestors_ts, path=None):
+def _make_compatible_sample_data_(sample_data, ancestors_ts, path=None):
     """
+    WARNING. This is deprecated. It is kept to compare with the newer implementation.
+
     Make an editable copy of a SampleData object, and edit it so that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as MISSING;
     (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
