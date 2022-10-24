@@ -320,7 +320,7 @@ def evaluate_imputation(
         comments="",
         header=header_text,
     )
-    
+
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"INFO: END {end_datetime}")
 

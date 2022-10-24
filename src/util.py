@@ -320,9 +320,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
     :return: A new SampleData object.
     :rtype: tsinfer.SampleData
     """
-    assert sample_data.sequence_length == ancestors_ts.sequence_length, \
-        f"Samples has sequence length of {sample_data.sequence_length}, " + \
-        f"whereas ancestors ts has {ancestors_ts.sequence_length}."
+    assert sample_data.sequence_length == ancestors_ts.sequence_length, (
+        f"Samples has sequence length of {sample_data.sequence_length}, "
+        + f"whereas ancestors ts has {ancestors_ts.sequence_length}."
+    )
 
     ts_site_pos = ancestors_ts.sites_position
     sd_site_pos = sample_data.sites_position[:]
@@ -434,7 +435,11 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                     # Key: index in old allele list; value: index in new allele list
                     index_map = {}
                     for i, a in enumerate(sd_site_alleles):
-                        index_map[i] = new_allele_list.index(a) if a in new_allele_list else tskit.MISSING_DATA
+                        index_map[i] = (
+                            new_allele_list.index(a)
+                            if a in new_allele_list
+                            else tskit.MISSING_DATA
+                        )
 
                     new_sd.add_site(
                         position=pos,

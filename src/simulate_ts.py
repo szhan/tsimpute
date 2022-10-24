@@ -7,6 +7,7 @@ import numpy as np
 
 # TODO: Use a HapMap genetic map.
 
+
 def simulate_ts(
     sample_set, demography, mutation_rate, recombination_rate, sequence_length
 ):
@@ -55,7 +56,7 @@ def simulate_ts(
 
     # Remove multi-allelic sites
     multiallelic_sites = [v.site.id for v in ts.variants() if v.num_alleles > 2]
-    ts = ts.delete_sites(site_ids=multiallelic_sites)   # Topology unaffected
+    ts = ts.delete_sites(site_ids=multiallelic_sites)  # Topology unaffected
 
     # Remove populations
     tables = ts.dump_tables()
