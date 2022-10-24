@@ -102,7 +102,6 @@ def evaluate_imputation(
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"INFO: START {start_datetime}")
 
-    print(f"DEPS: msprime {msprime.__version__}")
     print(f"DEPS: tskit {tskit.__version__}")
     print(f"DEPS: tsinfer {tsinfer.__version__}")
     repo = Repo(search_parent_directories=True)
