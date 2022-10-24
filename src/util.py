@@ -422,16 +422,22 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                         alleles=[ts_ancestral_state, ts_derived_state],
                     )
                 else:
-                    # Case 2c: TODO
-                    # The allele(s) present in `sample_data` but absent in `ancestor_ts`
-                    # is always incorrectly imputed.
+                    # Case 2c: At least one allele in `sample_data` is not found in `ancestor_ts`.
+                    # Allele(s) in `sample_data` but not in `ancestor_ts` is always wrongly imputed.
                     # It is best to ignore these sites when assessing imputation performance.
+                    # Also, if there are many such sites, then it should be a flag.
                     num_case_2c += 1
+
+                    new_allele_list = [ts_ancestral_state, ts_derived_state, None]
+                    # Key: index in old allele list; value: index in new allele list
+                    index_map = {}
+                    for i, a in enumerate(sd_site_alleles):
+                        index_map[i] = new_allele_list.index(a) if a in new_allele_list else tskit.MISSING_DATA
 
                     new_sd.add_site(
                         position=pos,
-                        genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
-                        alleles=[ts_ancestral_state, ts_derived_state],
+                        genotypes=np.vectorize(lambda x: index_map[x])(sample_data.sites_genotypes[sd_site_id]),
+                        alleles=new_allele_list,
                     )
             elif pos not in ts_site_pos and pos in sd_site_pos:
                 # Case 3: Unused markers
