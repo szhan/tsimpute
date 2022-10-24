@@ -466,10 +466,10 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
             else:
                 raise ValueError(f"ERROR: Site at {pos} must be in the ts and/or sd.")
 
-    print(f"INFO: case 1  = {num_case_1}")
-    print(f"INFO: case 2a = {num_case_2a}")
-    print(f"INFO: case 2b = {num_case_2b}")
-    print(f"INFO: case 2c = {num_case_2c}")
-    print(f"INFO: case 3  = {num_case_3}")
+    print(f"INFO: case 1  (ref.-only)       = {num_case_1}")
+    print(f"INFO: case 2a (both, aligned)   = {num_case_2a}")
+    print(f"INFO: case 2b (both, unaligned) = {num_case_2b}")
+    print(f"INFO: case 2c (flagged)         = {num_case_2c}")
+    print(f"INFO: case 3  (target-only)     = {num_case_3}")
 
     return new_sd
