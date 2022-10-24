@@ -388,6 +388,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                 assert (
                     len(sd_site_alleles) == 2
                 ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}"
+                sd_site_gt = sample_data.sites_genotypes[sd_site_id]
 
                 # Notes
                 # ts_site.alleles is an unordered set of alleles (without None).
@@ -400,7 +401,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
 
                     new_sd.add_site(
                         position=pos,
-                        genotypes=sample_data.sites_genotypes[sd_site_id],
+                        genotypes=sd_site_gt,
                         alleles=[ts_ancestral_state, ts_derived_state],
                     )
                 elif [ts_derived_state, ts_ancestral_state] == sd_site_alleles:
@@ -409,7 +410,6 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                     # Align them by flipping the alleles in `sample_data`.
                     num_case_2b += 1
 
-                    sd_site_gt = sample_data.sites_genotypes[sd_site_id]
                     new_gt = np.where(
                         sd_site_gt == tskit.MISSING_DATA,
                         tskit.MISSING_DATA,
@@ -436,7 +436,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
 
                     new_sd.add_site(
                         position=pos,
-                        genotypes=np.vectorize(lambda x: index_map[x])(sample_data.sites_genotypes[sd_site_id]),
+                        genotypes=np.vectorize(lambda x: index_map[x])(sd_site_gt),
                         alleles=new_allele_list,
                     )
             elif pos not in ts_site_pos and pos in sd_site_pos:
@@ -457,7 +457,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, path=None):
                     alleles=sample_data.sites_alleles[sd_site_id],
                 )
             else:
-                raise ValueError(f"Site at {pos} must be in the ts and/or sd.")
+                raise ValueError(f"ERROR: Site at {pos} must be in the ts and/or sd.")
 
     print(f"INFO: case 1  = {num_case_1}")
     print(f"INFO: case 2a = {num_case_2a}")
