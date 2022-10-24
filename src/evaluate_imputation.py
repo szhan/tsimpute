@@ -1,6 +1,8 @@
 import click
+import datetime
 import json
 import sys
+from git import Repo
 import tqdm
 import numpy as np
 import tskit
@@ -97,6 +99,16 @@ def evaluate_imputation(
     min_iqs,
     flip_alleles,
 ):
+    start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: START {start_datetime}")
+
+    print(f"DEPS: msprime {msprime.__version__}")
+    print(f"DEPS: tskit {tskit.__version__}")
+    print(f"DEPS: tsinfer {tsinfer.__version__}")
+    repo = Repo(search_parent_directories=True)
+    print(f"DEPS: tsimpute URL {repo.remotes.origin.url}")
+    print(f"DEPS: tsimpute SHA {repo.head.object.hexsha}")
+
     data_imputed = (
         tskit.load(in_imputed_file)
         if in_file_type == "trees"
@@ -308,6 +320,9 @@ def evaluate_imputation(
         comments="",
         header=header_text,
     )
+    
+    end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: END {end_datetime}")
 
 
 if __name__ == "__main__":
