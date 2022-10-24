@@ -1,5 +1,5 @@
 import click
-import datetime
+from datetime import datetime
 import json
 import sys
 from git import Repo
