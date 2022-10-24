@@ -98,7 +98,7 @@ def perform_imputation(
     print(f"INFO: Loading trees file containing reference panel")
     ts_ref = tskit.load(in_reference_trees_file)
 
-    print(f"INFO: Loading smaples file containing target samples")
+    print(f"INFO: Loading samples file containing target samples")
     sd_target = tsinfer.load(in_target_samples_file)
 
     if genetic_map is not None:

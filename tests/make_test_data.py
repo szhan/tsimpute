@@ -107,7 +107,7 @@ def make_simple_sample_data_with_multiallelic_site():
     return sd
 
 
-def make_simple_sample_data_with_wrong_sequence_length():
+def make_simple_sample_data_with_mismatched_sequence_length():
     """
     Create samples with 2 diploid genomes and a sequence length of 6.
 
