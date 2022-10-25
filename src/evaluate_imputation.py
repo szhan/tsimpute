@@ -238,8 +238,8 @@ def evaluate_imputation(
         )
         is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
 
-        # Determine the percentage of REF alleles wrongly imputed as ALT.
-        num_wrong_alleles_0 = 1 - np.sum(
+        # Determine the proportion of REF alleles wrongly imputed as ALT.
+        prop_wrong_alleles_0 = 1 - np.sum(
             v_sd_true.genotypes[np.where(v_sd_true.genotypes != imputed_genotypes)]
         ) / np.sum(v_sd_true.genotypes != imputed_genotypes)
 
@@ -262,7 +262,7 @@ def evaluate_imputation(
                     num_muts,
                     is_aa_ref,
                     is_aa_parsimonious,
-                    num_wrong_alleles_0,
+                    prop_wrong_alleles_0,
                     # tree_arity,
                 ],
             ]
@@ -314,7 +314,7 @@ def evaluate_imputation(
             "num_muts",
             "is_aa_ref",
             "is_aa_parsimonious",
-            "num_wrong_alleles_0",
+            "prop_wrong_alleles_0",
             # "tree_arity",
         ]
     )
