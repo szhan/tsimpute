@@ -239,11 +239,11 @@ def evaluate_imputation(
         is_aa_parsimonious = 1 if ref_ancestral_allele == inferred_aa else 0
 
         # Calculate the mean arity of the tree covering this site position.
-        tree = ts_ref_simp.at(pos)  # Exclude unary nodes
-        parent_id, count = np.unique(
-            tree.parent_array[tree.preorder()], return_counts=True
-        )
-        tree_arity = count[parent_id != tskit.NULL].mean()
+        #tree = ts_ref_simp.at(pos)  # Exclude unary nodes
+        #parent_id, count = np.unique(
+        #    tree.parent_array[tree.preorder()], return_counts=True
+        #)
+        #tree_arity = count[parent_id != tskit.NULL].mean()
 
         line = np.array(
             [
@@ -257,7 +257,7 @@ def evaluate_imputation(
                     num_muts,
                     is_aa_ref,
                     is_aa_parsimonious,
-                    tree_arity,
+                    #tree_arity,
                 ],
             ]
         )
@@ -304,7 +304,7 @@ def evaluate_imputation(
             "num_muts",
             "is_aa_ref",
             "is_aa_parsimonious",
-            "tree_arity",
+            #"tree_arity",
         ]
     )
 
