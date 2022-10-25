@@ -233,10 +233,10 @@ def evaluate_imputation(
         ts_ref_var = tskit.Variant(ts_ref)
         ts_ref_var.decode(site_id=v_ts_ref.site.id)
         ts_ref_tree = ts_ref.at(position=pos)
-        inferred_aa, _ = ts_ref_tree.map_mutations(
+        parsimonious_aa, _ = ts_ref_tree.map_mutations(
             genotypes=ts_ref_var.genotypes, alleles=ts_ref_var.alleles
         )
-        is_aa_parsimonious = 1 if ref_ancestral_allele == inferred_aa else 0
+        is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
 
         # Calculate the mean arity of the tree covering this site position.
         #tree = ts_ref_simp.at(pos)  # Exclude unary nodes
