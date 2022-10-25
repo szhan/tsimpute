@@ -98,8 +98,9 @@ def evaluate_imputation(
     max_iqs,
     flip_alleles,
 ):
-    start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    print(f"INFO: START {start_datetime}")
+    start_dt = datetime.now()
+    start_dt_str = start_dt.strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: START {start_dt_str}")
 
     print(f"DEPS: tskit {tskit.__version__}")
     print(f"DEPS: tsinfer {tsinfer.__version__}")
@@ -329,8 +330,10 @@ def evaluate_imputation(
         header=header_text,
     )
 
-    end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    print(f"INFO: END {end_datetime}")
+    end_dt = datetime.now()
+    end_dt_str = end_dt.strftime("%d/%m/%Y %H:%M:%S")
+    print(f"INFO: END {end_dt_str}")
+    print(f"INFO: DURATION {str(end_dt - start_dt)}")
 
 
 if __name__ == "__main__":
