@@ -238,12 +238,17 @@ def evaluate_imputation(
         )
         is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
 
+        # Determine the percentage of REF alleles wrongly imputed as ALT.
+        num_wrong_alleles_0 = 1 - np.sum(
+            v_sd_true.genotypes[np.where(v_sd_true.genotypes != imputed_genotypes)]
+        ) / np.sum(v_sd_true.genotypes != imputed_genotypes)
+
         # Calculate the mean arity of the tree covering this site position.
-        #tree = ts_ref_simp.at(pos)  # Exclude unary nodes
-        #parent_id, count = np.unique(
+        # tree = ts_ref_simp.at(pos)  # Exclude unary nodes
+        # parent_id, count = np.unique(
         #    tree.parent_array[tree.preorder()], return_counts=True
-        #)
-        #tree_arity = count[parent_id != tskit.NULL].mean()
+        # )
+        # tree_arity = count[parent_id != tskit.NULL].mean()
 
         line = np.array(
             [
@@ -257,7 +262,8 @@ def evaluate_imputation(
                     num_muts,
                     is_aa_ref,
                     is_aa_parsimonious,
-                    #tree_arity,
+                    num_wrong_alleles_0,
+                    # tree_arity,
                 ],
             ]
         )
@@ -308,7 +314,8 @@ def evaluate_imputation(
             "num_muts",
             "is_aa_ref",
             "is_aa_parsimonious",
-            #"tree_arity",
+            "num_wrong_alleles_0",
+            # "tree_arity",
         ]
     )
 
