@@ -277,6 +277,10 @@ def evaluate_imputation(
                 "#" + "remove_leaves" + "=" + f"{remove_leaves}",
                 "#" + "in_chip_file" + "=" + f"{in_chip_file}",
                 "#" + "out_csv_file" + "=" + f"{out_csv_file}",
+                "#" + "min_maf" + "=" + f"{min_maf}",
+                "#" + "min_iqs" + "=" + f"{min_iqs}",
+                "#" + "max_iqs" + "=" + f"{max_iqs}",
+                "#" + "flip_alleles" + "=" + f"{flip_alleles}",
                 # Site statistics
                 "#" + "num_sites_data_imputed" + "=" + f"{len(data_imputed_site_pos)}",
                 "#" + "num_sites_sd_true" + "=" + f"{len(sd_true_site_pos)}",
