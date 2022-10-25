@@ -74,6 +74,12 @@ import measures
     help="Minimum threshold on IQS, which can be negative.",
 )
 @click.option(
+    "--max_iqs",
+    type=float,
+    default=1.0,
+    help="Maximum threshold on IQS.",
+)
+@click.option(
     "--flip_alleles",
     is_flag=True,
     default=False,
@@ -89,6 +95,7 @@ def evaluate_imputation(
     out_csv_file,
     min_maf,
     min_iqs,
+    max_iqs,
     flip_alleles,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -208,8 +215,8 @@ def evaluate_imputation(
             ploidy=2,
         )
 
-        # Skip sites with an IQS too low.
-        if iqs < min_iqs:
+        # Skip sites with an IQS below or above a specified threshold.
+        if iqs < min_iqs or iqs > max_iqs:
             continue
 
         # Obtain site information.
