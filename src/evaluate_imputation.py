@@ -196,11 +196,9 @@ def evaluate_imputation(
 
         # Check whether the ancestral allele used to build the `ts_ref`
         # is best explained by parsimony using the inferred tree and observed genotypes.
-        ts_ref_var = tskit.Variant(ts_ref)
-        ts_ref_var.decode(site_id=v_ts_ref.site.id)
         ts_ref_tree = ts_ref.at(position=pos)
         parsimonious_aa, _ = ts_ref_tree.map_mutations(
-            genotypes=ts_ref_var.genotypes, alleles=ts_ref_var.alleles
+            genotypes=v_ts_ref.genotypes, alleles=v_ts_ref.alleles
         )
         is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
 
