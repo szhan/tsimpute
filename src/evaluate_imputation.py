@@ -195,12 +195,15 @@ def evaluate_imputation(
         is_aa_ref = 1 if ts_ref_site_metadata["REF"] == ref_ancestral_allele else 0
 
         # Check whether the ancestral allele used to build the `ts_ref`
-        # is best explained by parsimony using the inferred tree and observed genotypes.
-        ts_ref_tree = ts_ref.at(position=pos)
-        parsimonious_aa, _ = ts_ref_tree.map_mutations(
-            genotypes=v_ts_ref.genotypes, alleles=v_ts_ref.alleles
-        )
-        is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
+        # is best explained by parsimony using the imputed tree and genotypes.
+        if in_file_type == "trees":
+            data_imputed_tree = data_imputed.at(position=pos)
+            parsimonious_aa, _ = data_imputed_tree.map_mutations(
+                genotypes=v_data_imputed.genotypes, alleles=v_data_imputed.alleles
+            )
+            is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
+        else:
+            is_aa_parsimonious = -1
 
         # Determine the proportion of ancestral alleles wrongly imputed as derived alleles.
         prop_wrong_alleles_0 = 1 - np.sum(
