@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 import sys
 from git import Repo
-import tqdm
+from tqdm import tqdm
 import numpy as np
 import tskit
 import tsinfer
@@ -89,13 +89,13 @@ def evaluate_imputation(
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
 
-    # Define chip and mask sites relative to the ancestors ts from the reference ts.
+    # Define chip and mask sites relative to the ref. ts.
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file)
     chip_site_pos = np.sort(
         list(set(ts_ref_site_pos) & set(chip_site_pos_all)))
     mask_site_pos = set(ts_ref_site_pos) - \
         set(chip_site_pos)  # Must NOT be in chip set
-    mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in ground-truth set
+    mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in truth set
     mask_site_pos = np.sort(
         list(mask_site_pos & set(data_imputed_site_pos))
     )  # Must be in imputed set
@@ -116,7 +116,7 @@ def evaluate_imputation(
     #ts_ref_simp = ts_ref.simplify()
 
     results = None
-    for pos in tqdm.tqdm(mask_site_pos):
+    for pos in tqdm(mask_site_pos):
         while v_data_imputed.site.position != pos:
             v_data_imputed = next(vars_data_imputed)
         while v_sd_true.site.position != pos:
@@ -125,14 +125,14 @@ def evaluate_imputation(
             v_ts_ref = next(vars_ts_ref)
 
         # Variant objects have ordered lists of alleles.
-        ref_ancestral_allele = v_ts_ref.alleles[0]  # Denoted by 0
-        ref_derived_allele = v_ts_ref.alleles[1]  # Denoted by 1
+        ref_ancestral_allele = v_ts_ref.alleles[0]
+        ref_derived_allele = v_ts_ref.alleles[1]
 
         # Check ancestral alleles are identical.
         assert ref_ancestral_allele == v_data_imputed.site.ancestral_state
         assert ref_ancestral_allele == v_sd_true.site.ancestral_state
 
-        # Get Minor Allele index and frequency from `ts_ref`.
+        # Get Minor Allele index and frequency from ref. ts.
         ref_freqs = v_ts_ref.frequencies(remove_missing=True)
         ref_af_0 = ref_freqs[ref_ancestral_allele]
         ref_af_1 = ref_freqs[ref_derived_allele]
@@ -153,8 +153,8 @@ def evaluate_imputation(
                 imputed_af_1 if imputed_af_1 < imputed_af_0 else imputed_af_0
             )
         else:
-            # Variant objects from SampleData do not yet have frequencies().
-            # TODO: Update when they do have such functionality.
+            # Variant objects from SampleData do not have frequencies().
+            # TODO: Update if they get such functionality.
             imputed_ma_index = float("nan")
             imputed_ma_freq = float("nan")
 
@@ -171,12 +171,12 @@ def evaluate_imputation(
         # Get the mutations at this site.
         num_muts = np.sum(ts_ref.mutations_site == v_ts_ref.site.id)
 
-        # Check whether the ancestral allele used to build the `ts_ref` is REF.
+        # Check whether the ancestral allele used to build the ref. ts is REF.
         ts_ref_site_metadata = json.loads(v_ts_ref.site.metadata)
         assert "REF" in ts_ref_site_metadata
         is_aa_ref = 1 if ts_ref_site_metadata["REF"] == ref_ancestral_allele else 0
 
-        # Check whether the ancestral allele used to build the `ts_ref`
+        # Check whether the ancestral allele used to build the ref. ts
         # is best explained by parsimony using the imputed tree and genotypes.
         is_aa_parsimonious = -1
         if in_file_type == "trees":
