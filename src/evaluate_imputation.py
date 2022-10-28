@@ -178,19 +178,22 @@ def evaluate_imputation(
 
         # Check whether the ancestral allele used to build the `ts_ref`
         # is best explained by parsimony using the imputed tree and genotypes.
+        is_aa_parsimonious = -1
         if in_file_type == "trees":
             data_imputed_tree = data_imputed.at(position=pos)
             parsimonious_aa, _ = data_imputed_tree.map_mutations(
                 genotypes=v_data_imputed.genotypes, alleles=v_data_imputed.alleles
             )
             is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
-        else:
-            is_aa_parsimonious = -1
 
         # Determine the proportion of ancestral alleles wrongly imputed as derived alleles.
-        prop_wrong_alleles_0 = 1 - np.sum(
-            v_sd_true.genotypes[np.where(v_sd_true.genotypes != imputed_genotypes)]
-        ) / np.sum(v_sd_true.genotypes != imputed_genotypes)
+        prop_wrong_alleles_0 = 0
+        num_wrongly_imputed_alleles = np.sum(
+            v_sd_true.genotypes != imputed_genotypes)
+        if num_wrongly_imputed_alleles > 0:
+            prop_wrong_alleles_0 = 1 - np.sum(
+                v_sd_true.genotypes[np.where(v_sd_true.genotypes != imputed_genotypes)]
+            ) / num_wrongly_imputed_alleles
 
         # Calculate the mean arity of the tree covering this site position.
         # tree = ts_ref_simp.at(pos)  # Exclude unary nodes
