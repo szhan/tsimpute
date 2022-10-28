@@ -56,18 +56,6 @@ import measures
     help="Output CSV file.",
 )
 @click.option(
-    "--min_maf",
-    type=float,
-    default=0,
-    help="Minimum threshold on MAF in the reference samples.",
-)
-@click.option(
-    "--min_iqs",
-    type=float,
-    default=float("-Inf"),
-    help="Minimum threshold on IQS, which can be negative.",
-)
-@click.option(
     "--max_iqs",
     type=float,
     default=1.0,
