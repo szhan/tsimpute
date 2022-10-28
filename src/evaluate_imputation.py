@@ -55,12 +55,6 @@ import measures
     required=True,
     help="Output CSV file.",
 )
-@click.option(
-    "--max_iqs",
-    type=float,
-    default=1.0,
-    help="Maximum threshold on IQS.",
-)
 def evaluate_imputation(
     in_imputed_file,
     in_file_type,
