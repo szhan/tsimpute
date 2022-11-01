@@ -90,7 +90,7 @@ def evaluate_imputation(
     ts_ref_site_pos = ts_ref.sites_position
 
     # Define chip and mask sites relative to the ref. ts.
-    chip_site_pos_all = masks.parse_site_position_file(in_chip_file)
+    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=True)
     chip_site_pos = np.sort(
         list(set(ts_ref_site_pos) & set(chip_site_pos_all)))
     mask_site_pos = set(ts_ref_site_pos) - \
