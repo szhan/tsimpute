@@ -1,3 +1,4 @@
+from email.errors import MultipartInvariantViolationDefect
 from pathlib import Path
 import sys
 import tqdm
@@ -12,7 +13,7 @@ import masks
 import util
 
 
-def closest_match(ts, h, recombination_rate=1e-8, mutation_rate=1e-8):
+def closest_match(ts, h, recombination_rate, mutation_rate):
     rho = np.zeros(ts.num_sites) + recombination_rate
     mu = np.zeros(ts.num_sites) + mutation_rate
     ls_hmm = _tskit.LsHmm(
@@ -37,23 +38,28 @@ def create_index_map(x):
     return map_ACGT
 
 
-def impute_by_exact_matching(ts, sd):
+def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
     assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
     
-    # Get genotype matrix from target genomes in ACGT space
+    # Get genotype matrix from target genomes in ACGT space.
     H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
     for i, v in enumerate(sd.variants()):
         if v.site.position in ts.sites_position:
             H1[i, :] = create_index_map(v.alleles)[v.genotypes]
     H1 = H1.T
 
-    # Get HMM paths
+    # Get HMM paths.
     H2 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
     for i in np.arange(sd.num_samples):
-        H2[i, :] = closest_match(ts, H1[i, :])
+        H2[i, :] = closest_match(
+            ts,
+            H1[i, :],
+            recombination_rate=recombination_rate,
+            mutation_rate=mutation_rate,
+        )
 
-    # Get genotype matrix in 01 space by mapping HMM paths to reference tree
+    # Get genotype matrix in 01 space by mapping HMM paths to reference tree.
     # This is imputing from the reference genomes to the target genomes.
     H3 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
     for i, v in enumerate(ts.variants()):
@@ -132,7 +138,7 @@ assert (
 ), f"Chip and mask site positions are not mutually exclusive."
 
 print("INFO: Imputing into target samples")
-gm_imputed = impute_by_exact_matching(ts_ref, sd_compat)
+gm_imputed = impute_by_exact_matching(ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8)
 
 print("INFO: Printing results to samples file")
 print(f"INFO: {out_samples_file}")
