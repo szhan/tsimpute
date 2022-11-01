@@ -105,7 +105,7 @@ sd_target = tsinfer.load(in_target_samples_file)
 print(f"INFO: Loading chip position file")
 chip_site_pos = masks.parse_site_position_file(in_chip_file)
 
-print("INFO: Making samples compatible with the ancestors trees")
+print("INFO: Making samples compatible with the reference trees")
 sd_compat = util.make_compatible_sample_data(sd_target, ts_ref)
 
 print("INFO: Defining mask sites relative to the reference trees")
