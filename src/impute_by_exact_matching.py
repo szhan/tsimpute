@@ -160,8 +160,8 @@ def perform_imputation_by_exact_matching(
         path=tmp_samples_file
     )
 
-    print("INFO: Defining mask sites relative to the reference trees")
-    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=True)
+    print("INFO: Defining chip and mask sites relative to the reference trees")
+    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
     ts_ref_sites_isin_chip = np.isin(
         ts_ref_site_pos, chip_site_pos_all, assume_unique=True,
     )

@@ -89,8 +89,8 @@ def evaluate_imputation(
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
 
-    # Define chip and mask sites relative to the ref. ts.
-    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=True)
+    print("INFO: Defining chip and mask sites relative to the reference trees")
+    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
     ts_ref_sites_isin_chip = np.isin(
         ts_ref_site_pos, chip_site_pos_all, assume_unique=True,
     )
