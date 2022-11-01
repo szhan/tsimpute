@@ -20,7 +20,7 @@ def closest_match(ts, h, recombination_rate, mutation_rate):
         ts.ll_tree_sequence,
         recombination_rate=rho,
         mutation_rate=mu,
-        precision=6,  # Arbitrarily chose this, gives right answers on exact matching
+        precision=6, # Arbitrarily chose this, gives right answers on exact matching
         acgt_alleles=True,
     )
     vm = _tskit.ViterbiMatrix(ts.ll_tree_sequence)
@@ -41,7 +41,7 @@ def create_index_map(x):
 def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
     assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
-
+    
     # Get genotype matrix from target genomes in ACGT space.
     H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
     for i, v in enumerate(sd.variants()):
@@ -78,22 +78,22 @@ def write_genotype_matrix_to_samples(
     assert ts.num_sites == genotype_matrix.shape[1]
     out_file = str(out_file)
     ts_iter = ts.variants()
-    i = 0  # Track iterating through `genotype_matrix`
+    i = 0   # Track iterating through `genotype_matrix`
     with tsinfer.SampleData(path=out_file) as sd:
         for ts_v in tqdm(ts_iter):
             # Set metadata
-            marker_type = ""
+            marker_type = ''
             if ts_v.site.position in mask_site_pos:
-                marker_type = "mask"
+                marker_type = 'mask'
             elif ts_v.site.position in chip_site_pos:
-                marker_type = "chip"
-            metadata = {"marker": marker_type}
+                marker_type = 'chip'
+            metadata = {'marker': marker_type}
             # Add site
             sd.add_site(
                 position=ts_v.site.position,
                 genotypes=genotype_matrix[:, i],
                 alleles=ts_v.alleles,
-                metadata=metadata,
+                metadata=metadata
             )
             i += 1
 
@@ -121,7 +121,10 @@ chip_site_pos = masks.parse_site_position_file(in_chip_file)
 print("INFO: Making samples compatible with the reference trees")
 print(f"INFO: {tmp_samples_file}")
 sd_compat = util.make_compatible_sample_data(
-    sd_target, ts_ref, skip_unused_markers=True, path=tmp_samples_file
+    sd_target,
+    ts_ref,
+    skip_unused_markers=True,
+    path=tmp_samples_file
 )
 
 print("INFO: Defining mask sites relative to the reference trees")
@@ -135,9 +138,7 @@ assert (
 ), f"Chip and mask site positions are not mutually exclusive."
 
 print("INFO: Imputing into target samples")
-gm_imputed = impute_by_exact_matching(
-    ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8
-)
+gm_imputed = impute_by_exact_matching(ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8)
 
 print("INFO: Printing results to samples file")
 print(f"INFO: {out_samples_file}")
