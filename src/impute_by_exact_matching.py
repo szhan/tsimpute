@@ -98,6 +98,7 @@ out_samples_file = base_dir / "test.samples"
 
 print(f"INFO: Loading trees file containing reference genomes")
 ts_ref = tskit.load(in_reference_trees_file)
+ts_ref = ts_ref.simplify()
 
 print(f"INFO: Loading samples file containing target genomes")
 sd_target = tsinfer.load(in_target_samples_file)
