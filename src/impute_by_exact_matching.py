@@ -64,15 +64,15 @@ def impute_by_exact_matching(ts, sd):
 
 def write_genotype_matrix_to_samples(
     ts,
-    gm,
+    genotype_matrix,
     mask_site_pos,
     chip_site_pos,
     out_file,
 ):
-    assert ts.num_sites == gm.shape[1]
+    assert ts.num_sites == genotype_matrix.shape[1]
     out_file = str(out_file)
     ts_iter = ts.variants()
-    i = 0
+    i = 0   # Track iterating through `genotype_matrix`
     with tsinfer.SampleData(path=out_file) as sd:
         for ts_v in tqdm(ts_iter):
             # Set metadata
@@ -85,7 +85,7 @@ def write_genotype_matrix_to_samples(
             # Add site
             sd.add_site(
                 position=ts_v.site.position,
-                genotypes=gm[:, i],
+                genotypes=genotype_matrix[:, i],
                 alleles=ts_v.alleles,
                 metadata=metadata
             )
