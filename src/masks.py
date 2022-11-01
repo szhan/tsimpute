@@ -64,10 +64,8 @@ def parse_site_position_file(in_file):
     """
     Read list of site positions from a plain tab-delimited text file,
     which has these columns:
-    1) chrom
-    2) pos
-    3) recomb_rate
-    4) pos_cm
+    (1) chrom
+    (2) pos
 
     TODO: Consider sequence name, which is ignored now.
 
@@ -75,7 +73,7 @@ def parse_site_position_file(in_file):
     :return: A list of site positions.
     :rtype: numpy.ndarray
     """
-    expected_columns = ['chrom', 'pos', 'recomb_rate', 'pos_cm']
+    expected_columns = ['chrom', 'pos']
     df = pd.read_csv(in_file, sep="\t")
-    assert np.all(df.columns == expected_columns)
+    assert np.all(df.columns[:2] == expected_columns)
     return df['pos'].to_numpy()
