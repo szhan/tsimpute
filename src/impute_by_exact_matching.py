@@ -96,14 +96,17 @@ in_target_samples_file = base_dir / "single_panmictic_simulated.samples"
 in_chip_file = base_dir / "chip.txt"
 out_samples_file = base_dir / "test.samples"
 
-print(f"INFO: Loading trees file containing reference genomes")
+print("INFO: Loading trees file containing reference genomes")
+print(f"INFO: {in_reference_trees_file}")
 ts_ref = tskit.load(in_reference_trees_file)
-ts_ref = ts_ref.simplify()
+ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
 
-print(f"INFO: Loading samples file containing target genomes")
+print("INFO: Loading samples file containing target genomes")
+print(f"INFO: {in_target_samples_file}")
 sd_target = tsinfer.load(in_target_samples_file)
 
-print(f"INFO: Loading chip position file")
+print("INFO: Loading chip position file")
+print(f"INFO: {in_chip_file}")
 chip_site_pos = masks.parse_site_position_file(in_chip_file)
 
 print("INFO: Making samples compatible with the reference trees")
@@ -123,6 +126,7 @@ print("INFO: Imputing into target samples")
 gm_imputed = impute_by_exact_matching(ts_ref, sd_compat)
 
 print("INFO: Printing results to samples file")
+print(f"INFO: {out_samples_file}")
 write_genotype_matrix_to_samples(
     ts=ts_ref,
     gm=gm_imputed,
