@@ -37,6 +37,7 @@ def create_index_map(x):
 
 
 def impute_by_exact_matching(ts, sd):
+    assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
     
     # Get genotype matrix from target genomes in ACGT space
