@@ -93,6 +93,7 @@ def write_genotype_matrix_to_samples(
 base_dir = Path("/Users/szhan/Projects/tsimpute/analysis/test")
 in_reference_trees_file = base_dir / "single_panmictic_simulated.trees"
 in_target_samples_file = base_dir / "single_panmictic_simulated.samples"
+tmp_samples_file = str(base_dir / "compat.samples")
 in_chip_file = base_dir / "chip.txt"
 out_samples_file = base_dir / "test.samples"
 
@@ -110,7 +111,8 @@ print(f"INFO: {in_chip_file}")
 chip_site_pos = masks.parse_site_position_file(in_chip_file)
 
 print("INFO: Making samples compatible with the reference trees")
-sd_compat = util.make_compatible_sample_data(sd_target, ts_ref)
+print(f"INFO: {tmp_samples_file}")
+sd_compat = util.make_compatible_sample_data(sd_target, ts_ref, path=tmp_samples_file)
 
 print("INFO: Defining mask sites relative to the reference trees")
 ts_ref_sites_isnotin_chip = np.isin(
