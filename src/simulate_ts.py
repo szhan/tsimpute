@@ -9,22 +9,22 @@ import numpy as np
 
 
 def simulate_ts(
-    sample_set, demography, mutation_rate, recombination_rate, sequence_length
+    sample_set, demography, recombination_rate, mutation_rate, sequence_length
 ):
     """
     Simulate a tree sequence using `msprime` under a specified demographic model
-    with genome-wide uniform mutation rate and recombination rate.
+    with a genome-wide uniform mutation rate and recombination rate.
 
-    The standard coalescent with recombination is used (i.e. Hudson).
+    The standard coalescent with recombination is used (i.e. Hudson's model).
 
-    Processing steps before returning the `TreeSequence` object include:
+    Processing steps before returning the `TreeSequence` object:
     1. All multi-allelic sites are deleted.
     2. All populations are cleared.
 
-    :param list sample_set: A list of msprime.SampleSet object.
+    :param list sample_set: A list of msprime.SampleSet objects.
     :param msprime.Demography demography: If None, it defaults to a single population with constant size 1.
-    :param float mutation_rate: Uniform mutation rate.
     :param float recombination_rate: Uniform recombination rate.
+    :param float mutation_rate: Uniform mutation rate.
     :param float sequence_length: Sequence length input to get msprime.RateMap objects.
     :return: A simulated tree sequence.
     :rtype: tskit.TreeSequence
@@ -41,7 +41,8 @@ def simulate_ts(
     )
 
     # Simulate a tree sequence.
-    # Note a simulated ts contains no mono-allelic sites, but there may be multi-allelic sites.
+    # Note a simulated ts contains no mono-allelic sites,
+    # but there may be multi-allelic sites.
     ts = msprime.sim_mutations(
         msprime.sim_ancestry(
             samples=sample_set,
@@ -112,28 +113,30 @@ def get_ts_toy():
     ts = simulate_ts(
         sample_set=sample_set,
         demography=demographic_model,
-        mutation_rate=mutation_rate,
         recombination_rate=recombination_rate,
+        mutation_rate=mutation_rate,
         sequence_length=sequence_length,
     )
 
     return [ts] + generate_indices(size_ref, size_query, ploidy_level)
 
 
-def get_ts_single_panmictic(time_query):
+def get_ts_single_panmictic(
+    size_ref=1e4,
+    size_query=1e3,
+    eff_pop_size=1e4,
+    mutation_rate=1e-8,
+    recombination_rate=1e-8,
+    sequence_length=1e6,
+    time_ref=0,
+    time_query=0,
+):
     """
     TODO
 
-    :param float time_query:
     :return:
     :rtype: list
     """
-    size_ref = 1e4
-    size_query = 1e3
-    eff_pop_size = 1e4
-    mutation_rate = 1e-8
-    recombination_rate = 1e-8
-    sequence_length = 1e6
     ploidy_level = 1
 
     demographic_model = msprime.Demography()
@@ -142,15 +145,15 @@ def get_ts_single_panmictic(time_query):
     )
 
     sample_set = [
-        msprime.SampleSet(num_samples=size_ref, ploidy=ploidy_level, time=0),
+        msprime.SampleSet(num_samples=size_ref, ploidy=ploidy_level, time=time_ref),
         msprime.SampleSet(num_samples=size_query, ploidy=ploidy_level, time=time_query),
     ]
 
     ts = simulate_ts(
         sample_set=sample_set,
         demography=demographic_model,
-        mutation_rate=mutation_rate,
         recombination_rate=recombination_rate,
+        mutation_rate=mutation_rate,
         sequence_length=sequence_length,
     )
 
@@ -193,8 +196,8 @@ def get_ts_ten_pop(pop_ref, pop_query):
     ts = simulate_ts(
         sample_set=sample_set,
         demography=demographic_model,
-        mutation_rate=mutation_rate,
         recombination_rate=recombination_rate,
+        mutation_rate=mutation_rate,
         sequence_length=sequence_length,
     )
 
