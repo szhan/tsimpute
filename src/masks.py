@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import tskit
 
 
@@ -61,19 +62,20 @@ def mask_sites_in_sample_data(sample_data, sites, site_type, path=None):
 
 def parse_site_position_file(in_file):
     """
-    Read list of site positions from a plain tab-delimited text file.
+    Read list of site positions from a plain tab-delimited text file,
+    which has these columns:
+    1) chrom
+    2) pos
+    3) recomb_rate
+    4) pos_cm
 
     TODO: Consider sequence name, which is ignored now.
 
-    :param in_file: A list of site positions.
+    :param in_file: A tab-delimied file with site positions.
     :return: A list of site positions.
-    :rtype: np.array
+    :rtype: numpy.ndarray
     """
-    site_pos = []
-
-    with open(in_file, "rt") as f:
-        for line in f:
-            chr, pos = line.rstrip().split("\t")
-            site_pos.append(int(pos))
-
-    return np.array(site_pos)
+    expected_columns = ['chrom', 'pos', 'recomb_rate', 'pos_cm']
+    df = pd.read_csv(in_file, sep="\t")
+    assert np.all(df.columns == expected_columns)
+    return df['pos'].to_numpy()
