@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import tqdm
 
 import _tskit
 import tskit
@@ -73,7 +74,7 @@ def write_genotype_matrix_to_samples(
     ts_iter = ts.variants()
     i = 0
     with tsinfer.SampleData(path=out_file) as sd:
-        for ts_v in ts_iter:
+        for ts_v in tqdm(ts_iter):
             # Set metadata
             marker_type = ''
             if ts_v.site.position in mask_site_pos:
