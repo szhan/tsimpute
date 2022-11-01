@@ -1,6 +1,6 @@
 import json
 import numpy as np
-import tqdm
+from tqdm import tqdm
 import tskit
 import tsinfer
 import warnings
@@ -240,7 +240,7 @@ def make_compatible_sample_data(sample_data, ancestors_ts, skip_unused_markers=T
             )
 
         # Add sites
-        for pos in tqdm.tqdm(all_site_pos):
+        for pos in tqdm(all_site_pos):
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1: Reference markers
                 # Site in `ancestors_ts` (ref. panel) but not `sample_data` (target samples).
