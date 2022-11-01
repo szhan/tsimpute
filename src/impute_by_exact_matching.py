@@ -19,7 +19,7 @@ def closest_match(ts, h, recombination_rate, mutation_rate):
         ts.ll_tree_sequence,
         recombination_rate=rho,
         mutation_rate=mu,
-        precision=6, # Arbitrarily chose this, gives right answers on exact matching
+        precision=6,  # Arbitrarily chose this, gives right answers on exact matching
         acgt_alleles=True,
     )
     vm = _tskit.ViterbiMatrix(ts.ll_tree_sequence)
@@ -40,7 +40,7 @@ def create_index_map(x):
 def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
     assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
-    
+
     print("INFO: Mapping samples to ACGT space.")
     H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
     i = 0
@@ -66,7 +66,7 @@ def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
     for v in tqdm(ts.variants()):
         H3[:, i] = v.genotypes[H2[:, i]]
         i += 1
-        
+
     return H3
 
 
@@ -80,22 +80,22 @@ def write_genotype_matrix_to_samples(
     assert ts.num_sites == genotype_matrix.shape[1]
     out_file = str(out_file)
     ts_iter = ts.variants()
-    i = 0   # Track iterating through `genotype_matrix`
+    i = 0  # Track iterating through `genotype_matrix`
     with tsinfer.SampleData(path=out_file) as sd:
         for ts_v in tqdm(ts_iter):
             # Set metadata
-            marker_type = ''
+            marker_type = ""
             if ts_v.site.position in mask_site_pos:
-                marker_type = 'mask'
+                marker_type = "mask"
             elif ts_v.site.position in chip_site_pos:
-                marker_type = 'chip'
-            metadata = {'marker': marker_type}
+                marker_type = "chip"
+            metadata = {"marker": marker_type}
             # Add site
             sd.add_site(
                 position=ts_v.site.position,
                 genotypes=genotype_matrix[:, i],
                 alleles=ts_v.alleles,
-                metadata=metadata
+                metadata=metadata,
             )
             i += 1
 
@@ -105,31 +105,22 @@ def write_genotype_matrix_to_samples(
     "--in_reference_trees_file",
     "-i1",
     required=True,
-    help="Input trees file containing reference genomes."
+    help="Input trees file containing reference genomes.",
 )
 @click.option(
     "--in_target_samples_file",
     "-i2",
     required=True,
-    help="Input samples file containing target genomes."
+    help="Input samples file containing target genomes.",
 )
 @click.option(
     "--in_chip_file",
     "-c",
     required=True,
-    help="Input tab-delimited file with chip site positions."
+    help="Input tab-delimited file with chip site positions.",
 )
-@click.option(
-    "--out_samples_file",
-    "-o",
-    required=True,
-    help="Output samples file."
-)
-@click.option(
-    "--tmp_samples_file",
-    default=None,
-    help="Temporary samples file"
-)
+@click.option("--out_samples_file", "-o", required=True, help="Output samples file.")
+@click.option("--tmp_samples_file", default=None, help="Temporary samples file")
 def perform_imputation_by_exact_matching(
     in_reference_trees_file,
     in_target_samples_file,
@@ -154,16 +145,15 @@ def perform_imputation_by_exact_matching(
     print("INFO: Making samples compatible with the reference trees")
     print(f"INFO: {tmp_samples_file}")
     sd_compat = util.make_compatible_sample_data(
-        sd_target,
-        ts_ref,
-        skip_unused_markers=True,
-        path=tmp_samples_file
+        sd_target, ts_ref, skip_unused_markers=True, path=tmp_samples_file
     )
 
     print("INFO: Defining chip and mask sites relative to the reference trees")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
     ts_ref_sites_isin_chip = np.isin(
-        ts_ref_site_pos, chip_site_pos_all, assume_unique=True,
+        ts_ref_site_pos,
+        chip_site_pos_all,
+        assume_unique=True,
     )
     chip_site_pos = ts_ref_site_pos[ts_ref_sites_isin_chip]
     mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
@@ -173,7 +163,9 @@ def perform_imputation_by_exact_matching(
     ), f"Chip and mask site positions are not mutually exclusive."
 
     print("INFO: Imputing into target samples")
-    gm_imputed = impute_by_exact_matching(ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8)
+    gm_imputed = impute_by_exact_matching(
+        ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8
+    )
 
     print("INFO: Printing results to samples file")
     print(f"INFO: {out_samples_file}")

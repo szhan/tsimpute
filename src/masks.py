@@ -74,10 +74,10 @@ def parse_site_position_file(in_file, one_based):
     :return: A list of site positions.
     :rtype: numpy.ndarray
     """
-    expected_columns = ['chrom', 'pos']
+    expected_columns = ["chrom", "pos"]
     df = pd.read_csv(in_file, sep="\t")
     assert np.all(df.columns[:2] == expected_columns)
-    coords = df['pos'].to_numpy()
+    coords = df["pos"].to_numpy()
     if one_based:
         return coords - 1
     return coords

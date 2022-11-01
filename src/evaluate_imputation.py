@@ -92,15 +92,17 @@ def evaluate_imputation(
     print("INFO: Defining chip and mask sites relative to the reference trees")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
     ts_ref_sites_isin_chip = np.isin(
-        ts_ref_site_pos, chip_site_pos_all, assume_unique=True,
+        ts_ref_site_pos,
+        chip_site_pos_all,
+        assume_unique=True,
     )
     chip_site_pos = ts_ref_site_pos[ts_ref_sites_isin_chip]
     mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
 
-    #mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in truth set
-    #mask_site_pos = np.sort(
+    # mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in truth set
+    # mask_site_pos = np.sort(
     #    list(mask_site_pos & set(data_imputed_site_pos))
-    #)  # Must be in imputed set
+    # )  # Must be in imputed set
 
     assert set(mask_site_pos).issubset(set(data_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
@@ -115,7 +117,7 @@ def evaluate_imputation(
     v_ts_ref = next(vars_ts_ref)
 
     # Get a simplified ts for arity calculations.
-    #ts_ref_simp = ts_ref.simplify()
+    # ts_ref_simp = ts_ref.simplify()
 
     results = None
     for pos in tqdm(mask_site_pos):
@@ -190,12 +192,17 @@ def evaluate_imputation(
 
         # Determine the proportion of ancestral alleles wrongly imputed as derived alleles.
         prop_wrong_alleles_0 = 0
-        num_wrongly_imputed_alleles = np.sum(
-            v_sd_true.genotypes != imputed_genotypes)
+        num_wrongly_imputed_alleles = np.sum(v_sd_true.genotypes != imputed_genotypes)
         if num_wrongly_imputed_alleles > 0:
-            prop_wrong_alleles_0 = 1 - np.sum(
-                v_sd_true.genotypes[np.where(v_sd_true.genotypes != imputed_genotypes)]
-            ) / num_wrongly_imputed_alleles
+            prop_wrong_alleles_0 = (
+                1
+                - np.sum(
+                    v_sd_true.genotypes[
+                        np.where(v_sd_true.genotypes != imputed_genotypes)
+                    ]
+                )
+                / num_wrongly_imputed_alleles
+            )
 
         # Calculate the mean arity of the tree covering this site position.
         # tree = ts_ref_simp.at(pos)  # Exclude unary nodes

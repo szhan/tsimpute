@@ -121,7 +121,9 @@ def perform_imputation(
 
     print("INFO: Defining chip and mask sites relative to the ancestors trees")
     ts_anc_sites_isin_chip = np.isin(
-        ts_anc.sites_position, chip_site_pos_all, assume_unique=True,
+        ts_anc.sites_position,
+        chip_site_pos_all,
+        assume_unique=True,
     )
     chip_site_pos = ts_anc.sites_position[ts_anc_sites_isin_chip]
     mask_site_pos = ts_anc.sites_position[np.invert(ts_anc_sites_isin_chip)]

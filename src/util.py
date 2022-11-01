@@ -183,7 +183,9 @@ def is_biallelic(ts_or_sd):
     return True
 
 
-def make_compatible_sample_data(sample_data, ancestors_ts, skip_unused_markers=True, path=None):
+def make_compatible_sample_data(
+    sample_data, ancestors_ts, skip_unused_markers=True, path=None
+):
     """
     Make a new `SampleData` object from an existing `SampleData` object such that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as `tskit.MISSING`;
