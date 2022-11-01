@@ -60,7 +60,7 @@ def mask_sites_in_sample_data(sample_data, sites, site_type, path=None):
     return new_sd
 
 
-def parse_site_position_file(in_file):
+def parse_site_position_file(in_file, one_based):
     """
     Read list of site positions from a plain tab-delimited text file,
     which has these columns:
@@ -70,10 +70,14 @@ def parse_site_position_file(in_file):
     TODO: Consider sequence name, which is ignored now.
 
     :param in_file: A tab-delimied file with site positions.
+    :param one_based: Are the coordinates 1-based? If so, correct them.
     :return: A list of site positions.
     :rtype: numpy.ndarray
     """
     expected_columns = ['chrom', 'pos']
     df = pd.read_csv(in_file, sep="\t")
     assert np.all(df.columns[:2] == expected_columns)
-    return df['pos'].to_numpy()
+    coords = df['pos'].to_numpy()
+    if one_based:
+        return coords - 1
+    return coords
