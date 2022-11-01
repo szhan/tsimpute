@@ -1,5 +1,4 @@
-from email.errors import MultipartInvariantViolationDefect
-from pathlib import Path
+import click
 import sys
 from tqdm import tqdm
 
@@ -101,54 +100,88 @@ def write_genotype_matrix_to_samples(
             i += 1
 
 
-base_dir = Path("/Users/szhan/Projects/tsimpute/analysis/test")
-in_reference_trees_file = base_dir / "single_panmictic_simulated.trees"
-in_target_samples_file = base_dir / "single_panmictic_simulated.samples"
-tmp_samples_file = str(base_dir / "compat.samples")
-in_chip_file = base_dir / "chip.txt"
-out_samples_file = base_dir / "test.samples"
-
-print("INFO: Loading trees file containing reference genomes")
-print(f"INFO: {in_reference_trees_file}")
-ts_ref = tskit.load(in_reference_trees_file)
-ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
-
-print("INFO: Loading samples file containing target genomes")
-print(f"INFO: {in_target_samples_file}")
-sd_target = tsinfer.load(in_target_samples_file)
-
-print("INFO: Loading chip position file")
-print(f"INFO: {in_chip_file}")
-chip_site_pos = masks.parse_site_position_file(in_chip_file)
-
-print("INFO: Making samples compatible with the reference trees")
-print(f"INFO: {tmp_samples_file}")
-sd_compat = util.make_compatible_sample_data(
-    sd_target,
-    ts_ref,
-    skip_unused_markers=True,
-    path=tmp_samples_file
+@click.command()
+@click.option(
+    "--in_reference_trees_file",
+    "-i1",
+    required=True,
+    help="Input trees file containing reference genomes."
 )
-
-print("INFO: Defining mask sites relative to the reference trees")
-ts_ref_sites_isnotin_chip = np.isin(
-    ts_ref.sites_position, chip_site_pos, assume_unique=True, invert=True
+@click.option(
+    "--in_target_samples_file",
+    "-i2",
+    required=True,
+    help="Input samples file containing target genomes."
 )
-mask_site_pos = ts_ref.sites_position[ts_ref_sites_isnotin_chip]
-
-assert (
-    len(set(chip_site_pos) & set(mask_site_pos)) == 0
-), f"Chip and mask site positions are not mutually exclusive."
-
-print("INFO: Imputing into target samples")
-gm_imputed = impute_by_exact_matching(ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8)
-
-print("INFO: Printing results to samples file")
-print(f"INFO: {out_samples_file}")
-write_genotype_matrix_to_samples(
-    ts=ts_ref,
-    genotype_matrix=gm_imputed,
-    mask_site_pos=mask_site_pos,
-    chip_site_pos=chip_site_pos,
-    out_file=out_samples_file,
+@click.option(
+    "--in_chip_file",
+    "-c",
+    required=True,
+    help="Input tab-delimited file with chip site positions."
 )
+@click.option(
+    "--out_samples_file",
+    "-o",
+    required=True,
+    help="Output samples file."
+)
+@click.option(
+    "--tmp_samples_file",
+    default=None,
+    help="Temporary samples file"
+)
+def perform_imputation_by_exact_matching(
+    in_reference_trees_file,
+    in_target_samples_file,
+    in_chip_file,
+    out_samples_file,
+    tmp_samples_file,
+):
+    print("INFO: Loading trees file containing reference genomes")
+    print(f"INFO: {in_reference_trees_file}")
+    ts_ref = tskit.load(in_reference_trees_file)
+    ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
+
+    print("INFO: Loading samples file containing target genomes")
+    print(f"INFO: {in_target_samples_file}")
+    sd_target = tsinfer.load(in_target_samples_file)
+
+    print("INFO: Loading chip position file")
+    print(f"INFO: {in_chip_file}")
+    chip_site_pos = masks.parse_site_position_file(in_chip_file)
+
+    print("INFO: Making samples compatible with the reference trees")
+    print(f"INFO: {tmp_samples_file}")
+    sd_compat = util.make_compatible_sample_data(
+        sd_target,
+        ts_ref,
+        skip_unused_markers=True,
+        path=tmp_samples_file
+    )
+
+    print("INFO: Defining mask sites relative to the reference trees")
+    ts_ref_sites_isnotin_chip = np.isin(
+        ts_ref.sites_position, chip_site_pos, assume_unique=True, invert=True
+    )
+    mask_site_pos = ts_ref.sites_position[ts_ref_sites_isnotin_chip]
+
+    assert (
+        len(set(chip_site_pos) & set(mask_site_pos)) == 0
+    ), f"Chip and mask site positions are not mutually exclusive."
+
+    print("INFO: Imputing into target samples")
+    gm_imputed = impute_by_exact_matching(ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8)
+
+    print("INFO: Printing results to samples file")
+    print(f"INFO: {out_samples_file}")
+    write_genotype_matrix_to_samples(
+        ts=ts_ref,
+        genotype_matrix=gm_imputed,
+        mask_site_pos=mask_site_pos,
+        chip_site_pos=chip_site_pos,
+        out_file=out_samples_file,
+    )
+
+
+if __name__ == "__main__":
+    perform_imputation_by_exact_matching()
