@@ -107,7 +107,7 @@ def perform_imputation(
         recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
 
     print("INFO: Loading chip position file")
-    all_chip_site_pos = masks.parse_site_position_file(in_chip_file, one_based=1)
+    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=True)
 
     print("INFO: Making ancestors trees from the reference panel")
     ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=remove_leaves)
@@ -121,7 +121,7 @@ def perform_imputation(
 
     print("INFO: Defining mask sites relative to the ancestors trees")
     ts_anc_sites_isin_chip = np.isin(
-        ts_anc.sites_position, all_chip_site_pos, assume_unique=True,
+        ts_anc.sites_position, chip_site_pos_all, assume_unique=True,
     )
     chip_site_pos = ts_anc.sites_position[ts_anc_sites_isin_chip]
     mask_site_pos = ts_anc.sites_position[np.invert(ts_anc_sites_isin_chip)]
