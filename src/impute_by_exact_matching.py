@@ -1,7 +1,7 @@
 from email.errors import MultipartInvariantViolationDefect
 from pathlib import Path
 import sys
-import tqdm
+from tqdm import tqdm
 
 import _tskit
 import tskit
@@ -42,16 +42,18 @@ def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
     assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
     
-    # Get genotype matrix from target genomes in ACGT space.
+    print("INFO: Mapping samples to ACGT space.")
     H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
-    for i, v in enumerate(sd.variants()):
+    i = 0
+    for v in tqdm(sd.variants()):
         if v.site.position in ts.sites_position:
             H1[i, :] = create_index_map(v.alleles)[v.genotypes]
+            i += 1
     H1 = H1.T
 
-    # Get HMM paths.
+    print("INFO: Performing closest match.")
     H2 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
-    for i in np.arange(sd.num_samples):
+    for i in tqdm(np.arange(sd.num_samples)):
         H2[i, :] = closest_match(
             ts,
             H1[i, :],
@@ -59,12 +61,13 @@ def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
             mutation_rate=mutation_rate,
         )
 
-    # Get genotype matrix in 01 space by mapping HMM paths to reference tree.
-    # This is imputing from the reference genomes to the target genomes.
+    print("INFO: Imputing into samples.")
+    i = 0
     H3 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
-    for i, v in enumerate(ts.variants()):
+    for v in tqdm(ts.variants()):
         H3[:, i] = v.genotypes[H2[:, i]]
-
+        i += 1
+        
     return H3
 
 
@@ -144,7 +147,7 @@ print("INFO: Printing results to samples file")
 print(f"INFO: {out_samples_file}")
 write_genotype_matrix_to_samples(
     ts=ts_ref,
-    gm=gm_imputed,
+    genotype_matrix=gm_imputed,
     mask_site_pos=mask_site_pos,
     chip_site_pos=chip_site_pos,
     out_file=out_samples_file,
