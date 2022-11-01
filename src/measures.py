@@ -21,14 +21,14 @@ def compute_concordance(gt_true, gt_imputed, allele_state=None):
 
     WARNING: This assumes haploid genomes.
 
-    :param np.ndarray gt_true: List of alleles from ground-truth genotypes.
-    :param np.ndarray gt_imputed: List of alleles from imputed genotypes.
+    :param numpy.ndarray gt_true: List of alleles from ground-truth genotypes.
+    :param numpy.ndarray gt_imputed: List of alleles from imputed genotypes.
     :param int allele_state: Specify allele state to consider (default = None).
     :return: Total concordance.
     :rtype: float
     """
-    assert isinstance(gt_true, np.ndarray), f"Not numpy.ndarray"
-    assert isinstance(gt_imputed, np.ndarray), f"Not numpy.ndarray"
+    assert isinstance(gt_true, np.ndarray), f"Not {np.ndarray}"
+    assert isinstance(gt_imputed, np.ndarray), f"Not {np.ndarray}"
     assert len(gt_true) == len(gt_imputed), f"Genotype arrays differ in length."
 
     if allele_state != None:
@@ -66,8 +66,8 @@ def compute_iqs(gt_true, gt_imputed, ploidy):
     Two formulas are used to compute the IQS of imputed genotypes at biallelic sites,
     one for haploid genomes and the other for diploid genomes.
 
-    :param np.ndarray gt_true: A list of alleles from ground-truth genotypes.
-    :param np.ndarray gt_imputed: A list of alleles from imputed genotypes.
+    :param numpy.ndarray gt_true: A list of alleles from ground-truth genotypes.
+    :param numpy.ndarray gt_imputed: A list of alleles from imputed genotypes.
     :ploidy int: Ploidy (1 or 2).
     :return: IQS.
     :rtype: float
@@ -96,8 +96,8 @@ def compute_iqs_haploid(gt_true, gt_imputed):
     This specific formula is used to compute the IQS of imputed genotypes
     at biallelic sites in HAPLOID genomes.
 
-    :param np.ndarray gt_true: A list of alleles from ground-truth genotypes.
-    :param np.ndarray gt_imputed: A list of alleles from imputed genotypes.
+    :param numpy.ndarray gt_true: A list of alleles from ground-truth genotypes.
+    :param numpy.ndarray gt_imputed: A list of alleles from imputed genotypes.
     :return: IQS.
     :rtype: float
     """
@@ -146,8 +146,8 @@ def compute_iqs_diploid(gt_true, gt_imputed):
 
     TODO: Generalize to handle multiallelic sites.
 
-    :param np.ndarray gt_true: A list of alleles from ground-truth genotypes.
-    :param np.ndarray gt_imputed: A list of alleles from imputed genotypes.
+    :param numpy.ndarray gt_true: A list of alleles from ground-truth genotypes.
+    :param numpy.ndarray gt_imputed: A list of alleles from imputed genotypes.
     :return: IQS.
     :rtype: float
     """
@@ -209,8 +209,8 @@ def computed_r_squared(genotypes_true, genotypes_imputed):
     """
     Calculate the squared correlation coefficient between `genotypes_true` and `genotypes_imputed`.
 
-    :param np.ndarray genotypes_true: List of alleles from ground-truth genotypes.
-    :param np.ndarray genotypes_imputed: List of alleles from imputed genotypes.
+    :param numpy.ndarray genotypes_true: List of alleles from ground-truth genotypes.
+    :param numpy.ndarray genotypes_imputed: List of alleles from imputed genotypes.
     :return: R-squared correlation coefficient.
     :rtype: float
     """
