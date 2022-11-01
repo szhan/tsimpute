@@ -113,7 +113,12 @@ chip_site_pos = masks.parse_site_position_file(in_chip_file)
 
 print("INFO: Making samples compatible with the reference trees")
 print(f"INFO: {tmp_samples_file}")
-sd_compat = util.make_compatible_sample_data(sd_target, ts_ref, path=tmp_samples_file)
+sd_compat = util.make_compatible_sample_data(
+    sd_target,
+    ts_ref,
+    skip_unused_markers=True,
+    path=tmp_samples_file
+)
 
 print("INFO: Defining mask sites relative to the reference trees")
 ts_ref_sites_isnotin_chip = np.isin(
