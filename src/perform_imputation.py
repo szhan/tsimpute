@@ -95,10 +95,10 @@ def perform_imputation(
     print(f"DEPS: tsimpute URL {repo.remotes.origin.url}")
     print(f"DEPS: tsimpute SHA {repo.head.object.hexsha}")
 
-    print(f"INFO: Loading trees file containing reference panel")
+    print("INFO: Loading trees file containing reference panel")
     ts_ref = tskit.load(in_reference_trees_file)
 
-    print(f"INFO: Loading samples file containing target samples")
+    print("INFO: Loading samples file containing target samples")
     sd_target = tsinfer.load(in_target_samples_file)
 
     if genetic_map is not None:
@@ -106,24 +106,31 @@ def perform_imputation(
         print("WARN: Using these recombination rates instead of a uniform rate")
         recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
 
-    print(f"INFO: Loading chip position file")
-    chip_site_pos = masks.parse_site_position_file(in_chip_file)
+    print("INFO: Loading chip position file")
+    all_chip_site_pos = masks.parse_site_position_file(in_chip_file, one_based=1)
 
-    print(f"INFO: Making ancestors trees from the reference panel")
+    print("INFO: Making ancestors trees from the reference panel")
     ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=remove_leaves)
 
     print("INFO: Making samples compatible with the ancestors trees")
-    sd_compat = util.make_compatible_sample_data(sd_target, ts_anc)
+    sd_compat = util.make_compatible_sample_data(
+        sample_data=sd_target,
+        ancestors_ts=ts_anc,
+        skip_unused_markers=True,
+    )
 
     print("INFO: Defining mask sites relative to the ancestors trees")
-    ts_anc_sites_isnotin_chip = np.isin(
-        ts_anc.sites_position, chip_site_pos, assume_unique=True, invert=True
+    ts_anc_sites_isin_chip = np.isin(
+        ts_anc.sites_position, all_chip_site_pos, assume_unique=True,
     )
-    mask_site_pos = ts_anc.sites_position[ts_anc_sites_isnotin_chip]
+    chip_site_pos = ts_anc.sites_position[ts_anc_sites_isin_chip]
+    mask_site_pos = ts_anc.sites_position[np.invert(ts_anc_sites_isin_chip)]
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
     ), f"Chip and mask site positions are not mutually exclusive."
+    print(f"INFO: Mask site positions: {len(mask_site_pos)}")
+    print(f"INFO: Chip site positions: {len(chip_site_pos)}")
 
     print("INFO: Masking sites in target samples")
     sd_masked = masks.mask_sites_in_sample_data(
@@ -141,12 +148,6 @@ def perform_imputation(
 
     out_trees_file = out_dir + "/" + out_prefix + ".imputed.trees"
     ts_imputed.dump(out_trees_file)
-
-    # TODO: Check that these assertions are not needed.
-    #error_msg = f"Different number of sites in the tree sequences and sample data."
-    #assert ts_ref.num_sites == sd_compat.num_sites, error_msg
-    #assert ts_ref.num_sites == sd_masked.num_sites, error_msg
-    #assert ts_ref.num_sites == ts_imputed.num_sites, error_msg
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"INFO: END {end_datetime}")
