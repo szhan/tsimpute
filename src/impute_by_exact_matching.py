@@ -141,6 +141,7 @@ def perform_imputation_by_exact_matching(
     print(f"INFO: {in_reference_trees_file}")
     ts_ref = tskit.load(in_reference_trees_file)
     ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
+    ts_ref_site_pos = ts_ref.sites_position
 
     print("INFO: Loading samples file containing target genomes")
     print(f"INFO: {in_target_samples_file}")
@@ -160,10 +161,12 @@ def perform_imputation_by_exact_matching(
     )
 
     print("INFO: Defining mask sites relative to the reference trees")
-    ts_ref_sites_isnotin_chip = np.isin(
-        ts_ref.sites_position, chip_site_pos, assume_unique=True, invert=True
+    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=True)
+    ts_ref_sites_isin_chip = np.isin(
+        ts_ref_site_pos, chip_site_pos_all, assume_unique=True,
     )
-    mask_site_pos = ts_ref.sites_position[ts_ref_sites_isnotin_chip]
+    chip_site_pos = ts_ref_site_pos[ts_ref_sites_isin_chip]
+    mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
