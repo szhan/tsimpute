@@ -1,7 +1,9 @@
+from datetime import datetime
 import click
 import logging
 from pathlib import Path
 import sys
+from git import Repo
 from tqdm import tqdm
 import _tskit
 import tskit
@@ -186,15 +188,23 @@ def perform_imputation_by_sample_matching(
 
     logging.basicConfig(filename=str(log_file), encoding="utf-8", level=logging.INFO)
 
-    logging.info(f"Loading reference trees file {in_reference_trees_file}")
+    start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    logging.info(f"start: {start_datetime}")
+    logging.info(f"dep: tskit {tskit.__version__}")
+    logging.info(f"dep: tsinfer {tsinfer.__version__}")
+    repo = Repo(search_parent_directories=True)
+    logging.info(f"dep: tsimpute URL {repo.remotes.origin.url}")
+    logging.info(f"dep: tsimpute SHA {repo.head.object.hexsha}")
+
+    logging.info(f"Loading reference trees file: {in_reference_trees_file}")
     ts_ref = tskit.load(in_reference_trees_file)
     ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
     ts_ref_site_pos = ts_ref.sites_position
 
-    logging.info(f"Loading target samples file {in_target_samples_file}")
+    logging.info(f"Loading target samples file: {in_target_samples_file}")
     sd_target = tsinfer.load(in_target_samples_file)
 
-    logging.info(f"Loading chip position file {in_chip_file}")
+    logging.info(f"Loading chip position file: {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
     logging.info("Defining chip and mask sites relative to the reference trees")
@@ -238,6 +248,9 @@ def perform_imputation_by_sample_matching(
         mask_site_pos=mask_site_pos,
         out_file=str(out_samples_file),
     )
+
+    end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    logging.info(f"end: {end_datetime}")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 from datetime import datetime
+import click
 import logging
 from pathlib import Path
 import sys
-import click
 from git import Repo
 import numpy as np
 import msprime
@@ -47,12 +47,6 @@ import util
     "--out_prefix", "-p", type=str, required=True, help="Prefix of the output file."
 )
 @click.option(
-    "--keep_temporary_samples_file",
-    is_flag=True,
-    default=False,
-    help="Keep samples compatible with reference trees?",
-)
-@click.option(
     "--recombination_rate",
     "-r",
     type=float,
@@ -86,7 +80,6 @@ def perform_imputation(
     in_chip_file,
     out_dir,
     out_prefix,
-    keep_temporary_samples_file,
     recombination_rate,
     genetic_map,
     mmr_samples,
@@ -95,6 +88,9 @@ def perform_imputation(
 ):
     out_dir = Path(out_dir)
     log_file = out_dir / f"{out_prefix}.log"
+    compat_samples_file = out_dir / f"{out_prefix}.compat.samples"
+    out_trees_file = out_dir / f"{out_prefix}.imputed.trees"
+
     logging.basicConfig(filename=str(log_file), encoding="utf-8", level=logging.INFO)
 
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -106,25 +102,21 @@ def perform_imputation(
     logging.info(f"dep: tsimpute URL {repo.remotes.origin.url}")
     logging.info(f"dep: tsimpute SHA {repo.head.object.hexsha}")
 
-    logging.info("Loading trees file containing reference panel")
-    logging.info(f"file: {in_reference_trees_file}")
+    logging.info(f"Loading reference trees file: {in_reference_trees_file}")
     ts_ref = tskit.load(in_reference_trees_file)
 
-    logging.info("Loading samples file containing target samples")
-    logging.info(f"file: {in_target_samples_file}")
+    logging.info(f"Loading target samples file: {in_target_samples_file}")
     sd_target = tsinfer.load(in_target_samples_file)
 
     if genetic_map is not None:
-        logging.info("Loading genetic map")
-        logging.info(f"file: {genetic_map}")
+        logging.info(f"Loading genetic map: {genetic_map}")
         logging.info("Using these recombination rates instead of a uniform rate")
         recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
 
-    logging.info("Making ancestors trees from the reference panel")
+    logging.info("Making ancestors trees from the reference trees")
     ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=remove_leaves)
 
-    logging.info("Loading chip position file")
-    logging.info(f"file: {in_chip_file}")
+    logging.info(f"Loading chip position file: {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
     logging.info("Defining chip and mask sites relative to the ancestors trees")
@@ -137,17 +129,14 @@ def perform_imputation(
     mask_site_pos = ts_anc.sites_position[np.invert(ts_anc_sites_isin_chip)]
 
     logging.info("Making samples compatible with the ancestors trees")
-    tmp_samples_file = None
-    if keep_temporary_samples_file:
-        tmp_samples_file = out_dir / f"{out_prefix}.tmp.samples"
-        logging.info(f"file: {tmp_samples_file}")
+    logging.info(f"Writing compatible samples to file: {compat_samples_file}")
     sd_compat = util.make_compatible_sample_data(
         sample_data=sd_target,
         ancestors_ts=ts_anc,
         skip_unused_markers=True,
         chip_site_pos=chip_site_pos,
         mask_site_pos=mask_site_pos,
-        path=str(tmp_samples_file),
+        path=str(compat_samples_file),
     )
 
     assert (
@@ -170,7 +159,7 @@ def perform_imputation(
         num_threads=num_threads,
     )
 
-    out_trees_file = out_dir / f"{out_prefix}.imputed.trees"
+    logging.info(f"Writing imputed trees to file: {out_trees_file}")
     ts_imputed.dump(str(out_trees_file))
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
