@@ -119,6 +119,7 @@ def write_genotype_matrix_to_samples(
     i = 0  # Track iterating through `genotype_matrix`
     with tsinfer.SampleData(path=out_file) as sample_data:
         for ts_v in tqdm(ts_iter):
+            # TODO: Inherit site metadata from compatible samples.
             # Set metadata
             metadata = {"marker": ""}
             if ts_v.site.position in mask_site_pos:
@@ -215,8 +216,8 @@ def perform_imputation_by_sample_matching(
         sample_data=sd_target,
         ancestors_ts=ts_ref,
         skip_unused_markers=True,
-        chip_site_pos=chip_site_pos,  # Site metadata
-        mask_site_pos=mask_site_pos,  # Site metadata
+        chip_site_pos=chip_site_pos,
+        mask_site_pos=mask_site_pos,
         path=str(compat_samples_file),
     )
 
@@ -231,7 +232,7 @@ def perform_imputation_by_sample_matching(
 
     logging.info(f"Writing imputed samples to file: {out_samples_file}")
     write_genotype_matrix_to_samples(
-        ts=ts_ref,
+        tree_sequence=ts_ref,
         genotype_matrix=gm_imputed,
         chip_site_pos=chip_site_pos,
         mask_site_pos=mask_site_pos,

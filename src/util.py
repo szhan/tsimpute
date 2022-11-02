@@ -388,7 +388,7 @@ def make_compatible_sample_data(
                 logging.error(f"site at {pos} must be in the ts and/or sd.")
 
     logging.info(f"case 1 (ref.-only): {num_case_1}")
-    logging.info(f"case 2a (both, aligned):{num_case_2a}")
+    logging.info(f"case 2a (both, aligned): {num_case_2a}")
     logging.info(f"case 2b (both, unaligned): {num_case_2b}")
     logging.info(f"case 2c (flagged): {num_case_2c}")
     logging.info(f"case 3 (target-only): {num_case_3}")
