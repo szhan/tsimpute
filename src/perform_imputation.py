@@ -142,10 +142,9 @@ def perform_imputation(
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
     ), f"Chip and mask site positions are not mutually exclusive."
-    logging.info(f"Mask sites: {len(mask_site_pos)}")
-    logging.info(f"Chip sites: {len(chip_site_pos)}")
 
     logging.info(f"Masking sites in target samples")
+    # TODO: Check that sd_compat and sd_mask are identical if sd_target contains chip sites only.
     sd_masked = masks.mask_sites_in_sample_data(
         sample_data=sd_compat, sites=mask_site_pos, site_type="position"
     )
