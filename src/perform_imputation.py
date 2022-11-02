@@ -139,7 +139,7 @@ def perform_imputation(
     logging.info("Making samples compatible with the ancestors trees")
     tmp_samples_file = None
     if keep_temporary_samples_file:
-        tmp_samples_file = out_dir + "/" + out_prefix + ".tmp.samples"
+        tmp_samples_file = out_dir / f"{out_prefix}.tmp.samples"
         logging.info(f"file: {tmp_samples_file}")
     sd_compat = util.make_compatible_sample_data(
         sample_data=sd_target,
@@ -147,7 +147,7 @@ def perform_imputation(
         skip_unused_markers=True,
         chip_site_pos=chip_site_pos,
         mask_site_pos=mask_site_pos,
-        path=tmp_samples_file,
+        path=str(tmp_samples_file),
     )
 
     assert (
