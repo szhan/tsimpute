@@ -113,22 +113,11 @@ def perform_imputation(
         print("WARN: Using these recombination rates instead of a uniform rate")
         recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
 
-    print("INFO: Loading chip position file")
-    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
-
     print("INFO: Making ancestors trees from the reference panel")
     ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=remove_leaves)
 
-    print("INFO: Making samples compatible with the ancestors trees")
-    tmp_samples_file = None
-    if keep_temporary_samples_file:
-        tmp_samples_file = out_dir + "/" + out_prefix + ".tmp.samples"
-    sd_compat = util.make_compatible_sample_data(
-        sample_data=sd_target,
-        ancestors_ts=ts_anc,
-        skip_unused_markers=True,
-        path=tmp_samples_file,
-    )
+    print("INFO: Loading chip position file")
+    chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
     print("INFO: Defining chip and mask sites relative to the ancestors trees")
     ts_anc_sites_isin_chip = np.isin(
@@ -138,6 +127,19 @@ def perform_imputation(
     )
     chip_site_pos = ts_anc.sites_position[ts_anc_sites_isin_chip]
     mask_site_pos = ts_anc.sites_position[np.invert(ts_anc_sites_isin_chip)]
+
+    print("INFO: Making samples compatible with the ancestors trees")
+    tmp_samples_file = None
+    if keep_temporary_samples_file:
+        tmp_samples_file = out_dir + "/" + out_prefix + ".tmp.samples"
+    sd_compat = util.make_compatible_sample_data(
+        sample_data=sd_target,
+        ancestors_ts=ts_anc,
+        skip_unused_markers=True,
+        chip_site_pos=chip_site_pos,
+        mask_site_pos=mask_site_pos,
+        path=tmp_samples_file,
+    )
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
