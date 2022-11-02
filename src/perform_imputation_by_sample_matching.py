@@ -34,6 +34,9 @@ def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutatio
     ls_hmm.viterbi_matrix(haplotype, vm)
     path = vm.traceback()
 
+    assert np.all(np.isin(path, tree_sequence.samples())), \
+        f"Some IDs in the path are not sample IDs."
+
     return path
 
 
@@ -94,7 +97,7 @@ def write_genotype_matrix_to_samples(
     out_file,
 ):
     assert ts.num_sites == genotype_matrix.shape[1]
-    
+
     out_file = str(out_file)
     ts_iter = ts.variants()
     i = 0  # Track iterating through `genotype_matrix`
