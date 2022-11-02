@@ -46,6 +46,12 @@ import util
     "--out_prefix", "-p", type=str, required=True, help="Prefix of the output file."
 )
 @click.option(
+    "--keep_temporary_samples_file",
+    is_flag=True,
+    default=False,
+    help="Keep samples compatible with reference trees?",
+)
+@click.option(
     "--recombination_rate",
     "-r",
     type=float,
@@ -79,6 +85,7 @@ def perform_imputation(
     in_chip_file,
     out_dir,
     out_prefix,
+    keep_temporary_samples_file,
     recombination_rate,
     genetic_map,
     mmr_samples,
@@ -113,10 +120,14 @@ def perform_imputation(
     ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=remove_leaves)
 
     print("INFO: Making samples compatible with the ancestors trees")
+    tmp_samples_file = None
+    if keep_temporary_samples_file:
+        tmp_samples_file = out_dir + "/" + out_prefix + ".tmp.samples"
     sd_compat = util.make_compatible_sample_data(
         sample_data=sd_target,
         ancestors_ts=ts_anc,
         skip_unused_markers=True,
+        path=tmp_samples_file,
     )
 
     print("INFO: Defining chip and mask sites relative to the ancestors trees")
