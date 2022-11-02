@@ -11,12 +11,13 @@ import masks
 import util
 
 
-def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutation_rate_map):
+def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutation_rate_map, precision=10):
     """
     :param tskit.TreeSequence tree_sequence:
     :param numpy.ndarray haplotype: Haplotype in ACGT space.
-    :param numpy.ndarray recombination_rate_map: A list of site-specific recombination rates.
-    :param numpy.ndarray mutation_rate_map: A list of site-speicifc mutation rates.
+    :param numpy.ndarray recombination_rate_map: Site-specific recombination rates.
+    :param numpy.ndarray mutation_rate_map: Site-specifc mutation rates.
+    :param float precision: Precision to calculate likelihood values.
     :return: HMM path (a list of sample IDs).
     :rtype: numpy.ndarray
     """
@@ -26,8 +27,8 @@ def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutatio
         ll_ts,
         recombination_rate=recombination_rate_map,
         mutation_rate=mutation_rate_map,
-        precision=6,
-        acgt_alleles=True,
+        precision=precision,
+        acgt_alleles=True,  # The matrix is in ACGT (i.e. 0123) space.
     )
 
     vm = _tskit.ViterbiMatrix(ll_ts)
