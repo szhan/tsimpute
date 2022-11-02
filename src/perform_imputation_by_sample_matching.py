@@ -215,7 +215,7 @@ def perform_imputation_by_sample_matching(
         skip_unused_markers=True,
         chip_site_pos=chip_site_pos,  # Site metadata
         mask_site_pos=mask_site_pos,  # Site metadata
-        path=tmp_samples_file,
+        path=str(tmp_samples_file),
     )
 
     logging.info("Imputing into target samples")
@@ -233,7 +233,7 @@ def perform_imputation_by_sample_matching(
         genotype_matrix=gm_imputed,
         chip_site_pos=chip_site_pos,
         mask_site_pos=mask_site_pos,
-        out_file=out_samples_file,
+        out_file=str(out_samples_file),
     )
 
 
