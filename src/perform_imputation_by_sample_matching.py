@@ -1,30 +1,44 @@
 import click
+import logging
 import sys
 from tqdm import tqdm
-
 import _tskit
 import tskit
 import tsinfer
 import numpy as np
-
 sys.path.append("./src")
 import masks
 import util
 
 
-def get_traceback_path(ts, h, recombination_rate, mutation_rate):
-    rho = np.zeros(ts.num_sites) + recombination_rate
-    mu = np.zeros(ts.num_sites) + mutation_rate
+def get_traceback_path(tree_sequence, haplotype, recombination_rate, mutation_rate):
+    """
+    TODO: Allow specifying site-specific recombination rates and mutation rates.
+
+    :param tskit.TreeSequence ts:
+    :param numpy.ndarray haplotype: Haplotype in ACGT space.
+    :param float recombination_rate:
+    :param float mutation_rate:
+    :return: HMM path, which is a list of sample IDs.
+    :rtype: numpy.ndarray
+    """
+    rho = np.zeros(tree_sequence.num_sites) + recombination_rate
+    mu = np.zeros(tree_sequence.num_sites) + mutation_rate
+
+    ll_ts = tree_sequence.ll_tree_sequence
+
     ls_hmm = _tskit.LsHmm(
-        ts.ll_tree_sequence,
+        ll_ts,
         recombination_rate=rho,
         mutation_rate=mu,
-        precision=6,  # Arbitrarily chose this, gives right answers on exact matching
+        precision=6,
         acgt_alleles=True,
     )
-    vm = _tskit.ViterbiMatrix(ts.ll_tree_sequence)
-    ls_hmm.viterbi_matrix(h, vm)
+
+    vm = _tskit.ViterbiMatrix(ll_ts)
+    ls_hmm.viterbi_matrix(haplotype, vm)
     path = vm.traceback()
+
     return path
 
 
