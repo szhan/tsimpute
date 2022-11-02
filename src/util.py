@@ -1,4 +1,5 @@
 import json
+import logging
 import numpy as np
 from tqdm import tqdm
 import tskit
@@ -222,9 +223,9 @@ def make_compatible_sample_data(
     sd_site_pos = sample_data.sites_position[:]
     all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
 
-    print(f"INFO: Sites in TS = {len(ts_site_pos)}")
-    print(f"INFO: Sites in SD = {len(sd_site_pos)}")
-    print(f"INFO: Sites in ALL: {len(all_site_pos)}")
+    logging.info(f"sites in TS = {len(ts_site_pos)}")
+    logging.info(f"sites in SD = {len(sd_site_pos)}")
+    logging.info(f"shared sites = {len(all_site_pos)}")
 
     # Keep track of properly aligned sites
     num_case_1 = 0
@@ -384,16 +385,16 @@ def make_compatible_sample_data(
                     metadata=metadata,
                 )
             else:
-                raise ValueError(f"ERROR: Site at {pos} must be in the ts and/or sd.")
+                logging.error(f"site at {pos} must be in the ts and/or sd.")
 
-    print(f"INFO: Case 1  (ref.-only)       = {num_case_1}")
-    print(f"INFO: Case 2a (both, aligned)   = {num_case_2a}")
-    print(f"INFO: Case 2b (both, unaligned) = {num_case_2b}")
-    print(f"INFO: Case 2c (flagged)         = {num_case_2c}")
-    print(f"INFO: Case 3  (target-only)     = {num_case_3}")
-    print(f"INFO: Chip sites                = {num_chip_sites}")
-    print(f"INFO: Mask sites                = {num_mask_sites}")
-    print(f"INFO: Unused sites              = {num_unused_sites}")
+    logging.info(f"case 1 (ref.-only): {num_case_1}")
+    logging.info(f"case 2a (both, aligned):{num_case_2a}")
+    logging.info(f"case 2b (both, unaligned): {num_case_2b}")
+    logging.info(f"case 2c (flagged): {num_case_2c}")
+    logging.info(f"case 3 (target-only): {num_case_3}")
+    logging.info(f"chip sites: {num_chip_sites}")
+    logging.info(f"mask sites: {num_mask_sites}")
+    logging.info(f"unused sites: {num_unused_sites}")
 
     assert (
         sum(num_case_1, num_case_2a, num_case_2b, num_case_2c, num_case_3)
