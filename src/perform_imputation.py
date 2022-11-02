@@ -94,7 +94,7 @@ def perform_imputation(
     num_threads,
 ):
     out_dir = Path(out_dir)
-    log_file = out_dir / out_prefix + ".log"
+    log_file = out_dir / f"{out_prefix}.log"
     logging.basicConfig(filename=str(log_file), encoding="utf-8", level=logging.INFO)
 
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -170,7 +170,7 @@ def perform_imputation(
         num_threads=num_threads,
     )
 
-    out_trees_file = out_dir / + out_prefix + ".imputed.trees"
+    out_trees_file = out_dir / f"{out_prefix}.imputed.trees"
     ts_imputed.dump(str(out_trees_file))
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
