@@ -13,14 +13,18 @@ import util
 
 def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutation_rate_map, precision=10):
     """
-    :param tskit.TreeSequence tree_sequence:
+    :param tskit.TreeSequence tree_sequence: Tree sequence containing sample haplotypes to match against.
     :param numpy.ndarray haplotype: Haplotype in ACGT space.
     :param numpy.ndarray recombination_rate_map: Site-specific recombination rates.
     :param numpy.ndarray mutation_rate_map: Site-specifc mutation rates.
-    :param float precision: Precision to calculate likelihood values.
+    :param float precision: Precision to calculate likelihood values (default = 10).
     :return: HMM path (a list of sample IDs).
     :rtype: numpy.ndarray
     """
+    assert tree_sequence.num_sites == len(haplotype)
+    assert len(haplotype) == len(recombination_rate_map)
+    assert len(recombination_rate_map) == len(mutation_rate_map)
+
     ll_ts = tree_sequence.ll_tree_sequence
 
     ls_hmm = _tskit.LsHmm(
@@ -28,13 +32,14 @@ def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutatio
         recombination_rate=recombination_rate_map,
         mutation_rate=mutation_rate_map,
         precision=precision,
-        acgt_alleles=True,  # The matrix is in ACGT (i.e. 0123) space.
+        acgt_alleles=True,  # Matrix is in ACGT (i.e. 0123) space
     )
 
     vm = _tskit.ViterbiMatrix(ll_ts)
     ls_hmm.viterbi_matrix(haplotype, vm)
     path = vm.traceback()
 
+    assert len(path) == tree_sequence.num_sites
     assert np.all(np.isin(path, tree_sequence.samples())), \
         f"Some IDs in the path are not sample IDs."
 
