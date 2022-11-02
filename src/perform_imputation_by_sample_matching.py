@@ -212,8 +212,8 @@ def perform_imputation_by_sample_matching(
     logging.info("Making samples compatible with the reference trees")
     logging.info(f"Writing compatible samples to file: {compat_samples_file}")
     sd_compat = util.make_compatible_sample_data(
-        sd_target,
-        ts_ref,
+        sample_data=sd_target,
+        ancestors_ts=ts_ref,
         skip_unused_markers=True,
         chip_site_pos=chip_site_pos,  # Site metadata
         mask_site_pos=mask_site_pos,  # Site metadata
@@ -222,8 +222,8 @@ def perform_imputation_by_sample_matching(
 
     logging.info("Imputing into target samples")
     gm_imputed = impute_by_sample_matching(
-        ts=ts_ref,
-        sd=sd_compat,
+        tree_sequence=ts_ref,
+        sample_data=sd_compat,
         recombination_rate=1e-8,
         mutation_rate=1e-8,
         precision=precision,
