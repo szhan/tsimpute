@@ -398,8 +398,12 @@ def make_compatible_sample_data(
 
     assert (
         num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_3
-        == sample_data.num_sites
+        == len(all_site_pos)
     )
-    assert num_chip_sites + num_mask_sites + num_unused_sites == sample_data.num_sites
+
+    if skip_unused_markers:
+        assert num_chip_sites + num_mask_sites + num_unused_sites == len(ts_site_pos)
+    else:
+        assert num_chip_sites + num_mask_sites + num_unused_sites == len(all_site_pos)
 
     return new_sample_data
