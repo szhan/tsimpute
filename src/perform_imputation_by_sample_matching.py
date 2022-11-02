@@ -11,13 +11,26 @@ import masks
 import util
 
 
-def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutation_rate_map, precision=10):
+def create_index_map(x):
+    """
+    Maps from ancestral/derived allele space (i.e. 01) to ACGT space (i.e. 0123).
+    """
+    alleles = ["A", "C", "G", "T", None]
+    map_ACGT = [alleles.index(x[i]) for i in range(len(x))]
+    if None in x:
+        # Otherwise, the last element is 4.
+        map_ACGT[-1] = tskit.MISSING_DATA
+    map_ACGT = np.array(map_ACGT)
+    return map_ACGT
+
+
+def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutation_rate_map, precision):
     """
     :param tskit.TreeSequence tree_sequence: Tree sequence containing sample haplotypes to match against.
     :param numpy.ndarray haplotype: Haplotype in ACGT space.
     :param numpy.ndarray recombination_rate_map: Site-specific recombination rates.
     :param numpy.ndarray mutation_rate_map: Site-specifc mutation rates.
-    :param float precision: Precision to calculate likelihood values (default = 10).
+    :param float precision: Precision to calculate likelihood values.
     :return: HMM path (a list of sample IDs).
     :rtype: numpy.ndarray
     """
@@ -46,20 +59,7 @@ def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutatio
     return path
 
 
-def create_index_map(x):
-    """
-    Maps from ancestral/derived allele space (i.e. 01) to ACGT space (i.e. 0123).
-    """
-    alleles = ["A", "C", "G", "T", None]
-    map_ACGT = [alleles.index(x[i]) for i in range(len(x))]
-    if None in x:
-        # Otherwise, the last element is 4.
-        map_ACGT[-1] = tskit.MISSING_DATA
-    map_ACGT = np.array(map_ACGT)
-    return map_ACGT
-
-
-def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
+def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate, precision):
     assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
 
@@ -73,6 +73,7 @@ def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
     H1 = H1.T
 
     logging.info("Performing traceback.")
+    # TODO: Pass in arrays without creating them.
     recombination_rate_map = np.repeat(recombination_rate, ts.num_sites, dtype=np.int32)
     mutation_rate_map = np.repeat(mutation_rate, ts.num_sites, dtype=np.int32)
 
@@ -83,6 +84,7 @@ def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
             haplotype=H1[i, :],
             recombination_rate_map=recombination_rate_map,
             mutation_rate_map=mutation_rate_map,
+            precision=precision,
         )
 
     logging.info("Imputing into samples.")
@@ -106,17 +108,16 @@ def write_genotype_matrix_to_samples(
 
     out_file = str(out_file)
     ts_iter = ts.variants()
-    i = 0  # Track iterating through `genotype_matrix`
 
+    i = 0  # Track iterating through `genotype_matrix`
     with tsinfer.SampleData(path=out_file) as sd:
         for ts_v in tqdm(ts_iter):
             # Set metadata
-            marker_type = ""
+            metadata = {'marker': ''}
             if ts_v.site.position in mask_site_pos:
-                marker_type = "mask"
+                metadata['marker'] = 'mask'
             elif ts_v.site.position in chip_site_pos:
-                marker_type = "chip"
-            metadata = {"marker": marker_type}
+                metadata['marker'] = 'chip'
 
             # Add site
             sd.add_site(
@@ -149,12 +150,14 @@ def write_genotype_matrix_to_samples(
 )
 @click.option("--out_samples_file", "-o", required=True, help="Output samples file.")
 @click.option("--tmp_samples_file", default=None, help="Temporary samples file")
+@click.option("--precision", "-p", type=int, default=10, help="Precision to compute likelihood values.")
 def perform_imputation_by_sample_matching(
     in_reference_trees_file,
     in_target_samples_file,
     in_chip_file,
     out_samples_file,
     tmp_samples_file,
+    precision,
 ):
     logging.info(f"Loading reference trees file {in_reference_trees_file}")
     ts_ref = tskit.load(in_reference_trees_file)
@@ -193,7 +196,11 @@ def perform_imputation_by_sample_matching(
 
     logging.info("Imputing into target samples")
     gm_imputed = impute_by_sample_matching(
-        ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8
+        ts_ref,
+        sd_compat,
+        recombination_rate=1e-8,
+        mutation_rate=1e-8,
+        precision=precision,
     )
 
     print(f"Printing results to samples file: {out_samples_file}")
