@@ -95,7 +95,7 @@ def perform_imputation(
 ):
     out_dir = Path(out_dir)
     log_file = str(out_dir / out_prefix + ".log")
-    logging.basicConfig(filename=log_file, encoding="utf-8", level=logging.DEBUG)
+    logging.basicConfig(filename=log_file, encoding="utf-8", level=logging.INFO)
 
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     logging.info(f"start: {start_datetime}")
