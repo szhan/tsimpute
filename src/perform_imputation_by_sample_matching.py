@@ -1,5 +1,6 @@
 import click
 import logging
+from pathlib import Path
 import sys
 from tqdm import tqdm
 import _tskit
@@ -138,37 +139,50 @@ def write_genotype_matrix_to_samples(
     "--in_reference_trees_file",
     "-i1",
     required=True,
-    help="Input trees file containing reference genomes.",
+    help="Trees file with reference genomes.",
 )
 @click.option(
     "--in_target_samples_file",
     "-i2",
     required=True,
-    help="Input samples file containing target genomes.",
+    help="Samples file with target genomes.",
 )
 @click.option(
     "--in_chip_file",
     "-c",
     required=True,
-    help="Input tab-delimited file with chip site positions.",
+    help="Tab-delimited file with chip site positions.",
 )
-@click.option("--out_samples_file", "-o", required=True, help="Output samples file.")
-@click.option("--tmp_samples_file", default=None, help="Temporary samples file")
+@click.option(
+    "--out_dir",
+    "-o",
+    type=click.Path(exists=True),
+    required=True,
+    help="Output directory.",
+)
+@click.option(
+    "--out_prefix", "-p", type=str, required=True, help="Prefix of the output file."
+)
 @click.option(
     "--precision",
-    "-p",
     type=int,
     default=10,
-    help="Precision to compute likelihood values.",
+    help="Precision for computing likelihood values.",
 )
 def perform_imputation_by_sample_matching(
     in_reference_trees_file,
     in_target_samples_file,
     in_chip_file,
-    out_samples_file,
-    tmp_samples_file,
+    out_dir,
+    out_prefix,
     precision,
 ):
+    out_dir = Path(out_dir)
+    out_samples_file = out_dir / f"{out_prefix}.imputed.samples"
+    tmp_samples_file = out_dir / f"{out_prefix}.tmp.samples"
+    log_file = out_dir / f"{out_prefix}.log"
+    logging.basicConfig(filename=str(log_file), encoding="utf-8", level=logging.INFO)
+
     logging.info(f"Loading reference trees file {in_reference_trees_file}")
     ts_ref = tskit.load(in_reference_trees_file)
     ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
@@ -206,14 +220,14 @@ def perform_imputation_by_sample_matching(
 
     logging.info("Imputing into target samples")
     gm_imputed = impute_by_sample_matching(
-        ts_ref,
-        sd_compat,
+        ts=ts_ref,
+        sd=sd_compat,
         recombination_rate=1e-8,
         mutation_rate=1e-8,
         precision=precision,
     )
 
-    print(f"Printing results to samples file: {out_samples_file}")
+    logging.info(f"Writing imputed samles to file: {out_samples_file}")
     write_genotype_matrix_to_samples(
         ts=ts_ref,
         genotype_matrix=gm_imputed,
