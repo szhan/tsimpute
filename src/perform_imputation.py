@@ -1,11 +1,9 @@
 from datetime import datetime
 import logging
 import sys
-
 import click
 from git import Repo
 import numpy as np
-
 import msprime
 import tskit
 import tsinfer
@@ -95,7 +93,7 @@ def perform_imputation(
     num_threads,
 ):
     log_file = out_dir + "/" + out_prefix + ".log"
-    logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
+    logging.basicConfig(filename=log_file, encoding="utf-8", level=logging.DEBUG)
 
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     logging.info(f"start: {start_datetime}")
