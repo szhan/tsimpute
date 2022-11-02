@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from pathlib import Path
 import sys
 import click
 from git import Repo
@@ -92,7 +93,8 @@ def perform_imputation(
     remove_leaves,
     num_threads,
 ):
-    log_file = out_dir + "/" + out_prefix + ".log"
+    out_dir = Path(out_dir)
+    log_file = str(out_dir / out_prefix + ".log")
     logging.basicConfig(filename=log_file, encoding="utf-8", level=logging.DEBUG)
 
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -168,7 +170,7 @@ def perform_imputation(
         num_threads=num_threads,
     )
 
-    out_trees_file = out_dir + "/" + out_prefix + ".imputed.trees"
+    out_trees_file = str(out_dir / + out_prefix + ".imputed.trees")
     ts_imputed.dump(out_trees_file)
 
     end_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
