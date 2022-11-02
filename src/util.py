@@ -397,11 +397,9 @@ def make_compatible_sample_data(
     logging.info(f"unused sites: {num_unused_sites}")
 
     assert (
-        sum(num_case_1, num_case_2a, num_case_2b, num_case_2c, num_case_3)
+        num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_3
         == sample_data.num_sites
     )
-    assert (
-        sum(num_chip_sites, num_mask_sites, num_unused_sites) == sample_data.num_sites
-    )
+    assert num_chip_sites + num_mask_sites + num_unused_sites == sample_data.num_sites
 
     return new_sample_data
