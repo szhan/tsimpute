@@ -11,26 +11,21 @@ import masks
 import util
 
 
-def get_traceback_path(tree_sequence, haplotype, recombination_rate, mutation_rate):
+def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutation_rate_map):
     """
-    TODO: Allow specifying site-specific recombination rates and mutation rates.
-
-    :param tskit.TreeSequence ts:
+    :param tskit.TreeSequence tree_sequence:
     :param numpy.ndarray haplotype: Haplotype in ACGT space.
-    :param float recombination_rate:
-    :param float mutation_rate:
-    :return: HMM path, which is a list of sample IDs.
+    :param numpy.ndarray recombination_rate_map: A list of site-specific recombination rates.
+    :param numpy.ndarray mutation_rate_map: A list of site-speicifc mutation rates.
+    :return: HMM path (a list of sample IDs).
     :rtype: numpy.ndarray
     """
-    rho = np.zeros(tree_sequence.num_sites) + recombination_rate
-    mu = np.zeros(tree_sequence.num_sites) + mutation_rate
-
     ll_ts = tree_sequence.ll_tree_sequence
 
     ls_hmm = _tskit.LsHmm(
         ll_ts,
-        recombination_rate=rho,
-        mutation_rate=mu,
+        recombination_rate=recombination_rate_map,
+        mutation_rate=mutation_rate_map,
         precision=6,
         acgt_alleles=True,
     )
@@ -65,13 +60,16 @@ def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
     H1 = H1.T
 
     print("INFO: Performing closest match.")
+    recombination_rate_map = np.repeat(recombination_rate, ts.num_sites, dtype=np.int32)
+    mutation_rate_map = np.repeat(mutation_rate, ts.num_sites, dtype=np.int32)
+
     H2 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
     for i in tqdm(np.arange(sd.num_samples)):
         H2[i, :] = get_traceback_path(
-            ts,
-            H1[i, :],
-            recombination_rate=recombination_rate,
-            mutation_rate=mutation_rate,
+            tree_sequence=ts,
+            haplotype=H1[i, :],
+            recombination_rate_map=recombination_rate_map,
+            mutation_rate_map=mutation_rate_map,
         )
 
     print("INFO: Imputing into samples.")
