@@ -78,8 +78,8 @@ def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate, precisi
 
     logging.info("Performing traceback.")
     # TODO: Pass in arrays without creating them.
-    recombination_rate_map = np.repeat(recombination_rate, ts.num_sites, dtype=np.int32)
-    mutation_rate_map = np.repeat(mutation_rate, ts.num_sites, dtype=np.int32)
+    recombination_rate_map = np.repeat(recombination_rate, ts.num_sites)
+    mutation_rate_map = np.repeat(mutation_rate, ts.num_sites)
 
     H2 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
     for i in tqdm(np.arange(sd.num_samples)):
