@@ -63,7 +63,7 @@ def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
             i += 1
     H1 = H1.T
 
-    print("INFO: Performing closest match.")
+    logging.info("Performing traceback.")
     recombination_rate_map = np.repeat(recombination_rate, ts.num_sites, dtype=np.int32)
     mutation_rate_map = np.repeat(mutation_rate, ts.num_sites, dtype=np.int32)
 
@@ -94,9 +94,11 @@ def write_genotype_matrix_to_samples(
     out_file,
 ):
     assert ts.num_sites == genotype_matrix.shape[1]
+    
     out_file = str(out_file)
     ts_iter = ts.variants()
     i = 0  # Track iterating through `genotype_matrix`
+
     with tsinfer.SampleData(path=out_file) as sd:
         for ts_v in tqdm(ts_iter):
             # Set metadata
@@ -106,6 +108,7 @@ def write_genotype_matrix_to_samples(
             elif ts_v.site.position in chip_site_pos:
                 marker_type = "chip"
             metadata = {"marker": marker_type}
+
             # Add site
             sd.add_site(
                 position=ts_v.site.position,
