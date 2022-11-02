@@ -402,7 +402,7 @@ def make_compatible_sample_data(
     )
 
     if skip_unused_markers:
-        assert num_chip_sites + num_mask_sites + num_unused_sites == len(ts_site_pos)
+        assert num_chip_sites + num_mask_sites == len(ts_site_pos)
     else:
         assert num_chip_sites + num_mask_sites + num_unused_sites == len(all_site_pos)
 
