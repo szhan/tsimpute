@@ -183,7 +183,12 @@ def is_biallelic(ts_or_sd):
 
 
 def make_compatible_sample_data(
-    sample_data, ancestors_ts, skip_unused_markers=True, chip_site_pos=None, mask_site_pos=None, path=None
+    sample_data,
+    ancestors_ts,
+    skip_unused_markers=True,
+    chip_site_pos=None,
+    mask_site_pos=None,
+    path=None,
 ):
     """
     Make a new `SampleData` object from an existing `SampleData` object such that:
@@ -221,11 +226,17 @@ def make_compatible_sample_data(
     print(f"INFO: Sites in SD = {len(sd_site_pos)}")
     print(f"INFO: Sites in ALL: {len(all_site_pos)}")
 
+    # Keep track of properly aligned sites
     num_case_1 = 0
     num_case_2a = 0
     num_case_2b = 0
     num_case_2c = 0
     num_case_3 = 0
+
+    # Keep track of markers
+    num_chip_sites = 0  # In ref. and target
+    num_mask_sites = 0  # In ref. and target
+    num_unused_sites = 0  # Only in target
 
     with tsinfer.SampleData(
         sequence_length=ancestors_ts.sequence_length, path=path
@@ -243,11 +254,14 @@ def make_compatible_sample_data(
             # TODO: Append to existing metadata rather than overwriting it.
             metadata = {}
             if pos in chip_site_pos:
-                metadata['marker'] = 'chip'
+                metadata["marker"] = "chip"
+                num_chip_sites += 1
             elif pos in mask_site_pos:
-                metadata['marker'] = 'mask'
+                metadata["marker"] = "mask"
+                num_mask_sites += 1
             else:
-                metadata['marker'] = ''
+                metadata["marker"] = ""
+                num_unused_sites += 1
 
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1: Reference markers
@@ -377,5 +391,16 @@ def make_compatible_sample_data(
     print(f"INFO: Case 2b (both, unaligned) = {num_case_2b}")
     print(f"INFO: Case 2c (flagged)         = {num_case_2c}")
     print(f"INFO: Case 3  (target-only)     = {num_case_3}")
+    print(f"INFO: Chip sites                = {num_chip_sites}")
+    print(f"INFO: Mask sites                = {num_mask_sites}")
+    print(f"INFO: Unused sites              = {num_unused_sites}")
+
+    assert (
+        sum(num_case_1, num_case_2a, num_case_2b, num_case_2c, num_case_3)
+        == sample_data.num_sites
+    )
+    assert (
+        sum(num_chip_sites, num_mask_sites, num_unused_sites) == sample_data.num_sites
+    )
 
     return new_sample_data
