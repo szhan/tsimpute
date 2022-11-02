@@ -38,10 +38,14 @@ def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutatio
 
 
 def create_index_map(x):
+    """
+    Maps from ancestral/derived allele space (i.e. 01) to ACGT space (i.e. 0123).
+    """
     alleles = ["A", "C", "G", "T", None]
     map_ACGT = [alleles.index(x[i]) for i in range(len(x))]
     if None in x:
-        map_ACGT[-1] = -1
+        # Otherwise, the last element is 4.
+        map_ACGT[-1] = tskit.MISSING_DATA
     map_ACGT = np.array(map_ACGT)
     return map_ACGT
 
@@ -50,7 +54,7 @@ def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
     assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
 
-    print("INFO: Mapping samples to ACGT space.")
+    logging.info("Mapping samples to ACGT space.")
     H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
     i = 0
     for v in tqdm(sd.variants()):
@@ -72,7 +76,7 @@ def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
             mutation_rate_map=mutation_rate_map,
         )
 
-    print("INFO: Imputing into samples.")
+    logging.info("Imputing into samples.")
     i = 0
     H3 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
     for v in tqdm(ts.variants()):
@@ -140,21 +144,18 @@ def perform_imputation_by_sample_matching(
     out_samples_file,
     tmp_samples_file,
 ):
-    print("INFO: Loading trees file containing reference genomes")
-    print(f"INFO: {in_reference_trees_file}")
+    logging.info(f"Loading reference trees file {in_reference_trees_file}")
     ts_ref = tskit.load(in_reference_trees_file)
     ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
     ts_ref_site_pos = ts_ref.sites_position
 
-    print("INFO: Loading samples file containing target genomes")
-    print(f"INFO: {in_target_samples_file}")
+    logging.info(f"Loading target samples file {in_target_samples_file}")
     sd_target = tsinfer.load(in_target_samples_file)
 
-    print("INFO: Loading chip position file")
-    print(f"INFO: {in_chip_file}")
+    logging.info(f"Loading chip position file {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
-    print("INFO: Defining chip and mask sites relative to the reference trees")
+    logging.info("Defining chip and mask sites relative to the reference trees")
     ts_ref_sites_isin_chip = np.isin(
         ts_ref_site_pos,
         chip_site_pos_all,
@@ -167,8 +168,8 @@ def perform_imputation_by_sample_matching(
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
     ), f"Chip and mask site positions are not mutually exclusive."
 
-    print("INFO: Making samples compatible with the reference trees")
-    print(f"INFO: {tmp_samples_file}")
+    logging.info("Making samples compatible with the reference trees")
+    logging.info(f"Writing compatible samples to file: {tmp_samples_file}")
     sd_compat = util.make_compatible_sample_data(
         sd_target,
         ts_ref,
@@ -178,13 +179,12 @@ def perform_imputation_by_sample_matching(
         path=tmp_samples_file,
     )
 
-    print("INFO: Imputing into target samples")
+    logging.info("Imputing into target samples")
     gm_imputed = impute_by_sample_matching(
         ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8
     )
 
-    print("INFO: Printing results to samples file")
-    print(f"INFO: {out_samples_file}")
+    print(f"Printing results to samples file: {out_samples_file}")
     write_genotype_matrix_to_samples(
         ts=ts_ref,
         genotype_matrix=gm_imputed,
