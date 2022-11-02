@@ -267,7 +267,7 @@ def make_compatible_sample_data(
                     genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
                     alleles=[ts_ancestral_state, ts_derived_state],
                     ancestral_allele=0,
-                    metadata=json.dumps(metadata),
+                    metadata=metadata,
                 )
             elif pos in ts_site_pos and pos in sd_site_pos:
                 # Case 2: Target markers
@@ -302,7 +302,7 @@ def make_compatible_sample_data(
                         genotypes=sd_site_gt,
                         alleles=[ts_ancestral_state, ts_derived_state],
                         ancestral_allele=0,
-                        metadata=json.dumps(metadata),
+                        metadata=metadata,
                     )
                 elif [ts_derived_state, ts_ancestral_state] == sd_site_alleles:
                     # Case 2b: Unaligned target markers
@@ -321,7 +321,7 @@ def make_compatible_sample_data(
                         genotypes=new_gt,
                         alleles=[ts_ancestral_state, ts_derived_state],
                         ancestral_allele=0,
-                        metadata=json.dumps(metadata),
+                        metadata=metadata,
                     )
                 else:
                     # Case 2c: At least one allele in `sample_data` is not found in `ancestor_ts`.
@@ -345,7 +345,7 @@ def make_compatible_sample_data(
                         genotypes=np.vectorize(lambda x: index_map[x])(sd_site_gt),
                         alleles=new_allele_list,
                         ancestral_allele=0,
-                        metadata=json.dumps(metadata),
+                        metadata=metadata,
                     )
             elif pos not in ts_site_pos and pos in sd_site_pos:
                 # Case 3: Unused target-only markers
@@ -367,7 +367,7 @@ def make_compatible_sample_data(
                     genotypes=sample_data.sites_genotypes[sd_site_id],
                     alleles=sd_site_alleles,
                     ancestral_allele=0,
-                    metadata=json.dumps(metadata),
+                    metadata=metadata,
                 )
             else:
                 raise ValueError(f"ERROR: Site at {pos} must be in the ts and/or sd.")
