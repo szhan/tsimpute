@@ -6,6 +6,7 @@ import _tskit
 import tskit
 import tsinfer
 import numpy as np
+
 sys.path.append("./src")
 import masks
 import util
@@ -24,7 +25,9 @@ def create_index_map(x):
     return map_ACGT
 
 
-def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutation_rate_map, precision):
+def get_traceback_path(
+    tree_sequence, haplotype, recombination_rate_map, mutation_rate_map, precision
+):
     """
     :param tskit.TreeSequence tree_sequence: Tree sequence containing sample haplotypes to match against.
     :param numpy.ndarray haplotype: Haplotype in ACGT space.
@@ -53,8 +56,9 @@ def get_traceback_path(tree_sequence, haplotype, recombination_rate_map, mutatio
     path = vm.traceback()
 
     assert len(path) == tree_sequence.num_sites
-    assert np.all(np.isin(path, tree_sequence.samples())), \
-        f"Some IDs in the path are not sample IDs."
+    assert np.all(
+        np.isin(path, tree_sequence.samples())
+    ), f"Some IDs in the path are not sample IDs."
 
     return path
 
@@ -113,11 +117,11 @@ def write_genotype_matrix_to_samples(
     with tsinfer.SampleData(path=out_file) as sd:
         for ts_v in tqdm(ts_iter):
             # Set metadata
-            metadata = {'marker': ''}
+            metadata = {"marker": ""}
             if ts_v.site.position in mask_site_pos:
-                metadata['marker'] = 'mask'
+                metadata["marker"] = "mask"
             elif ts_v.site.position in chip_site_pos:
-                metadata['marker'] = 'chip'
+                metadata["marker"] = "chip"
 
             # Add site
             sd.add_site(
@@ -150,7 +154,13 @@ def write_genotype_matrix_to_samples(
 )
 @click.option("--out_samples_file", "-o", required=True, help="Output samples file.")
 @click.option("--tmp_samples_file", default=None, help="Temporary samples file")
-@click.option("--precision", "-p", type=int, default=10, help="Precision to compute likelihood values.")
+@click.option(
+    "--precision",
+    "-p",
+    type=int,
+    default=10,
+    help="Precision to compute likelihood values.",
+)
 def perform_imputation_by_sample_matching(
     in_reference_trees_file,
     in_target_samples_file,
