@@ -3,7 +3,6 @@ import numpy as np
 from tqdm import tqdm
 import tskit
 import tsinfer
-import warnings
 
 
 def count_sites_by_type(ts_or_sd):
@@ -184,12 +183,12 @@ def is_biallelic(ts_or_sd):
 
 
 def make_compatible_sample_data(
-    sample_data, ancestors_ts, skip_unused_markers=True, path=None
+    sample_data, ancestors_ts, skip_unused_markers=True, chip_site_pos=None, mask_site_pos=None, path=None
 ):
     """
     Make a new `SampleData` object from an existing `SampleData` object such that:
     (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as `tskit.MISSING`;
-    (2) the allele list in `new_sd` corresponds to the allele list in `ancestors_ts`.
+    (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
     (3) sites in `ancestors_ts` but not in `sample_data` are added to `new_sd`
         with all the genotypes `tskit.MISSING`.
 
@@ -200,9 +199,11 @@ def make_compatible_sample_data(
     Note: Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
     which are not explained in the tsinfer API doc, are used to facilitate the editing.
 
-    :param tsinfer.SampleData sample_data: Samples which may not be compatible with ancestors_ts.
-    :param tskit.TreeSequence ancestors_ts:
-    :param bool skip_unused_markers: Skip markers only in sample_data (default = True).
+    :param tsinfer.SampleData sample_data: Samples which may be incompatible with ancestors_ts.
+    :param tskit.TreeSequence ancestors_ts: Ancestors tree serving as the reference panel.
+    :param bool skip_unused_markers: Skip markers only in samples (default = True).
+    :param numpy.ndarray chip_site_pos: A list of chip site positions.
+    :param numpy.ndarray mask_site_pos: A list of mask site positions.
     :param str path: Output samples file (default = None).
     :return: Samples compatible with the tree sequence.
     :rtype: tsinfer.SampleData
@@ -216,9 +217,9 @@ def make_compatible_sample_data(
     sd_site_pos = sample_data.sites_position[:]
     all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
 
-    print(f"INFO: sites in TS = {len(ts_site_pos)}")
-    print(f"INFO: sites in SD = {len(sd_site_pos)}")
-    print(f"INFO: sites in ALL: {len(all_site_pos)}")
+    print(f"INFO: Sites in TS = {len(ts_site_pos)}")
+    print(f"INFO: Sites in SD = {len(sd_site_pos)}")
+    print(f"INFO: Sites in ALL: {len(all_site_pos)}")
 
     num_case_1 = 0
     num_case_2a = 0
@@ -229,20 +230,25 @@ def make_compatible_sample_data(
     with tsinfer.SampleData(
         sequence_length=ancestors_ts.sequence_length, path=path
     ) as new_sample_data:
-        # Add populations
-        for pop in sample_data.populations():
-            new_sample_data.add_population(metadata=pop.metadata)
-
+        # TODO: Add populations.
         # Add individuals
         for ind in sample_data.individuals():
             new_sample_data.add_individual(
                 ploidy=len(ind.samples),
-                population=ind.population,
                 metadata=ind.metadata,
             )
 
         # Add sites
         for pos in tqdm(all_site_pos):
+            # TODO: Append to existing metadata rather than overwriting it.
+            metadata = {}
+            if pos in chip_site_pos:
+                metadata['marker'] = 'chip'
+            elif pos in mask_site_pos:
+                metadata['marker'] = 'mask'
+            else:
+                metadata['marker'] = ''
+
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1: Reference markers
                 # Site in `ancestors_ts` (ref. panel) but not `sample_data` (target samples).
@@ -260,6 +266,8 @@ def make_compatible_sample_data(
                     position=pos,
                     genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
                     alleles=[ts_ancestral_state, ts_derived_state],
+                    ancestral_allele=ts_ancestral_state,
+                    metadata=json.dumps(metadata),
                 )
             elif pos in ts_site_pos and pos in sd_site_pos:
                 # Case 2: Target markers
@@ -293,6 +301,8 @@ def make_compatible_sample_data(
                         position=pos,
                         genotypes=sd_site_gt,
                         alleles=[ts_ancestral_state, ts_derived_state],
+                        ancestral_allele=ts_ancestral_state,
+                        metadata=json.dumps(metadata),
                     )
                 elif [ts_derived_state, ts_ancestral_state] == sd_site_alleles:
                     # Case 2b: Unaligned target markers
@@ -310,12 +320,14 @@ def make_compatible_sample_data(
                         position=pos,
                         genotypes=new_gt,
                         alleles=[ts_ancestral_state, ts_derived_state],
+                        ancestral_allele=ts_ancestral_state,
+                        metadata=json.dumps(metadata),
                     )
                 else:
                     # Case 2c: At least one allele in `sample_data` is not found in `ancestor_ts`.
                     # Allele(s) in `sample_data` but not in `ancestor_ts` is always wrongly imputed.
                     # It is best to ignore these sites when assessing imputation performance.
-                    # Also, if there are many such sites, then it should be a flag.
+                    # Also, if there are many such sites, then it should be a red flag.
                     num_case_2c += 1
 
                     new_allele_list = [ts_ancestral_state, ts_derived_state, None]
@@ -332,6 +344,8 @@ def make_compatible_sample_data(
                         position=pos,
                         genotypes=np.vectorize(lambda x: index_map[x])(sd_site_gt),
                         alleles=new_allele_list,
+                        ancestral_allele=ts_ancestral_state,
+                        metadata=json.dumps(metadata),
                     )
             elif pos not in ts_site_pos and pos in sd_site_pos:
                 # Case 3: Unused target-only markers
@@ -351,15 +365,17 @@ def make_compatible_sample_data(
                 new_sample_data.add_site(
                     position=pos,
                     genotypes=sample_data.sites_genotypes[sd_site_id],
-                    alleles=sample_data.sites_alleles[sd_site_id],
+                    alleles=sd_site_alleles,
+                    ancestral_allele=sd_site_alleles[0],
+                    metadata=json.dumps(metadata),
                 )
             else:
                 raise ValueError(f"ERROR: Site at {pos} must be in the ts and/or sd.")
 
-    print(f"INFO: case 1  (ref.-only)       = {num_case_1}")
-    print(f"INFO: case 2a (both, aligned)   = {num_case_2a}")
-    print(f"INFO: case 2b (both, unaligned) = {num_case_2b}")
-    print(f"INFO: case 2c (flagged)         = {num_case_2c}")
-    print(f"INFO: case 3  (target-only)     = {num_case_3}")
+    print(f"INFO: Case 1  (ref.-only)       = {num_case_1}")
+    print(f"INFO: Case 2a (both, aligned)   = {num_case_2a}")
+    print(f"INFO: Case 2b (both, unaligned) = {num_case_2b}")
+    print(f"INFO: Case 2c (flagged)         = {num_case_2c}")
+    print(f"INFO: Case 3  (target-only)     = {num_case_3}")
 
     return new_sample_data
