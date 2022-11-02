@@ -225,7 +225,7 @@ def make_compatible_sample_data(
 
     logging.info(f"sites in TS = {len(ts_site_pos)}")
     logging.info(f"sites in SD = {len(sd_site_pos)}")
-    logging.info(f"shared sites = {len(all_site_pos)}")
+    logging.info(f"site union = {len(all_site_pos)}")
 
     # Keep track of properly aligned sites
     num_case_1 = 0
