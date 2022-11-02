@@ -186,9 +186,9 @@ def is_biallelic(ts_or_sd):
 def make_compatible_sample_data(
     sample_data,
     ancestors_ts,
+    chip_site_pos,
+    mask_site_pos,
     skip_unused_markers=True,
-    chip_site_pos=None,
-    mask_site_pos=None,
     path=None,
 ):
     """
@@ -207,9 +207,9 @@ def make_compatible_sample_data(
 
     :param tsinfer.SampleData sample_data: Samples which may be incompatible with ancestors_ts.
     :param tskit.TreeSequence ancestors_ts: Ancestors tree serving as the reference panel.
-    :param bool skip_unused_markers: Skip markers only in samples (default = True).
     :param numpy.ndarray chip_site_pos: A list of chip site positions.
     :param numpy.ndarray mask_site_pos: A list of mask site positions.
+    :param bool skip_unused_markers: Skip markers only in samples (default = True).
     :param str path: Output samples file (default = None).
     :return: Samples compatible with the tree sequence.
     :rtype: tsinfer.SampleData
