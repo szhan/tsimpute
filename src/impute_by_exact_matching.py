@@ -12,7 +12,7 @@ import masks
 import util
 
 
-def closest_match(ts, h, recombination_rate, mutation_rate):
+def get_traceback_path(ts, h, recombination_rate, mutation_rate):
     rho = np.zeros(ts.num_sites) + recombination_rate
     mu = np.zeros(ts.num_sites) + mutation_rate
     ls_hmm = _tskit.LsHmm(
@@ -37,7 +37,7 @@ def create_index_map(x):
     return map_ACGT
 
 
-def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
+def impute_by_sample_matching(ts, sd, recombination_rate, mutation_rate):
     assert ts.num_sites == sd.num_sites
     assert np.all(np.isin(ts.sites_position, sd.sites_position))
 
@@ -53,7 +53,7 @@ def impute_by_exact_matching(ts, sd, recombination_rate, mutation_rate):
     print("INFO: Performing closest match.")
     H2 = np.zeros((sd.num_samples, ts.num_sites), dtype=np.int32)
     for i in tqdm(np.arange(sd.num_samples)):
-        H2[i, :] = closest_match(
+        H2[i, :] = get_traceback_path(
             ts,
             H1[i, :],
             recombination_rate=recombination_rate,
@@ -121,7 +121,7 @@ def write_genotype_matrix_to_samples(
 )
 @click.option("--out_samples_file", "-o", required=True, help="Output samples file.")
 @click.option("--tmp_samples_file", default=None, help="Temporary samples file")
-def perform_imputation_by_exact_matching(
+def perform_imputation_by_sample_matching(
     in_reference_trees_file,
     in_target_samples_file,
     in_chip_file,
@@ -167,7 +167,7 @@ def perform_imputation_by_exact_matching(
     )
 
     print("INFO: Imputing into target samples")
-    gm_imputed = impute_by_exact_matching(
+    gm_imputed = impute_by_sample_matching(
         ts_ref, sd_compat, recombination_rate=1e-8, mutation_rate=1e-8
     )
 
@@ -183,4 +183,4 @@ def perform_imputation_by_exact_matching(
 
 
 if __name__ == "__main__":
-    perform_imputation_by_exact_matching()
+    perform_imputation_by_sample_matching()
