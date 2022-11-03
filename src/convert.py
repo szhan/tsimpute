@@ -336,18 +336,27 @@ class VcfConverter(Converter):
                 if alleles[1] == ".":
                     a[2 * j + 1] = tskit.MISSING_DATA
         else:
+            # NOTE: Site filters
+            # NOTE: This is overriden by `MaxPlanckConverter.convert_genotypes()`.
+            # TODO: Make it optional to keep monoallelic sites or not?
             freq = np.sum(a == 1)
             if len(all_alleles) > 2:
+                # Variable name is a bit misleading,
+                # because it is skipping multiallelic sites.
+                # Non-biallelic sites include monoallelic sites.
                 self.num_non_biallelic += 1
-            elif freq == self.num_samples or freq == 0:
-                self.num_invariant += 1
             elif any(len(allele) != 1 for allele in all_alleles):
+                # Skip sites with indels.
                 self.num_indels += 1
             elif freq == self.num_samples - 1:
                 self.num_nmo_tons += 1
             else:
                 metadata = {"ID": row.ID, "REF": row.REF}
-                if freq == 1:
+                # Keep track of the number of monoallelic sites,
+                # and retain them.
+                if freq == self.num_samples or freq == 0:
+                    self.num_invariant += 1
+                elif freq == 1:
                     self.num_singletons += 1
                 all_alleles.remove(ancestral_state)
                 alleles = [ancestral_state, all_alleles.pop()]
