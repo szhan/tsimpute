@@ -351,11 +351,11 @@ class VcfConverter(Converter):
             elif freq == self.num_samples - 1:
                 self.num_nmo_tons += 1
             else:
+                print(all_alleles)
                 metadata = {"ID": row.ID, "REF": row.REF}
                 # Keep track of the number of monoallelic sites,
                 # and retain them.
                 if freq == self.num_samples or freq == 0:
-                    print(all_alleles)
                     self.num_invariant += 1
                     only_allele = all_alleles.pop()
                     if ancestral_state == only_allele:
