@@ -356,12 +356,11 @@ class VcfConverter(Converter):
                 # and retain them.
                 if freq == self.num_samples or freq == 0:
                     self.num_invariant += 1
-                    if ancestral_state == all_alleles[0]:
-                        # Only ancestral allele observed
+                    only_allele = all_alleles.pop()
+                    if ancestral_state == only_allele:
                         alleles = [ancestral_state]
                     else:
-                        # Only derived allele observed
-                        alleles = [ancestral_state, all_alleles.pop()]
+                        alleles = [ancestral_state, only_allele]
                 else:
                     if freq == 1:
                         self.num_singletons += 1
