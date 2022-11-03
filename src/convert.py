@@ -389,7 +389,6 @@ class VcfConverter(Converter):
                 site = self.convert_genotypes(row, ancestral_state)
                 if site is not None:
                     if site.inference is not None:
-                        print(f"1 {site.position} {np.unique(site.genotypes)} {site.alleles}")
                         self.samples.add_site(
                             position=site.position,
                             genotypes=site.genotypes,
@@ -398,7 +397,6 @@ class VcfConverter(Converter):
                             inference=site.inference,
                         )
                     else:
-                        print(f"2 {site.position} {np.unique(site.genotypes)} {site.alleles}")
                         self.samples.add_site(
                             position=site.position,
                             genotypes=site.genotypes,
