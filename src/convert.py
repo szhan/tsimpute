@@ -319,10 +319,7 @@ class VcfConverter(Converter):
             else:
                 self.num_unphased += 1
                 alleles = bases[j].split("/")
-            # TODO: Previously, this skips over non-biallelic sites.
-            #       Now, it skips over multi-allelic sites.
-            #       This should be made an argument and clear to the user.
-            if len(alleles) > 2:
+            if len(alleles) != 2:
                 break
             for allele in alleles:
                 if allele == ".":
