@@ -100,7 +100,7 @@ def evaluate_imputation(
     mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
     print(f"INFO: Mask sites all: {len(mask_site_pos)}")
 
-    mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in truth set
+    mask_site_pos = set(mask_site_pos) & set(sd_true_site_pos)  # Must be in truth set
     print(f"INFO: Mask sites in truth set: {len(mask_site_pos)}")
 
     mask_site_pos = np.sort(
