@@ -352,6 +352,7 @@ class VcfConverter(Converter):
                 self.num_nmo_tons += 1
             else:
                 print(all_alleles)
+                print(np.unique(a))
                 metadata = {"ID": row.ID, "REF": row.REF}
                 # Keep track of the number of monoallelic sites,
                 # and retain them.
