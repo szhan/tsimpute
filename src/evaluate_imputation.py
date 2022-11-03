@@ -1,6 +1,7 @@
 import click
 from datetime import datetime
 import json
+import logging
 import sys
 from git import Repo
 from tqdm import tqdm
@@ -65,13 +66,13 @@ def evaluate_imputation(
 ):
     start_dt = datetime.now()
     start_dt_str = start_dt.strftime("%d/%m/%Y %H:%M:%S")
-    print(f"INFO: START {start_dt_str}")
+    logging.info(f"start: {start_dt_str}")
 
-    print(f"DEPS: tskit {tskit.__version__}")
-    print(f"DEPS: tsinfer {tsinfer.__version__}")
+    logging.info(f"dep: tskit {tskit.__version__}")
+    logging.info(f"dep: tsinfer {tsinfer.__version__}")
     repo = Repo(search_parent_directories=True)
-    print(f"DEPS: tsimpute URL {repo.remotes.origin.url}")
-    print(f"DEPS: tsimpute SHA {repo.head.object.hexsha}")
+    logging.info(f"dep: tsimpute URL {repo.remotes.origin.url}")
+    logging.info(f"dep: tsimpute SHA {repo.head.object.hexsha}")
 
     data_imputed = (
         tskit.load(in_imputed_file)
@@ -89,7 +90,7 @@ def evaluate_imputation(
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
 
-    print("INFO: Defining chip and mask sites relative to the reference trees")
+    logging.info("Defining chip and mask sites relative to the reference trees")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
     ts_ref_sites_isin_chip = np.isin(
         ts_ref_site_pos,
@@ -98,15 +99,15 @@ def evaluate_imputation(
     )
     chip_site_pos = ts_ref_site_pos[ts_ref_sites_isin_chip]
     mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
-    print(f"INFO: Mask sites all: {len(mask_site_pos)}")
+    logging.info(f"Mask sites all: {len(mask_site_pos)}")
 
     mask_site_pos = set(mask_site_pos) & set(sd_true_site_pos)  # Must be in truth set
-    print(f"INFO: Mask sites in truth set: {len(mask_site_pos)}")
+    logging.info(f"Mask sites in truth set: {len(mask_site_pos)}")
 
     mask_site_pos = np.sort(
         list(mask_site_pos & set(data_imputed_site_pos))
     )  # Must be in imputed set
-    print(f"INFO: Mask sites also in imputed set: {len(mask_site_pos)}")
+    logging.info(f"Mask sites also in imputed set: {len(mask_site_pos)}")
 
     assert set(mask_site_pos).issubset(set(data_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
