@@ -351,7 +351,6 @@ class VcfConverter(Converter):
             elif freq == self.num_samples - 1:
                 self.num_nmo_tons += 1
             else:
-                print(f"{np.unique(a)} {all_alleles} {len(all_alleles)}")
                 metadata = {"ID": row.ID, "REF": row.REF}
                 # Keep track of the number of monoallelic sites,
                 # and retain them.
@@ -359,7 +358,7 @@ class VcfConverter(Converter):
                     self.num_invariant += 1
                     only_allele = all_alleles.pop()
                     if ancestral_state == only_allele:
-                        alleles = [ancestral_state]
+                        alleles = [only_allele]
                     else:
                         alleles = [ancestral_state, only_allele]
                 else:
@@ -389,6 +388,7 @@ class VcfConverter(Converter):
                 site = self.convert_genotypes(row, ancestral_state)
                 if site is not None:
                     if site.inference is not None:
+                        print(f"1 {site.position} {np.unique(site.genotypes)} {site.alleles}")
                         self.samples.add_site(
                             position=site.position,
                             genotypes=site.genotypes,
@@ -397,6 +397,7 @@ class VcfConverter(Converter):
                             inference=site.inference,
                         )
                     else:
+                        print(f"2 {site.position} {np.unique(site.genotypes)} {site.alleles}")
                         self.samples.add_site(
                             position=site.position,
                             genotypes=site.genotypes,
