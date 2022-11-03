@@ -356,12 +356,12 @@ class VcfConverter(Converter):
                 # and retain them.
                 if freq == self.num_samples or freq == 0:
                     self.num_invariant += 1
-                    print(all_alleles)
-                    only_allele = all_alleles.pop()
-                    if ancestral_state == only_allele:
-                        alleles = [only_allele]
+                    if len(all_alleles) == 1:
+                        # Ancestral allele is always in set.
+                        alleles = [ancestral_state]
                     else:
-                        alleles = [ancestral_state, only_allele]
+                        all_alleles.remove(ancestral_state)
+                        alleles = [ancestral_state, all_alleles.pop()]
                 else:
                     if freq == 1:
                         self.num_singletons += 1
