@@ -356,10 +356,12 @@ class VcfConverter(Converter):
                 # and retain them.
                 if freq == self.num_samples or freq == 0:
                     self.num_invariant += 1
-                elif freq == 1:
-                    self.num_singletons += 1
-                all_alleles.remove(ancestral_state)
-                alleles = [ancestral_state, all_alleles.pop()]
+                    alleles = [ancestral_state]
+                else:
+                    if freq == 1:
+                        self.num_singletons += 1
+                    all_alleles.remove(ancestral_state)
+                    alleles = [ancestral_state, all_alleles.pop()]
                 ret = Site(
                     position=row.POS, alleles=alleles, genotypes=a, metadata=metadata
                 )
