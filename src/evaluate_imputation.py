@@ -98,11 +98,15 @@ def evaluate_imputation(
     )
     chip_site_pos = ts_ref_site_pos[ts_ref_sites_isin_chip]
     mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
+    print(f"INFO: Mask sites all: {len(mask_site_pos)}")
 
-    # mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in truth set
-    # mask_site_pos = np.sort(
-    #    list(mask_site_pos & set(data_imputed_site_pos))
-    # )  # Must be in imputed set
+    mask_site_pos = mask_site_pos & set(sd_true_site_pos)  # Must be in truth set
+    print(f"INFO: Mask sites in truth set: {len(mask_site_pos)}")
+
+    mask_site_pos = np.sort(
+        list(mask_site_pos & set(data_imputed_site_pos))
+    )  # Must be in imputed set
+    print(f"INFO: Mask sites also in imputed set: {len(mask_site_pos)}")
 
     assert set(mask_site_pos).issubset(set(data_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
