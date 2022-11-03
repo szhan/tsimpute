@@ -355,6 +355,7 @@ class VcfConverter(Converter):
                 # Keep track of the number of monoallelic sites,
                 # and retain them.
                 if freq == self.num_samples or freq == 0:
+                    print(all_alleles)
                     self.num_invariant += 1
                     only_allele = all_alleles.pop()
                     if ancestral_state == only_allele:
