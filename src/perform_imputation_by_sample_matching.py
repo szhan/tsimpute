@@ -225,12 +225,12 @@ def perform_imputation_by_sample_matching(
     logging.info(f"Loading chip position file: {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
-    recombination_rates = np.repeat(1e-8, ts_ref.sequence_length)
+    recombination_rates = np.repeat(1e-8, ts_ref.num_sites)
     if in_genetic_map_file is not None:
         logging.info(f"Loading genetic map file: {in_genetic_map_file}")
         genetic_map = msprime.RateMap.read_hapmap(in_genetic_map_file)
-        recombination_rates = genetic_map.get_rate(np.arange(ts_ref.sequence_length))
-    mutation_rates = np.repeat(1e-8, ts_ref.sequence_length)
+        recombination_rates = genetic_map.get_rate(np.arange(ts_ref.num_sites))
+    mutation_rates = np.repeat(1e-8, ts_ref.num_sites)
 
     logging.info("Defining chip and mask sites relative to the reference trees")
     ts_ref_sites_isin_chip = np.isin(
