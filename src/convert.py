@@ -290,6 +290,7 @@ class Converter(object):
             self.num_no_ancestral_state += 1
         elif ancestral_state in ["a", "c", "t", "g"]:
             self.num_low_confidence_ancestral_state += 1
+            ret = ancestral_state.upper()
         else:
             assert ancestral_state in ["A", "C", "T", "G"]
             ret = ancestral_state
@@ -336,14 +337,17 @@ class VcfConverter(Converter):
                 if alleles[1] == ".":
                     a[2 * j + 1] = tskit.MISSING_DATA
         else:
-            # NOTE: Site filters
-            # NOTE: This is overriden by `MaxPlanckConverter.convert_genotypes()`.
+            # Site filters
+            # NOTE: `MaxPlanckConverter.convert_genotypes()` overwrites this.
             # TODO: Make it optional to keep monoallelic sites or not?
+            # TODO: Think more carefully about the ordering of the filters.
+            # TODO: Handle sites with low-confidence AAs.
+            # TODO: Handle sites with no AAs.
             freq = np.sum(a == 1)
             if len(all_alleles) > 2:
+                # Skip multiallelic sites.
                 # Variable name is a bit misleading,
-                # because it is skipping multiallelic sites.
-                # Non-biallelic sites include monoallelic sites.
+                # because non-biallelic sites include monoallelic sites.
                 self.num_non_biallelic += 1
             elif any(len(allele) != 1 for allele in all_alleles):
                 # Skip sites with indels.
