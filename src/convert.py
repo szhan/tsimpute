@@ -389,29 +389,31 @@ class VcfConverter(Converter):
             vcf = cyvcf2.VCF(self.data_file)(vcf_subset)
         for row in filter_duplicates_target(vcf, self.target_sites_pos):
             ancestral_state = self.get_ancestral_state(row.POS)
-            if ancestral_state is not None:
-                site = self.convert_genotypes(row, ancestral_state)
-                if site is not None:
-                    if site.inference is not None:
-                        self.samples.add_site(
-                            position=site.position,
-                            genotypes=site.genotypes,
-                            alleles=site.alleles,
-                            metadata=site.metadata,
-                            inference=site.inference,
-                        )
-                    else:
-                        self.samples.add_site(
-                            position=site.position,
-                            genotypes=site.genotypes,
-                            alleles=site.alleles,
-                            metadata=site.metadata,
-                        )
+            if ancestral_state is None:
+                # When no AA is known, use REF instead.
+                ancestral_state = row.REF
+            site = self.convert_genotypes(row, ancestral_state)
+            if site is not None:
+                if site.inference is not None:
+                    self.samples.add_site(
+                        position=site.position,
+                        genotypes=site.genotypes,
+                        alleles=site.alleles,
+                        metadata=site.metadata,
+                        inference=site.inference,
+                    )
+                else:
+                    self.samples.add_site(
+                        position=site.position,
+                        genotypes=site.genotypes,
+                        alleles=site.alleles,
+                        metadata=site.metadata,
+                    )
 
-                    progress.set_postfix(used=str(self.num_sites))
-                    self.num_sites += 1
-                    if self.num_sites == max_sites:
-                        break
+                progress.set_postfix(used=str(self.num_sites))
+                self.num_sites += 1
+                if self.num_sites == max_sites:
+                    break
             progress.update()
         progress.close()
         report_dict = self.report()
