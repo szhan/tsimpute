@@ -31,7 +31,6 @@ class Site(object):
     alleles = attr.ib(None)
     genotypes = attr.ib(None)
     metadata = attr.ib({})
-    inference = attr.ib(None)
 
 
 def run_multiprocessing(args, function):
@@ -394,24 +393,14 @@ class VcfConverter(Converter):
                 ancestral_state = row.REF
             site = self.convert_genotypes(row, ancestral_state)
             if site is not None:
-                if site.inference is not None:
-                    self.samples.add_site(
-                        position=site.position,
-                        genotypes=site.genotypes,
-                        alleles=site.alleles,
-                        metadata=site.metadata,
-                        inference=site.inference,
-                    )
-                else:
-                    self.samples.add_site(
-                        position=site.position,
-                        genotypes=site.genotypes,
-                        alleles=site.alleles,
-                        metadata=site.metadata,
-                    )
-
+                self.samples.add_site(
+                    position=site.position,
+                    genotypes=site.genotypes,
+                    alleles=site.alleles,
+                    metadata=site.metadata,
+                )
                 progress.set_postfix(used=str(self.num_sites))
-                self.num_sites += 1
+                self.num_sites += 1 # Post-filter sites
                 if self.num_sites == max_sites:
                     break
             progress.update()
