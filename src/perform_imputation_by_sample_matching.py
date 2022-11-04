@@ -33,20 +33,26 @@ def get_traceback_path(
     tree_sequence, haplotype, recombination_rates, mutation_rates, precision
 ):
     """
-    :param tskit.TreeSequence tree_sequence: Tree sequence containing sample haplotypes to match against.
+    :param tskit.TreeSequence tree_sequence: Tree sequence with samples to match against.
     :param numpy.ndarray haplotype: Haplotype in ACGT space.
     :param numpy.ndarray recombination_rates: Site-specific recombination rates.
     :param numpy.ndarray mutation_rates: Site-specifc mutation rates.
-    :param float precision: Precision to calculate likelihood values.
+    :param float precision: Precision of likelihood calculations.
     :return: HMM path (a list of sample IDs).
     :rtype: numpy.ndarray
     """
     assert tree_sequence.num_sites == len(haplotype), \
-        f"Length of haplotype array differs from number of sites."
+        f"Length of haplotype array {tree_sequence.num_sites} " \
+        "differs from " \
+        f"number of sites {len(haplotype)}."
     assert len(haplotype) == len(recombination_rates), \
-        f"Lengths of haplotype and recombination rate array differ."
+        f"Length of haplotype array {len(haplotype)} " \
+        "differs from " \
+        f"length of recombination rate array {len(recombination_rates)}."
     assert len(recombination_rates) == len(mutation_rates), \
-        f"Lengths of recombination rate and mutaiton rate arrays differ."
+        f"Length of recombination rate array {len(recombination_rates)}" \
+        f"differs from" \
+        f"length of mutation rate array {len(mutation_rates)}."
     assert np.all(np.unique(haplotype) == [0, 1, 2, 3]), \
         f"Haplotype array must contain 0, 1, 2, or 3."
 
@@ -65,7 +71,9 @@ def get_traceback_path(
     path = vm.traceback()
 
     assert len(path) == tree_sequence.num_sites, \
-        f"Length of HMM path differs from number of sites."
+        f"Length of HMM path {len(path)} " \
+        "differs from " \
+        f"number of sites {tree_sequence.num_sites}."
     assert np.all(
         np.isin(path, tree_sequence.samples())
     ), f"Some IDs in the path are not sample IDs."
