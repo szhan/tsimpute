@@ -94,8 +94,8 @@ def impute_by_sample_matching(
         H2[i, :] = get_traceback_path(
             tree_sequence=tree_sequence,
             haplotype=H1[i, :],
-            recombination_rate_map=recombination_rates,
-            mutation_rate_map=mutation_rates,
+            recombination_rates=recombination_rates,
+            mutation_rates=mutation_rates,
             precision=precision,
         )
 
@@ -161,7 +161,7 @@ def write_genotype_matrix_to_samples(
     help="Tab-delimited file with chip site positions.",
 )
 @click.option(
-    "--genetic_map_file",
+    "--in_genetic_map_file",
     "-g",
     default=None,
     help="Genetic map file in HapMap3 format."
@@ -186,7 +186,7 @@ def perform_imputation_by_sample_matching(
     in_reference_trees_file,
     in_target_samples_file,
     in_chip_file,
-    genetic_map_file,
+    in_genetic_map_file,
     out_dir,
     out_prefix,
     precision,
@@ -217,10 +217,12 @@ def perform_imputation_by_sample_matching(
     logging.info(f"Loading chip position file: {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
-    logging.info(f"Loading genetic map file: {genetic_map_file}")
-    genetic_map = msprime.RateMap.read_hapmap(genetic_map_file)
-    recombination_rates = genetic_map.get_rate(np.arange(ts_ref.sequence_length))
-    mutation_rates = np.repeat(1e-8, ts_ref.sequence_length)    # Human-like rate
+    recombination_rates = np.repeat(1e-8, ts_ref.sequence_length)
+    if in_genetic_map_file is not None:
+        logging.info(f"Loading genetic map file: {in_genetic_map_file}")
+        genetic_map = msprime.RateMap.read_hapmap(in_genetic_map_file)
+        recombination_rates = genetic_map.get_rate(np.arange(ts_ref.sequence_length))
+    mutation_rates = np.repeat(1e-8, ts_ref.sequence_length)
 
     logging.info("Defining chip and mask sites relative to the reference trees")
     ts_ref_sites_isin_chip = np.isin(
@@ -250,8 +252,8 @@ def perform_imputation_by_sample_matching(
     gm_imputed = impute_by_sample_matching(
         tree_sequence=ts_ref,
         sample_data=sd_compat,
-        recombination_rate=recombination_rates,
-        mutation_rate=mutation_rates,
+        recombination_rates=recombination_rates,
+        mutation_rates=mutation_rates,
         precision=precision,
     )
 
