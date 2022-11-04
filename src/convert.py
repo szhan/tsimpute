@@ -298,12 +298,6 @@ class Converter(object):
 
 class VcfConverter(Converter):
     def convert_genotypes(self, row, ancestral_state):
-        def return_genotype(allele, ancestral_state):
-            if allele == ".":
-                return tskit.MISSING_DATA
-            else:
-                return allele != ancestral_state
-
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
@@ -869,12 +863,6 @@ class MaxPlanckConverter(VcfConverter):
                 )
 
     def convert_genotypes(self, row, ancestral_state):
-        def return_genotype(allele, ancestral_state):
-            if allele == ".":
-                return tskit.MISSING_DATA
-            else:
-                return allele != ancestral_state
-
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
