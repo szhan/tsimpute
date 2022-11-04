@@ -53,8 +53,8 @@ def get_traceback_path(
         f"Length of recombination rate array {len(recombination_rates)}" \
         f"differs from" \
         f"length of mutation rate array {len(mutation_rates)}."
-    assert np.all(np.unique(haplotype) == [0, 1, 2, 3]), \
-        f"Haplotype array must contain 0, 1, 2, or 3."
+    assert np.all(np.isin(haplotype, np.array([0, 1, 2, 3]))), \
+        f"Haplotype array must contain 0, 1, 2, or 3 - {np.unique(haplotype)}."
 
     ll_ts = tree_sequence.ll_tree_sequence
 
