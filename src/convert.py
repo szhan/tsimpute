@@ -342,8 +342,6 @@ class VcfConverter(Converter):
                 # Variable name is a bit misleading,
                 # because non-biallelic sites include monoallelic sites.
                 self.num_non_biallelic += 1
-            elif freq == self.num_samples - 1:
-                self.num_nmo_tons += 1
             else:
                 metadata = {"ID": row.ID, "REF": row.REF}
                 # Keep track of the number of monoallelic sites,
@@ -369,6 +367,15 @@ class VcfConverter(Converter):
                             alleles = [allele_0, allele_1]
                         else:
                             alleles = [allele_1, allele_0]
+                elif freq == self.num_samples - 1:
+                    # Flip the AA and the derived allele.
+                    self.num_nmo_tons += 1
+                    flipped_a = np.where(a == 0, 1, 0)
+                    flipped_a = np.where(
+                        a == tskit.MISSING_DATA, tskit.MISSING_DATA, flipped_a
+                    )
+                    all_alleles.remove(ancestral_state)
+                    alleles = [all_alleles.pop(), ancestral_state]
                 else:
                     if freq == 1:
                         self.num_singletons += 1
@@ -407,7 +414,7 @@ class VcfConverter(Converter):
                     metadata=site.metadata,
                 )
                 progress.set_postfix(used=str(self.num_sites))
-                self.num_sites += 1 # Post-filter sites
+                self.num_sites += 1  # Post-filter sites
                 if self.num_sites == max_sites:
                     break
             progress.update()
