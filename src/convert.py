@@ -342,9 +342,6 @@ class VcfConverter(Converter):
                 # Variable name is a bit misleading,
                 # because non-biallelic sites include monoallelic sites.
                 self.num_non_biallelic += 1
-            elif any(len(allele) != 1 for allele in all_alleles):
-                # Skip sites with indels.
-                self.num_indels += 1
             elif freq == self.num_samples - 1:
                 self.num_nmo_tons += 1
             else:
@@ -354,11 +351,24 @@ class VcfConverter(Converter):
                 if freq == self.num_samples or freq == 0:
                     self.num_invariant += 1
                     if len(all_alleles) == 1:
-                        # Ancestral allele is always in set.
+                        # Ancestral allele is always in the set.
                         alleles = [ancestral_state]
                     else:
                         all_alleles.remove(ancestral_state)
                         alleles = [ancestral_state, all_alleles.pop()]
+                elif any(len(allele) != 1 for allele in all_alleles):
+                    self.num_indels += 1
+                    allele_0 = all_alleles.pop()
+                    allele_1 = all_alleles.pop()
+                    if len(allele_0) != 1 and len(allele_1) != 1:
+                        # The first allele is arbitrarily set as the AA.
+                        alleles = [allele_0, allele_1]
+                    else:
+                        # The non-indel allele is set as the AA.
+                        if len(allele_0) == 1:
+                            alleles = [allele_0, allele_1]
+                        else:
+                            alleles = [allele_1, allele_0]
                 else:
                     if freq == 1:
                         self.num_singletons += 1
