@@ -57,7 +57,7 @@ def get_traceback_path(
         f"Haplotype array contains only {tskit.MISSING_DATA}, 0, 1, 2, and 3 " \
         f"- {np.unique(haplotype)}."
 
-    # TODO: Test if NaN lead to a bug.
+    # TODO: How should NaN values be replaced?
     recombination_rates[np.isnan(recombination_rates)] = 0
 
     ll_ts = tree_sequence.ll_tree_sequence
