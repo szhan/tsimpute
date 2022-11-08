@@ -334,10 +334,8 @@ class VcfConverter(Converter):
         else:
             # Site filters
             # NOTE: `MaxPlanckConverter.convert_genotypes()` overwrites this.
-            # TODO: Make it optional to keep monoallelic sites or not?
+            # TODO: Handle indels outside of this section.
             # TODO: Think more carefully about the ordering of the filters.
-            # TODO: Handle sites with low-confidence AAs.
-            # TODO: Handle sites with no AAs.
             freq = np.sum(a == 1)
             if len(all_alleles) > 2:
                 # Skip multiallelic sites.
