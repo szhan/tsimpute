@@ -301,6 +301,8 @@ class VcfConverter(Converter):
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
+        # Check that the ancestral allele is either REF or ALT.
+        assert ancestral_state in [row.REF, row.ALT]
         # Use upper case version of ancestral state (keep original
         # for checking low-confidence ancestral state)
         all_alleles = set([ancestral_state])
