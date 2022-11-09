@@ -41,24 +41,25 @@ def get_traceback_path(
     :return: HMM path (a list of sample IDs).
     :rtype: numpy.ndarray
     """
-    assert tree_sequence.num_sites == len(haplotype), \
-        f"Length of haplotype array {tree_sequence.num_sites} " \
-        "differs from " \
+    assert tree_sequence.num_sites == len(haplotype), (
+        f"Length of haplotype array {tree_sequence.num_sites} "
+        "differs from "
         f"number of sites {len(haplotype)}."
-    assert len(haplotype) == len(recombination_rates), \
-        f"Length of haplotype array {len(haplotype)} " \
-        "differs from " \
+    )
+    assert len(haplotype) == len(recombination_rates), (
+        f"Length of haplotype array {len(haplotype)} "
+        "differs from "
         f"length of recombination rate array {len(recombination_rates)}."
-    assert len(recombination_rates) == len(mutation_rates), \
-        f"Length of recombination rate array {len(recombination_rates)}" \
-        f"differs from" \
+    )
+    assert len(recombination_rates) == len(mutation_rates), (
+        f"Length of recombination rate array {len(recombination_rates)}"
+        f"differs from"
         f"length of mutation rate array {len(mutation_rates)}."
-    assert np.all(np.isin(haplotype, np.array([tskit.MISSING_DATA, 0, 1, 2, 3]))), \
-        f"Haplotype array contains only {tskit.MISSING_DATA}, 0, 1, 2, and 3 " \
+    )
+    assert np.all(np.isin(haplotype, np.array([tskit.MISSING_DATA, 0, 1, 2, 3]))), (
+        f"Haplotype array contains only {tskit.MISSING_DATA}, 0, 1, 2, and 3 "
         f"- {np.unique(haplotype)}."
-
-    # TODO: How should NaN values be replaced?
-    recombination_rates[np.isnan(recombination_rates)] = 0
+    )
 
     ll_ts = tree_sequence.ll_tree_sequence
 
@@ -74,10 +75,11 @@ def get_traceback_path(
     ls_hmm.viterbi_matrix(haplotype, vm)
     path = vm.traceback()
 
-    assert len(path) == tree_sequence.num_sites, \
-        f"Length of HMM path {len(path)} " \
-        "differs from " \
+    assert len(path) == tree_sequence.num_sites, (
+        f"Length of HMM path {len(path)} "
+        "differs from "
         f"number of sites {tree_sequence.num_sites}."
+    )
     assert np.all(
         np.isin(path, tree_sequence.samples())
     ), f"Some IDs in the path are not sample IDs."
@@ -176,7 +178,7 @@ def write_genotype_matrix_to_samples(
     "--in_genetic_map_file",
     "-g",
     default=None,
-    help="Genetic map file in HapMap3 format."
+    help="Genetic map file in HapMap3 format.",
 )
 @click.option(
     "--out_dir",
@@ -233,7 +235,14 @@ def perform_imputation_by_sample_matching(
     if in_genetic_map_file is not None:
         logging.info(f"Loading genetic map file: {in_genetic_map_file}")
         genetic_map = msprime.RateMap.read_hapmap(in_genetic_map_file)
-        recombination_rates = genetic_map.get_rate(np.arange(ts_ref.num_sites))
+        # Coordinates must be discrete, not continuous.
+        assert np.all(np.round(ts_ref.sites_position) == ts_ref.sites_position)
+        recombination_rates = genetic_map.get_rate(ts_ref.sites_position)
+        # `_tskit.LsHmm()` cannot handle NaN, so replace them with zero.
+        recombination_rates = np.where(
+            np.isnan(recombination_rates), 0, recombination_rates
+        )
+    # TODO: Allow for site-specific mutation rates.
     mutation_rates = np.repeat(1e-8, ts_ref.num_sites)
 
     logging.info("Defining chip and mask sites relative to the reference trees")
