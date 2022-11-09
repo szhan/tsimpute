@@ -16,7 +16,7 @@ python src/convert.py generic \
     ${out_dir}${dataset}".samples" \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
-    --exclude-indels True \
+    --exclude-indels \
     > \
     ${out_dir}${dataset}".samples.report"
 
@@ -27,7 +27,7 @@ python src/convert.py generic \
     ${out_dir}${dataset}".samples" \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
-    --exclude-indels True \
+    --exclude-indels \
     > \
     ${out_dir}${dataset}"samples.report"
 
@@ -38,7 +38,7 @@ python src/convert.py generic \
     ${out_dir}${dataset}".samples" \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
-    --exclude-indels True \
+    --exclude-indels \
     > \
     ${out_dir}${dataset}".samples.report"
 
@@ -47,9 +47,9 @@ python src/convert.py generic \
     ../data/fimm/sisu_v3/sisu3_imputed_merged_nochip_info_chr20.vcf.gz \
     ${ancestral_states_file} \
     ${out_dir}${dataset}".samples" \
-    --exclude-indels True \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
+    --exclude-indels \
     > \
     ${out_dir}${dataset}".samples.report"
 
