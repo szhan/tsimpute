@@ -351,7 +351,8 @@ class VcfConverter(Converter):
             else:
                 # Check ancestral allele is either REF or ALT.
                 assert ancestral_state in [row.REF] + row.ALT, \
-                    f"Ancestral allele {ancestral_state} is neither REF {row.REF} nor ALT {row.ALT}."
+                    f"Ancestral allele {ancestral_state} having ID {row.ID} " \
+                    f"is neither REF {row.REF} nor ALT {row.ALT}."
                 metadata = {"ID": row.ID, "REF": row.REF}
                 if all(len(x) != 1 for x in all_alleles):
                     # Indels is not the REF or AA.
