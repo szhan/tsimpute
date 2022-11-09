@@ -260,9 +260,12 @@ class Converter(object):
         report_dict["num_sites"] = self.num_sites
         report_dict["unphased"] = self.num_unphased
         report_dict["missing_data"] = self.num_missing_data
+        report_dict["indels"] = self.num_indels
         report_dict["invariant"] = self.num_invariant
-        report_dict["num_indels"] = self.num_indels
+        report_dict["biallelic"] = self.num_biallelic
         report_dict["non_biallelic"] = self.num_non_biallelic
+        report_dict["triallelic"] = self.num_triallelic
+        report_dict["tetraallelic"] = self.num_tetraallelic
         report_dict["no_ancestral_state"] = self.num_no_ancestral_state
         report_dict[
             "low_confidence_ancestral_state"
@@ -303,9 +306,7 @@ class VcfConverter(Converter):
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
-        # Check that the ancestral allele is either REF or ALT.
         assert len(ancestral_state) == 1
-        assert ancestral_state in [row.REF, row.ALT]
         # Use upper case version of ancestral state (keep original
         # for checking low-confidence ancestral state)
         all_alleles = set([ancestral_state])
@@ -337,6 +338,7 @@ class VcfConverter(Converter):
         else:
             # Site filters
             # NOTE: `MaxPlanckConverter.convert_genotypes()` overwrites this.
+            assert ancestral_state in [row.REF, row.ALT]
             freq = np.sum(a == 1)
             if len(all_alleles) > 2:
                 # Skip multiallelic sites.
