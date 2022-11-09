@@ -356,7 +356,10 @@ class VcfConverter(Converter):
                 metadata = {"ID": row.ID, "REF": row.REF}
                 if any(len(x) != 1 for x in all_alleles):
                     # Indels is not the REF or AA.
+                    # Treat indels as missing data.
                     self.num_indels += 1
+                    a = np.where(a == 1, tskit.MISSING_DATA, a)
+                    alleles = [ancestral_state]
                 if freq == self.num_samples or freq == 0:
                     # Monoallelic sites.
                     self.num_invariant += 1
