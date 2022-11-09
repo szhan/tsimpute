@@ -302,6 +302,7 @@ class VcfConverter(Converter):
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
         # Check that the ancestral allele is either REF or ALT.
+        assert len(ancestral_state) == 1
         assert ancestral_state in [row.REF, row.ALT]
         # Use upper case version of ancestral state (keep original
         # for checking low-confidence ancestral state)
@@ -354,19 +355,6 @@ class VcfConverter(Converter):
                     else:
                         all_alleles.remove(ancestral_state)
                         alleles = [ancestral_state, all_alleles.pop()]
-                elif any(len(allele) != 1 for allele in all_alleles):
-                    self.num_indels += 1
-                    allele_0 = all_alleles.pop()
-                    allele_1 = all_alleles.pop()
-                    if len(allele_0) != 1 and len(allele_1) != 1:
-                        # The first allele is arbitrarily set as the AA.
-                        alleles = [allele_0, allele_1]
-                    else:
-                        # The non-indel allele is set as the AA.
-                        if len(allele_0) == 1:
-                            alleles = [allele_0, allele_1]
-                        else:
-                            alleles = [allele_1, allele_0]
                 elif freq == self.num_samples - 1:
                     # Flip the AA and the derived allele.
                     self.num_nmo_tons += 1
