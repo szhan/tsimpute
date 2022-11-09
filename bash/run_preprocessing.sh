@@ -29,7 +29,7 @@ python src/convert.py generic \
     --num-threads ${num_threads} \
     --exclude-indels \
     > \
-    ${out_dir}${dataset}"samples.report"
+    ${out_dir}${dataset}".samples.report"
 
 dataset="sisu3_merged_nochip_chr20"
 python src/convert.py generic \
