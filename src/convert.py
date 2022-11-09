@@ -354,7 +354,7 @@ class VcfConverter(Converter):
                     f"Ancestral allele {ancestral_state} having ID {row.ID} " \
                     f"is neither REF {row.REF} nor ALT {row.ALT}."
                 metadata = {"ID": row.ID, "REF": row.REF}
-                if all(len(x) != 1 for x in all_alleles):
+                if any(len(x) != 1 for x in all_alleles):
                     # Indels is not the REF or AA.
                     self.num_indels += 1
                 if freq == self.num_samples or freq == 0:
