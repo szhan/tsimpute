@@ -306,9 +306,6 @@ class VcfConverter(Converter):
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
-        # Check ancestral allele is either REF or ALT.
-        assert ancestral_state in [row.REF] + row.ALT, \
-            f"Ancestral allele {ancestral_state} is not REF {row.REF} or ALT {row.ALT}."
         # Use upper case version of ancestral state (keep original
         # for checking low-confidence ancestral state)
         all_alleles = set([ancestral_state])
@@ -352,6 +349,9 @@ class VcfConverter(Converter):
                 else:
                     self.num_tetraallelic += 1
             else:
+                # Check ancestral allele is either REF or ALT.
+                assert ancestral_state in [row.REF] + row.ALT, \
+                    f"Ancestral allele {ancestral_state} is neither REF {row.REF} nor ALT {row.ALT}."
                 metadata = {"ID": row.ID, "REF": row.REF}
                 if all(len(x) != 1 for x in all_alleles):
                     # Indels is not the REF or AA.
