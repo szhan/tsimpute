@@ -1076,7 +1076,7 @@ def main():
         help="The name of the reference for provenance.",
     )
     parser.add_argument(
-        "--exclude_indels",
+        "--exclude-indels",
         default=False,
         help="Exclude indels?"
     )
