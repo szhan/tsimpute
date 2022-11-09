@@ -27,18 +27,19 @@ GENERATION_TIME = 25
 
 @attr.s()
 class Argument(object):
-    source = attr.ib(None),
-    data_file = attr.ib(None),
-    ancestral_states_file = attr.ib(None),
-    output_file = attr.ib(None),
-    metadata_file = attr.ib(None),
-    max_variants = attr.ib(None),
-    target_samples = attr.ib(None),
-    progress = attr.ib(None),
-    ancestral_states_url = attr.ib(None),
-    reference_name = attr.ib(None),
-    exclude_indels = attr.ib(None),
-    num_threads = attr.ib(None),
+    source = (attr.ib(None),)
+    data_file = (attr.ib(None),)
+    ancestral_states_file = (attr.ib(None),)
+    output_file = (attr.ib(None),)
+    metadata_file = (attr.ib(None),)
+    max_variants = (attr.ib(None),)
+    target_samples = (attr.ib(None),)
+    progress = (attr.ib(None),)
+    ancestral_states_url = (attr.ib(None),)
+    reference_name = (attr.ib(None),)
+    exclude_indels = (attr.ib(None),)
+    num_threads = (attr.ib(None),)
+
 
 @attr.s()
 class Site(object):
@@ -272,7 +273,7 @@ class Converter(object):
         self.num_triallelic = 0
         self.num_tetraallelic = 0
         self.num_singletons = 0
-        self.num_nmo_tons = 0   # (n - 1)-tons
+        self.num_nmo_tons = 0  # (n - 1)-tons
 
     def report(self):
         report_dict = {}
@@ -369,9 +370,10 @@ class VcfConverter(Converter):
                     self.num_tetraallelic += 1
             else:
                 # Check ancestral allele is either REF or ALT.
-                assert ancestral_state in [row.REF] + row.ALT, \
-                    f"Ancestral allele {ancestral_state} having ID {row.ID} " \
+                assert ancestral_state in [row.REF] + row.ALT, (
+                    f"Ancestral allele {ancestral_state} having ID {row.ID} "
                     f"is neither REF {row.REF} nor ALT {row.ALT}."
+                )
                 metadata = {"ID": row.ID, "REF": row.REF}
                 if any(len(x) != 1 for x in all_alleles):
                     # Indels is not the REF or AA.
@@ -408,7 +410,9 @@ class VcfConverter(Converter):
                 )
         return ret
 
-    def process_sites(self, exclude_indels, vcf_subset=None, show_progress=False, max_sites=None):
+    def process_sites(
+        self, exclude_indels, vcf_subset=None, show_progress=False, max_sites=None
+    ):
         num_data_sites = int(
             subprocess.check_output(["bcftools", "index", "--nrecords", self.data_file])
         )
@@ -421,8 +425,8 @@ class VcfConverter(Converter):
             vcf = cyvcf2.VCF(self.data_file)(vcf_subset)
         for row in filter_duplicates_target(vcf, self.target_sites_pos):
             ancestral_state = self.get_ancestral_state(row.POS)
-            if ancestral_state is None:
-                # When no AA is known, use REF instead.
+            if ancestral_state is None or ancestral_state not in [row.REF] + row.ALT:
+                # When no AA is known, or it's not REF or ALT, take REF as AA.
                 ancestral_state = row.REF
             site = self.convert_genotypes(row, ancestral_state, exclude_indels)
             if site is not None:
@@ -1044,7 +1048,9 @@ class ReichConverter(VcfConverter):
 @click.command()
 @click.option(
     "--source",
-    type=click.Choice(["generic", "1kg", "sgdp", "hgdp", "max-planck", "afanasievo", "1240k"]),
+    type=click.Choice(
+        ["generic", "1kg", "sgdp", "hgdp", "max-planck", "afanasievo", "1240k"]
+    ),
     required=True,
     help="Source of the input data.",
 )
@@ -1058,7 +1064,7 @@ class ReichConverter(VcfConverter):
     "--ancestral_states_file",
     type=click.Path(exists=True),
     required=True,
-    help="FastA file containing ancestral alleles."
+    help="FastA file containing ancestral alleles.",
 )
 @click.option(
     "--output_file",
@@ -1104,12 +1110,7 @@ class ReichConverter(VcfConverter):
     default=None,
     help="Name of the reference for provenance.",
 )
-@click.option(
-    "--exclude-indels",
-    is_flag=True,
-    default=False,
-    help="Exclude indels?"
-)
+@click.option("--exclude-indels", is_flag=True, default=False, help="Exclude indels?")
 @click.option(
     "--num-threads",
     type=int,
