@@ -135,6 +135,7 @@ def make_sampledata(args):
     data_provenance = {
         "ancestral_states_url": args.ancestral_states_url,
         "reference_name": args.reference_name,
+        "exclude_indels": args.exclude_indels,
     }
 
     # Get the ancestral states.
@@ -1038,31 +1039,31 @@ def main():
     parser.add_argument(
         "ancestral_states_file", help="A vcf file containing ancestral allele states. "
     )
-    parser.add_argument("output_file", help="The tsinfer output file")
+    parser.add_argument("output_file", help="The tsinfer output file.")
     parser.add_argument(
         "-m",
         "--metadata_file",
         default=None,
-        help="The metadata file containing population and sample data",
+        help="The metadata file containing population and sample data.",
     )
     parser.add_argument(
         "-n",
         "--max-variants",
         default=None,
         type=int,
-        help="Keep only the first n variants",
+        help="Keep only the first n variants.",
     )
     parser.add_argument(
         "--target-samples",
         default=None,
         help="A target sampledata file, only variants present in this target file will \
-            will be used in the resulting sampledata file",
+            will be used in the resulting sampledata file.",
     )
     parser.add_argument(
         "-p",
         "--progress",
         action="store_true",
-        help="Show progress bars and output extra information when done",
+        help="Show progress bars and output extra information when done.",
     )
     parser.add_argument(
         "--ancestral-states-url",
@@ -1076,7 +1077,7 @@ def main():
     )
     parser.add_argument(
         "--exclude-indels",
-        default=False,
+        action="store_true",
         help="Exclude indels?"
     )
     parser.add_argument(
