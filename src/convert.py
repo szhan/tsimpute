@@ -4,7 +4,7 @@ Convert input data from various sources to samples format.
 Original source code is here:
 https://github.com/awohns/unified_genealogy_paper/blob/51dc9130275ec93dfeba83bb3d31cf27d95e2dbb/all-data/convert.py
 """
-import argparse
+import click
 import subprocess
 import os
 import sys
@@ -24,6 +24,21 @@ import tskit
 
 GENERATION_TIME = 25
 
+
+@attr.s()
+class Argument(object):
+    source = attr.ib(None),
+    data_file = attr.ib(None),
+    ancestral_states_file = attr.ib(None),
+    output_file = attr.ib(None),
+    metadata_file = attr.ib(None),
+    max_variants = attr.ib(None),
+    target_samples = attr.ib(None),
+    progress = attr.ib(None),
+    ancestral_states_url = attr.ib(None),
+    reference_name = attr.ib(None),
+    exclude_indels = attr.ib(None),
+    num_threads = attr.ib(None),
 
 @attr.s()
 class Site(object):
@@ -1026,67 +1041,109 @@ class ReichConverter(VcfConverter):
             )
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Script to convert VCF files into tsinfer input."
+@click.command()
+@click.option(
+    "--source",
+    type=click.Choice(["generic", "1kg", "sgdp", "hgdp", "max-planck", "afanasievo", "1240k"]),
+    required=True,
+    help="Source of the input data.",
+)
+@click.option(
+    "--data_file",
+    type=click.Path(exists=True),
+    required=True,
+    help="Input data file pattern.",
+)
+@click.option(
+    "--ancestral_states_file",
+    type=click.Path(exists=True),
+    required=True,
+    help="FastA file containing ancestral alleles."
+)
+@click.option(
+    "--output_file",
+    type=click.Path(exists=False),
+    required=True,
+    help="The tsinfer output file.",
+)
+@click.option(
+    "--metadata_file",
+    "-m",
+    type=click.Path(exists=True),
+    default=None,
+    help="Metadata file containing population and sample data.",
+)
+@click.option(
+    "--max-variants",
+    "-n",
+    type=int,
+    default=None,
+    help="Keep only the first n variants.",
+)
+@click.option(
+    "--target-samples",
+    type=click.Path(exists=True),
+    default=None,
+    help="Target samples file, only variants present in this target file will \
+        will be used in the resulting samples file.",
+)
+@click.option(
+    "--progress",
+    "-p",
+    is_flag=True,
+    default=False,
+    help="Show progress bars and output extra information when done.",
+)
+@click.option(
+    "--ancestral-states-url",
+    default=None,
+    help="Source of ancestral state information for provenance.",
+)
+@click.option(
+    "--reference-name",
+    default=None,
+    help="Name of the reference for provenance.",
+)
+@click.option(
+    "--exclude-indels",
+    is_flag=True,
+    default=False,
+    help="Exclude indels?"
+)
+@click.option(
+    "--num-threads",
+    type=int,
+    default=1,
+    help="Number of threads to use.",
+)
+def main(
+    source,
+    data_file,
+    ancestral_states_file,
+    output_file,
+    metadata_file,
+    max_variants,
+    target_samples,
+    progress,
+    ancestral_states_url,
+    reference_name,
+    exclude_indels,
+    num_threads,
+):
+    args = Argument(
+        source=source,
+        data_file=data_file,
+        ancestral_states_file=ancestral_states_file,
+        output_file=output_file,
+        metadata_file=metadata_file,
+        max_variants=max_variants,
+        target_samples=target_samples,
+        progress=progress,
+        ancestral_states_url=ancestral_states_url,
+        reference_name=reference_name,
+        exclude_indels=exclude_indels,
+        num_threads=num_threads,
     )
-    parser.add_argument(
-        "source",
-        choices=["generic", "1kg", "sgdp", "hgdp", "max-planck", "afanasievo", "1240k"],
-        help="The source of the input data.",
-    )
-    parser.add_argument("data_file", help="The input data file pattern.")
-    parser.add_argument(
-        "ancestral_states_file", help="A vcf file containing ancestral allele states. "
-    )
-    parser.add_argument("output_file", help="The tsinfer output file.")
-    parser.add_argument(
-        "-m",
-        "--metadata_file",
-        default=None,
-        help="The metadata file containing population and sample data.",
-    )
-    parser.add_argument(
-        "-n",
-        "--max-variants",
-        default=None,
-        type=int,
-        help="Keep only the first n variants.",
-    )
-    parser.add_argument(
-        "--target-samples",
-        default=None,
-        help="A target sampledata file, only variants present in this target file will \
-            will be used in the resulting sampledata file.",
-    )
-    parser.add_argument(
-        "-p",
-        "--progress",
-        action="store_true",
-        help="Show progress bars and output extra information when done.",
-    )
-    parser.add_argument(
-        "--ancestral-states-url",
-        default=None,
-        help="The source of ancestral state information for provenance.",
-    )
-    parser.add_argument(
-        "--reference-name",
-        default=None,
-        help="The name of the reference for provenance.",
-    )
-    parser.add_argument(
-        "--exclude-indels",
-        action="store_true",
-        help="Exclude indels?"
-    )
-    parser.add_argument(
-        "--num-threads", type=int, default=1, help="Number of threads to use."
-    )
-
-    args = parser.parse_args()
-    print(args.exclude_indels)
-    print(args.num_threads)
 
     if args.num_threads > 1:
         run_multiprocessing(args, make_sampledata)
