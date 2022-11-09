@@ -367,6 +367,7 @@ class VcfConverter(Converter):
                         all_alleles.remove(ancestral_state)
                         alleles = [ancestral_state, all_alleles.pop()]
                 elif freq == self.num_samples - 1:
+                    self.num_biallelic += 1
                     # Flip the AA and the derived allele.
                     self.num_nmo_tons += 1
                     flipped_a = np.where(a == 0, 1, 0)
@@ -376,6 +377,7 @@ class VcfConverter(Converter):
                     all_alleles.remove(ancestral_state)
                     alleles = [all_alleles.pop(), ancestral_state]
                 else:
+                    self.num_biallelic += 1
                     if freq == 1:
                         self.num_singletons += 1
                     all_alleles.remove(ancestral_state)
