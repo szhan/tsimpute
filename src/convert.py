@@ -338,7 +338,8 @@ class VcfConverter(Converter):
         else:
             # Site filters
             # NOTE: `MaxPlanckConverter.convert_genotypes()` overwrites this.
-            assert ancestral_state in [row.REF, row.ALT]
+            assert ancestral_state in [row.REF, row.ALT], \
+                f"Ancestral allele {ancestral_state} is not REF {row.REF} or ALT {row.ALT}."
             freq = np.sum(a == 1)
             if len(all_alleles) > 2:
                 # Skip multiallelic sites.
