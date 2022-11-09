@@ -361,7 +361,6 @@ class VcfConverter(Converter):
                     # Indels is not the REF or AA.
                     self.num_indels += 1
                     if exclude_indels:
-                        print(f"INFO: Discarding site: {all_alleles}")
                         return ret
                 if freq == self.num_samples or freq == 0:
                     # Monoallelic sites.
