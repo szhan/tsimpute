@@ -168,12 +168,15 @@ def make_sampledata(args):
             if vcf_subset is not None:
                 report = converter.process_sites(
                     vcf_subset=vcf_subset,
+                    exclude_indels=args.exclude_indels,
                     show_progress=args.progress,
                     max_sites=args.max_variants,
                 )
             else:
                 report = converter.process_sites(
-                    show_progress=args.progress, max_sites=args.max_variants
+                    exclude_indels=args.exclude_indels,
+                    show_progress=args.progress,
+                    max_sites=args.max_variants,
                 )
             samples.record_provenance(
                 command=sys.argv[0],
@@ -302,7 +305,7 @@ class Converter(object):
 
 
 class VcfConverter(Converter):
-    def convert_genotypes(self, row, ancestral_state):
+    def convert_genotypes(self, row, ancestral_state, exclude_indels):
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
@@ -356,10 +359,9 @@ class VcfConverter(Converter):
                 metadata = {"ID": row.ID, "REF": row.REF}
                 if any(len(x) != 1 for x in all_alleles):
                     # Indels is not the REF or AA.
-                    # Treat indels as missing data.
                     self.num_indels += 1
-                    a = np.where(a == 1, tskit.MISSING_DATA, a)
-                    alleles = [ancestral_state]
+                    if exclude_indels:
+                        return ret
                 if freq == self.num_samples or freq == 0:
                     # Monoallelic sites.
                     self.num_invariant += 1
@@ -390,7 +392,7 @@ class VcfConverter(Converter):
                 )
         return ret
 
-    def process_sites(self, vcf_subset=None, show_progress=False, max_sites=None):
+    def process_sites(self, exclude_indels, vcf_subset=None, show_progress=False, max_sites=None):
         num_data_sites = int(
             subprocess.check_output(["bcftools", "index", "--nrecords", self.data_file])
         )
@@ -406,7 +408,7 @@ class VcfConverter(Converter):
             if ancestral_state is None:
                 # When no AA is known, use REF instead.
                 ancestral_state = row.REF
-            site = self.convert_genotypes(row, ancestral_state)
+            site = self.convert_genotypes(row, ancestral_state, exclude_indels)
             if site is not None:
                 # Mark sites to list in `exclude_position``
                 # when calling `generate_ancestors()`.
@@ -1074,6 +1076,11 @@ def main():
         "--reference-name",
         default=None,
         help="The name of the reference for provenance.",
+    )
+    parser.add_argument(
+        "--exclude_indels",
+        default=False,
+        help="Exclude indels?"
     )
     parser.add_argument(
         "--num-threads", type=int, default=1, help="Number of threads to use."
