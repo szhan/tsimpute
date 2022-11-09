@@ -246,12 +246,14 @@ class Converter(object):
         # Counters for genotypes and sites.
         self.num_unphased = 0
         self.num_missing_data = 0
-        self.num_invariant = 0
         self.num_indels = 0
-        self.num_non_biallelic = 0
+        self.num_invariant = 0  # monoallelic
+        self.num_biallelic = 0
+        self.num_non_biallelic = 0  # Used only by `MaxPlanckConverter`
+        self.num_triallelic = 0
+        self.num_tetraallelic = 0
         self.num_singletons = 0
-        # (n - 1)-tons
-        self.num_nmo_tons = 0
+        self.num_nmo_tons = 0   # (n - 1)-tons
 
     def report(self):
         report_dict = {}
@@ -335,19 +337,24 @@ class VcfConverter(Converter):
         else:
             # Site filters
             # NOTE: `MaxPlanckConverter.convert_genotypes()` overwrites this.
-            # TODO: Handle indels outside of this section.
-            # TODO: Think more carefully about the ordering of the filters.
             freq = np.sum(a == 1)
             if len(all_alleles) > 2:
                 # Skip multiallelic sites.
                 # Variable name is a bit misleading,
                 # because non-biallelic sites include monoallelic sites.
+                assert len(all_alleles) <= 4
                 self.num_non_biallelic += 1
+                if len(all_alleles) == 3:
+                    self.num_triallelic += 1
+                else:
+                    self.num_tetraallelic += 1
             else:
                 metadata = {"ID": row.ID, "REF": row.REF}
-                # Keep track of the number of monoallelic sites,
-                # and retain them.
+                if all(len(x) != 1 for x in all_alleles):
+                    # Indels is not the REF or AA.
+                    self.num_indels += 1
                 if freq == self.num_samples or freq == 0:
+                    # Monoallelic sites.
                     self.num_invariant += 1
                     if len(all_alleles) == 1:
                         # Ancestral allele is always in the set.
