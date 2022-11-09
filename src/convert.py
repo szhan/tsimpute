@@ -410,9 +410,6 @@ class VcfConverter(Converter):
                 ancestral_state = row.REF
             site = self.convert_genotypes(row, ancestral_state, exclude_indels)
             if site is not None:
-                # Mark sites to list in `exclude_position``
-                # when calling `generate_ancestors()`.
-                site.metadata["exclude_position"] = True
                 self.samples.add_site(
                     position=site.position,
                     genotypes=site.genotypes,
