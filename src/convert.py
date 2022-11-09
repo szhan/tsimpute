@@ -306,7 +306,9 @@ class VcfConverter(Converter):
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
-        assert len(ancestral_state) == 1
+        # Check ancestral allele is either REF or ALT.
+        assert ancestral_state in [row.REF] + row.ALT, \
+            f"Ancestral allele {ancestral_state} is not REF {row.REF} or ALT {row.ALT}."
         # Use upper case version of ancestral state (keep original
         # for checking low-confidence ancestral state)
         all_alleles = set([ancestral_state])
@@ -338,8 +340,6 @@ class VcfConverter(Converter):
         else:
             # Site filters
             # NOTE: `MaxPlanckConverter.convert_genotypes()` overwrites this.
-            assert ancestral_state in [row.REF, row.ALT], \
-                f"Ancestral allele {ancestral_state} is not REF {row.REF} or ALT {row.ALT}."
             freq = np.sum(a == 1)
             if len(all_alleles) > 2:
                 # Skip multiallelic sites.
