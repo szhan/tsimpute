@@ -5,46 +5,53 @@ out_dir="../analysis/sisu/"
 ancestral_states_file="../analysis/external/chr20_ancestral_states.fa"
 end="25700000"
 seq_len="25700000"
-num_threads=16
+num_threads="16"
 
 
 # Prepare samples files
+dataset="sisu42_chr20"
 python src/convert.py generic \
     ../data/fimm/sisu_v4_2/v4.2.chr20_phased_SNPID.vcf.gz \
     ${ancestral_states_file} \
-    ${out_dir}"sisu42_chr20.samples" \
-    --reference-name GRCh38 \
-    --num-threads ${num_threads} \
-    > \
-    ${out_dir}"sisu42_chr20.samples.report"
-
-python src/convert.py generic \
-    ../data/fimm/sisu_v3/sisu3_affylike_chr20.vcf.gz \
-    ${ancestral_states_file} \
-    ${out_dir}"sisu3_affylike_chr20.samples" \
+    ${out_dir}${dataset}".samples" \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
     --exclude-indels True \
     > \
-    ${out_dir}"sisu3_affylike_chr20.samples.report"
+    ${out_dir}${dataset}".samples.report"
 
+dataset="sisu3_affylike_chr20"
+python src/convert.py generic \
+    ../data/fimm/sisu_v3/sisu3_affylike_chr20.vcf.gz \
+    ${ancestral_states_file} \
+    ${out_dir}${dataset}".samples" \
+    --reference-name GRCh38 \
+    --num-threads ${num_threads} \
+    --exclude-indels True \
+    > \
+    ${out_dir}${dataset}"samples.report"
+
+dataset="sisu3_merged_nochip_chr20"
 python src/convert.py generic \
     ../data/fimm/sisu_v3/sisu3_merged_nochip_chr20.vcf.gz \
     ${ancestral_states_file} \
-    ${out_dir}"sisu3_merged_nochip_chr20.samples" \
+    ${out_dir}${dataset}".samples" \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
+    --exclude-indels True \
     > \
-    ${out_dir}"sisu3_merged_nochip_chr20.samples.report"
+    ${out_dir}${dataset}".samples.report"
 
+dataset="sisu3_imputed_merged_nochip_info_chr20"
 python src/convert.py generic \
     ../data/fimm/sisu_v3/sisu3_imputed_merged_nochip_info_chr20.vcf.gz \
     ${ancestral_states_file} \
-    ${out_dir}"sisu3_imputed_merged_nochip_info_chr20.samples" \
+    ${out_dir}${dataset}".samples" \
+    --exclude-indels True \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
     > \
-    ${out_dir}"sisu3_imputed_merged_nochip_info_chr20.samples.report"
+    ${out_dir}${dataset}".samples.report"
 
 
 # Subset the samples files by coordinate
