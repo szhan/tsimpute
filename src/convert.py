@@ -1085,6 +1085,8 @@ def main():
     )
 
     args = parser.parse_args()
+    print(args.exclude_indels)
+    print(args.num_threads)
 
     if args.num_threads > 1:
         run_multiprocessing(args, make_sampledata)
