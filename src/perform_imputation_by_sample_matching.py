@@ -157,10 +157,16 @@ def write_genotype_matrix_to_samples(
 
 @click.command()
 @click.option(
-    "--in_reference_trees_file",
+    "--in_reference_file",
     "-i1",
     required=True,
-    help="Trees file with reference genomes.",
+    help="Trees or samples file with reference genomes.",
+)
+@click.option(
+    "--in_file_type",
+    type=click.Choice(["trees", "samples"], case_sensitive=False),
+    required=True,
+    help="File type.",
 )
 @click.option(
     "--in_target_samples_file",
@@ -197,7 +203,8 @@ def write_genotype_matrix_to_samples(
     help="Precision for computing likelihood values.",
 )
 def perform_imputation_by_sample_matching(
-    in_reference_trees_file,
+    in_reference_file,
+    in_file_type,
     in_target_samples_file,
     in_chip_file,
     in_genetic_map_file,
@@ -220,10 +227,14 @@ def perform_imputation_by_sample_matching(
     logging.info(f"dep: tsimpute URL {repo.remotes.origin.url}")
     logging.info(f"dep: tsimpute SHA {repo.head.object.hexsha}")
 
-    logging.info(f"Loading reference trees file: {in_reference_trees_file}")
-    ts_ref = tskit.load(in_reference_trees_file)
-    ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
-    ts_ref_site_pos = ts_ref.sites_position
+    logging.info(f"Loading reference file: {in_reference_file}")
+    if in_file_type == "trees":
+        ts_ref = tskit.load(in_reference_file)
+        ts_ref = ts_ref.simplify()  # Needed? Remove unary nodes... what else?
+        ref_site_pos = ts_ref.sites_position
+    else:
+        sd_ref = tsinfer.load(in_reference_file)
+        ref_site_pos = sd_ref.sites_position[:]
 
     logging.info(f"Loading target samples file: {in_target_samples_file}")
     sd_target = tsinfer.load(in_target_samples_file)
@@ -246,13 +257,13 @@ def perform_imputation_by_sample_matching(
     mutation_rates = np.repeat(1e-8, ts_ref.num_sites)
 
     logging.info("Defining chip and mask sites relative to the reference trees")
-    ts_ref_sites_isin_chip = np.isin(
-        ts_ref_site_pos,
+    ref_sites_isin_chip = np.isin(
+        ref_site_pos,
         chip_site_pos_all,
         assume_unique=True,
     )
-    chip_site_pos = ts_ref_site_pos[ts_ref_sites_isin_chip]
-    mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
+    chip_site_pos = ref_site_pos[ref_sites_isin_chip]
+    mask_site_pos = ref_site_pos[np.invert(ref_sites_isin_chip)]
 
     assert (
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
