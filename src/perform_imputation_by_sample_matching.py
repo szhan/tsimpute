@@ -242,21 +242,23 @@ def perform_imputation_by_sample_matching(
     logging.info(f"Loading chip position file: {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
-    recombination_rates = np.repeat(1e-8, ts_ref.num_sites)
+    # Set uniform genome-wide recombination rate.
+    recombination_rates = np.repeat(1e-8, len(ref_site_pos))
+    # Apply genetic map if supplied.
     if in_genetic_map_file is not None:
         logging.info(f"Loading genetic map file: {in_genetic_map_file}")
         genetic_map = msprime.RateMap.read_hapmap(in_genetic_map_file)
         # Coordinates must be discrete, not continuous.
-        assert np.all(np.round(ts_ref.sites_position) == ts_ref.sites_position)
-        recombination_rates = genetic_map.get_rate(ts_ref.sites_position)
-        # `_tskit.LsHmm()` cannot handle NaN, so replace them with zero.
+        assert np.all(np.round(ref_site_pos) == ref_site_pos)
+        recombination_rates = genetic_map.get_rate(ref_site_pos)
+        # `_tskit.LsHmm()` cannot handle NaN values, so replace them with zero.
         recombination_rates = np.where(
             np.isnan(recombination_rates), 0, recombination_rates
         )
-    # TODO: Allow for site-specific mutation rates.
-    mutation_rates = np.repeat(1e-8, ts_ref.num_sites)
+    # Set uniform genome-wide mutation rate.
+    mutation_rates = np.repeat(1e-8, len(ref_site_pos))
 
-    logging.info("Defining chip and mask sites relative to the reference trees")
+    logging.info("Defining chip and mask sites relative to the reference data.")
     ref_sites_isin_chip = np.isin(
         ref_site_pos,
         chip_site_pos_all,
