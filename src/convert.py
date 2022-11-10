@@ -1112,7 +1112,7 @@ class ReichConverter(VcfConverter):
     default=None,
     help="Name of the reference sequence for provenance.",
 )
-@click.option("--exclude-indels", is_flag=True, default=False, help="Exclude indels?")
+@click.option("--exclude_indels", is_flag=True, default=False, help="Exclude indels?")
 @click.option(
     "--num_threads",
     type=int,
