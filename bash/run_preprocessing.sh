@@ -29,9 +29,9 @@ python src/convert.py \
     --data_file ../data/fimm/sisu_v3/sisu3_affylike_chr20.vcf.gz \
     --ancestral_states_file ${ancestral_states_file} \
     --output_file ${out_file} \
-    --reference-name GRCh38 \
-    --num-threads ${num_threads} \
-    --exclude-indels \
+    --reference_name GRCh38 \
+    --num_threads ${num_threads} \
+    --exclude_indels \
     --progress \
     > ${out_file}".report"
 
@@ -42,9 +42,9 @@ python src/convert.py \
     --data_file ../data/fimm/sisu_v3/sisu3_merged_nochip_chr20.vcf.gz \
     --ancestral_states_file ${ancestral_states_file} \
     --output_file ${out_file} \
-    --reference-name GRCh38 \
-    --num-threads ${num_threads} \
-    --exclude-indels \
+    --reference_name GRCh38 \
+    --num_threads ${num_threads} \
+    --exclude_indels \
     --progress \
     > ${out_file}".report"
 
@@ -55,9 +55,9 @@ python src/convert.py \
     --data_file ../data/fimm/sisu_v3/sisu3_imputed_merged_nochip_info_chr20.vcf.gz \
     --ancestral_states_file ${ancestral_states_file} \
     --output_file ${out_file} \
-    --reference-name GRCh38 \
-    --num-threads ${num_threads} \
-    --exclude-indels \
+    --reference_name GRCh38 \
+    --num_threads ${num_threads} \
+    --exclude_indels \
     --progress \
     > ${out_file}".report"
 
