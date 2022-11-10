@@ -426,7 +426,9 @@ class VcfConverter(Converter):
         for row in filter_duplicates_target(vcf, self.target_sites_pos):
             ancestral_state = self.get_ancestral_state(row.POS)
             if ancestral_state is None or ancestral_state not in [row.REF] + row.ALT:
-                # When no AA is known, or it's not REF or ALT, take REF as AA.
+                # Take REF as the AA if
+                # (1) no AA is known, or
+                # (2) it's not REF or ALT.
                 ancestral_state = row.REF
             site = self.convert_genotypes(row, ancestral_state, exclude_indels)
             if site is not None:
