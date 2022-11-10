@@ -263,7 +263,7 @@ def perform_imputation_by_sample_matching(
     logging.info(f"Writing ref.-compatible target samples: {compat_samples_file}")
     sd_compat = util.make_compatible_sample_data(
         target_samples=sd_target,
-        ref_ts=ts_ref,
+        ref_tree_sequence=ts_ref,
         skip_unused_markers=True,
         chip_site_pos=chip_site_pos,
         mask_site_pos=mask_site_pos,
