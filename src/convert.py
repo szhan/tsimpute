@@ -1060,19 +1060,19 @@ class ReichConverter(VcfConverter):
     "--data_file",
     type=click.Path(exists=True),
     required=True,
-    help="Input data file pattern.",
+    help="Input VCF file.",
 )
 @click.option(
     "--ancestral_states_file",
     type=click.Path(exists=True),
     required=True,
-    help="FastA file containing ancestral alleles.",
+    help="FastA file with ancestral alleles.",
 )
 @click.option(
     "--output_file",
     type=click.Path(exists=False),
     required=True,
-    help="The tsinfer output file.",
+    help="Output samples file.",
 )
 @click.option(
     "--metadata_file",
@@ -1100,7 +1100,7 @@ class ReichConverter(VcfConverter):
     "-p",
     is_flag=True,
     default=False,
-    help="Show progress bars and output extra information when done.",
+    help="Show progress bars and output extra information.",
 )
 @click.option(
     "--ancestral_states_url",
@@ -1110,7 +1110,7 @@ class ReichConverter(VcfConverter):
 @click.option(
     "--reference_name",
     default=None,
-    help="Name of the reference for provenance.",
+    help="Name of the reference sequence for provenance.",
 )
 @click.option("--exclude-indels", is_flag=True, default=False, help="Exclude indels?")
 @click.option(
