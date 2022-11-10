@@ -1,7 +1,7 @@
 $!/usr/bin/bash
 
 
-in_chip_file="../data/fimm/chip_positions_chr20.txt "
+in_chip_file="../data/fimm/chip_positions_chr20.txt"
 in_map_file="./assets/recomb-hg38/genetic_map_GRCh38_chr20_p.txt"
 in_dir="../analysis/sisu/"
 out_dir="../analysis/sisu/"
