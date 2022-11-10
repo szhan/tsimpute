@@ -10,48 +10,56 @@ num_threads="16"
 
 # Prepare samples files
 dataset="sisu42_chr20"
-python src/convert.py generic \
-    ../data/fimm/sisu_v4_2/v4.2.chr20_phased_SNPID.vcf.gz \
-    ${ancestral_states_file} \
-    ${out_dir}${dataset}".samples" \
-    --reference-name GRCh38 \
-    --num-threads ${num_threads} \
-    --exclude-indels \
-    > \
-    ${out_dir}${dataset}".samples.report"
+out_file=${out_dir}${dataset}".samples"
+python src/convert.py \
+    --source generic \
+    --data_file ../data/fimm/sisu_v4_2/v4.2.chr20_phased_SNPID.vcf.gz \
+    --ancestral_states_file ${ancestral_states_file} \
+    --output_file ${out_file} \
+    --reference_name GRCh38 \
+    --num_threads ${num_threads} \
+    --exclude_indels \
+    --progress \
+    > ${out_file}".report"
 
 dataset="sisu3_affylike_chr20"
-python src/convert.py generic \
-    ../data/fimm/sisu_v3/sisu3_affylike_chr20.vcf.gz \
-    ${ancestral_states_file} \
-    ${out_dir}${dataset}".samples" \
+out_file=${out_dir}${dataset}".samples"
+python src/convert.py \
+    --source generic \
+    --data_file ../data/fimm/sisu_v3/sisu3_affylike_chr20.vcf.gz \
+    --ancestral_states_file ${ancestral_states_file} \
+    --output_file ${out_file} \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
     --exclude-indels \
-    > \
-    ${out_dir}${dataset}".samples.report"
+    --progress \
+    > ${out_file}".report"
 
 dataset="sisu3_merged_nochip_chr20"
-python src/convert.py generic \
-    ../data/fimm/sisu_v3/sisu3_merged_nochip_chr20.vcf.gz \
-    ${ancestral_states_file} \
-    ${out_dir}${dataset}".samples" \
+out_file=${out_dir}${dataset}".samples"
+python src/convert.py \
+    --source generic \
+    --data_file ../data/fimm/sisu_v3/sisu3_merged_nochip_chr20.vcf.gz \
+    --ancestral_states_file ${ancestral_states_file} \
+    --output_file ${out_file} \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
     --exclude-indels \
-    > \
-    ${out_dir}${dataset}".samples.report"
+    --progress \
+    > ${out_file}".report"
 
 dataset="sisu3_imputed_merged_nochip_info_chr20"
-python src/convert.py generic \
-    ../data/fimm/sisu_v3/sisu3_imputed_merged_nochip_info_chr20.vcf.gz \
-    ${ancestral_states_file} \
-    ${out_dir}${dataset}".samples" \
+out_file=${out_dir}${dataset}".samples"
+python src/convert.py \
+    --source generic \
+    --data_file ../data/fimm/sisu_v3/sisu3_imputed_merged_nochip_info_chr20.vcf.gz \
+    --ancestral_states_file ${ancestral_states_file} \
+    --output_file ${out_file} \
     --reference-name GRCh38 \
     --num-threads ${num_threads} \
     --exclude-indels \
-    > \
-    ${out_dir}${dataset}".samples.report"
+    --progress \
+    > ${out_file}".report"
 
 
 # Subset the samples files by coordinate
