@@ -183,48 +183,53 @@ def is_biallelic(ts_or_sd):
     return True
 
 
-def make_compatible_sample_data(
-    sample_data,
-    ancestors_ts,
+def make_compatible_samples(
+    target_samples,
+    ref_samples,
     chip_site_pos,
     mask_site_pos,
     skip_unused_markers=True,
     path=None,
 ):
     """
-    Make a new `SampleData` object from an existing `SampleData` object such that:
-    (1) the derived alleles in `sample_data` not in `ancestors_ts` are marked as `tskit.MISSING`;
-    (2) the allele list in `new_sample_data` corresponds to the allele list in `ancestors_ts`.
-    (3) sites in `ancestors_ts` but not in `sample_data` are added to `new_sd`
-        with all the genotypes `tskit.MISSING`.
+    Make `target_samples` compatible with `ref_samples`.
+
+    Create a new `SampleData` object from an existing `SampleData` object such that:
+    (1) the derived alleles in `target_samples` not in `ref_samples` are encoded
+        as `tskit.MISSING` in `new_samples`;
+    (2) the allele list in `new_samples` corresponds to the allele list in `ref_samples`;
+    (3) the sites in `ref_samples` not in `target_samples` are added to `new_samples`
+        with all the genotypes encoded as `tskit.MISSING`;
+    (4) the sites in `target_samples` not in `ref_samples` may be kept as is,
+        or skipped optionally.
 
     These assumptions must be met:
-    (1) All the sites in `sample_data` and `ancestors_ts` must be biallelic.
-    (2) `sample_data` and `ancestors_ts` must have the same sequence length.
+    (1) `ref_samples` and `target_samples` must have the same sequence length.
+    (2) All the sites in `ref_samples` and `target_samples` must be biallelic.
 
-    Note: Two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
-    which are not explained in the tsinfer API doc, are used to facilitate the editing.
+    Note that this code uses two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
+    which are not explained in the tsinfer API doc.
 
-    :param tsinfer.SampleData sample_data: Samples which may be incompatible with ancestors_ts.
-    :param tskit.TreeSequence ancestors_ts: Ancestors tree serving as the reference panel.
-    :param numpy.ndarray chip_site_pos: A list of chip site positions.
-    :param numpy.ndarray mask_site_pos: A list of mask site positions.
-    :param bool skip_unused_markers: Skip markers only in samples (default = True).
+    :param tsinfer.SampleData target_samples: Target samples incompatible with reference samples.
+    :param tsinfer.SampleData ref_samples: Reference samples.
+    :param numpy.ndarray chip_site_pos: Chip site positions.
+    :param numpy.ndarray mask_site_pos: Mask site positions.
+    :param bool skip_unused_markers: Skip markers only in target samples (default = True).
     :param str path: Output samples file (default = None).
-    :return: Samples compatible with the tree sequence.
+    :return: Target samples compatible with reference samples.
     :rtype: tsinfer.SampleData
     """
-    assert sample_data.sequence_length == ancestors_ts.sequence_length, (
-        f"Samples has sequence length of {sample_data.sequence_length}, "
-        + f"whereas ancestors ts has {ancestors_ts.sequence_length}."
+    assert target_samples.sequence_length == ref_samples.sequence_length, (
+        f"Target samples has sequence length of {target_samples.sequence_length}, "
+        + f"whereas reference samples has {ref_samples.sequence_length}."
     )
 
-    ts_site_pos = ancestors_ts.sites_position
-    sd_site_pos = sample_data.sites_position[:]
-    all_site_pos = sorted(set(ts_site_pos).union(set(sd_site_pos)))
+    target_site_pos = target_samples.sites_position
+    ref_site_pos = ref_samples.sites_position[:]
+    all_site_pos = sorted(set(target_site_pos).union(set(ref_site_pos)))
 
-    logging.info(f"sites in TS = {len(ts_site_pos)}")
-    logging.info(f"sites in SD = {len(sd_site_pos)}")
+    logging.info(f"sites in target samples = {len(target_site_pos)}")
+    logging.info(f"sites in reference samples = {len(ref_site_pos)}")
     logging.info(f"site union = {len(all_site_pos)}")
 
     # Keep track of properly aligned sites
@@ -239,13 +244,24 @@ def make_compatible_sample_data(
     num_mask_sites = 0  # In ref. and target
     num_unused_sites = 0  # Only in target
 
+    # Add helper to get allele list of a site by position.
+    def get_site_id_alleles(samples, site_pos, query_pos):
+        site_id = np.where(site_pos == query_pos)[0]
+        assert len(site_id) == 1, f"Multiple site indices at {query_pos}"
+        site_id = site_id[0]
+        site_alleles = samples.sites_alleles[site_id]
+        assert (
+            len(site_alleles) == 2
+        ), f"Non-biallelic site at {query_pos}: {site_alleles}"
+        return site_id, site_alleles
+
     with tsinfer.SampleData(
-        sequence_length=ancestors_ts.sequence_length, path=path
-    ) as new_sample_data:
+        sequence_length=target_samples.sequence_length, path=path
+    ) as new_samples:
         # TODO: Add populations.
         # Add individuals
-        for ind in sample_data.individuals():
-            new_sample_data.add_individual(
+        for ind in target_samples.individuals():
+            new_samples.add_individual(
                 ploidy=len(ind.samples),
                 metadata=ind.metadata,
             )
@@ -264,128 +280,107 @@ def make_compatible_sample_data(
                 metadata["marker"] = ""
                 num_unused_sites += 1
 
-            if pos in ts_site_pos and pos not in sd_site_pos:
+            if pos in ref_site_pos and pos not in target_site_pos:
                 # Case 1: Reference markers
-                # Site in `ancestors_ts` (ref. panel) but not `sample_data` (target samples).
-                # Add the site to `new_sample_data` with all genotypes `tskit.MISSING`.
+                # Site in `ref_samples` not `target_samples`.
+                # Add the site to `new_samples` with all genotypes `tskit.MISSING`.
                 num_case_1 += 1
-
-                ts_site = ancestors_ts.site(position=pos)
-                assert (
-                    len(ts_site.alleles) == 2
-                ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
-                ts_ancestral_state = ts_site.ancestral_state
-                ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
-
-                new_sample_data.add_site(
+                _, ref_alleles = get_site_id_alleles(
+                    samples=ref_samples, site_pos=ref_site_pos, query_pos=pos
+                )
+                new_samples.add_site(
                     position=pos,
-                    genotypes=np.full(sample_data.num_samples, tskit.MISSING_DATA),
-                    alleles=[ts_ancestral_state, ts_derived_state],
+                    genotypes=np.full(target_samples.num_samples, tskit.MISSING_DATA),
+                    alleles=ref_alleles,
                     ancestral_allele=0,
                     metadata=metadata,
                 )
-            elif pos in ts_site_pos and pos in sd_site_pos:
+            elif pos in ref_site_pos and pos in target_site_pos:
                 # Case 2: Target markers
-                # Site in both `ancestors_ts` (ref. panel) and `sample_data` (target samples).
+                # Site in both `ref_samples` and `target_samples`.
                 # Align the allele lists and genotypes if unaligned.
-                # Add the site to `new_sample_data` with (aligned) genotypes from `sample_data`.
-                ts_site = ancestors_ts.site(position=pos)
-                assert (
-                    len(ts_site.alleles) == 2
-                ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
-                ts_ancestral_state = ts_site.ancestral_state
-                ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
+                # Add the site to `new_samples` with (aligned) genotypes from `target_samples`.
+                _, ref_alleles = get_site_id_alleles(
+                    samples=ref_samples, site_pos=ref_site_pos, query_pos=pos
+                )
+                target_site_id, target_alleles = get_site_id_alleles(
+                    samples=target_samples, site_pos=target_site_pos, query_pos=pos
+                )
+                target_gt = target_samples.sites_genotypes[target_site_id]
 
-                sd_site_id = sd_site_pos.tolist().index(pos)
-                sd_site_alleles = sample_data.sites_alleles[sd_site_id]
-                assert (
-                    len(sd_site_alleles) == 2
-                ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}"
-                sd_site_gt = sample_data.sites_genotypes[sd_site_id]
-
-                # Notes
-                # `ts_site.alleles` is an unordered set of alleles (without None).
-                # `sd_site_alleles` is an ordered list of alleles.
-                if [ts_ancestral_state, ts_derived_state] == sd_site_alleles:
+                # `ref_alleles` and `target_alleles` are ordered lists.
+                if ref_alleles == target_alleles:
                     # Case 2a: Aligned target markers
-                    # Both alleles are in `ancestors_ts` and `sample_data`.
+                    # Both alleles are in `ref_samples` and `target_samples`.
                     # Already aligned, so no need to realign.
                     num_case_2a += 1
-
-                    new_sample_data.add_site(
+                    new_samples.add_site(
                         position=pos,
-                        genotypes=sd_site_gt,
-                        alleles=[ts_ancestral_state, ts_derived_state],
+                        genotypes=target_gt,
+                        alleles=ref_alleles,
                         ancestral_allele=0,
                         metadata=metadata,
                     )
-                elif [ts_derived_state, ts_ancestral_state] == sd_site_alleles:
+                elif ref_alleles[::-1] == target_alleles:
                     # Case 2b: Unaligned target markers
-                    # Both alleles are in `ancestors_ts` and `sample_data`.
-                    # Align them by flipping the alleles in `sample_data`.
+                    # Both alleles are in `ref_samples` and `target_samples`.
+                    # Align them by flipping the alleles in `target_samples`.
                     num_case_2b += 1
-
-                    new_gt = np.where(
-                        sd_site_gt == tskit.MISSING_DATA,
+                    realigned_gt = np.where(
+                        target_gt == tskit.MISSING_DATA,
                         tskit.MISSING_DATA,
-                        np.where(sd_site_gt == 0, 1, 0),  # Flip
+                        np.where(target_gt == 0, 1, 0),  # Flip
                     )
-
-                    new_sample_data.add_site(
+                    new_samples.add_site(
                         position=pos,
-                        genotypes=new_gt,
-                        alleles=[ts_ancestral_state, ts_derived_state],
+                        genotypes=realigned_gt,
+                        alleles=ref_alleles,
                         ancestral_allele=0,
                         metadata=metadata,
                     )
                 else:
-                    # Case 2c: At least one allele in `sample_data` is not found in `ancestor_ts`.
-                    # Allele(s) in `sample_data` but not in `ancestor_ts` is always wrongly imputed.
+                    # Case 2c: At least one allele in `target_samples` is not found in `ref_samples`.
+                    # Allele(s) in `target_samples` but not in `ref_samples` is always wrongly imputed.
                     # It is best to ignore these sites when assessing imputation performance.
                     # Also, if there are many such sites, then it should be a red flag.
                     num_case_2c += 1
-
-                    new_allele_list = [ts_ancestral_state, ts_derived_state, None]
+                    new_allele_list = [ref_alleles[0], ref_alleles[1], None]
                     # Key: index in old allele list; value: index in new allele list
                     index_map = {}
-                    for i, a in enumerate(sd_site_alleles):
+                    for i, a in enumerate(target_alleles):
                         index_map[i] = (
                             new_allele_list.index(a)
                             if a in new_allele_list
                             else tskit.MISSING_DATA
                         )
-
-                    new_sample_data.add_site(
+                    new_samples.add_site(
                         position=pos,
-                        genotypes=np.vectorize(lambda x: index_map[x])(sd_site_gt),
+                        genotypes=np.vectorize(lambda x: index_map[x])(target_gt),
                         alleles=new_allele_list,
                         ancestral_allele=0,
                         metadata=metadata,
                     )
-            elif pos not in ts_site_pos and pos in sd_site_pos:
-                # Case 3: Unused target-only markers
-                # Site not in `ancestors_ts` but in `sample_data`.
-                # Add the site to `new_sample_data` with the original genotypes from `sample_data`.
+            elif pos not in ref_site_pos and pos in target_site_pos:
+                # Case 3: Unused (target-only) markers
+                # Site not in `ref_samples` but in `target_samples`.
+                # Add the site to `new_samples` with the original genotypes.
                 num_case_3 += 1
-
                 if skip_unused_markers:
                     continue
+                target_site_id, target_alleles = get_site_id_alleles(
+                    samples=target_samples, site_pos=target_site_pos, query_pos=pos
+                )
+                target_gt = target_samples.sites_genotypes[target_site_id]
 
-                sd_site_id = sd_site_pos.tolist().index(pos)
-                sd_site_alleles = sample_data.sites_alleles[sd_site_id]
-                assert (
-                    len(sd_site_alleles) == 2
-                ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}."
-
-                new_sample_data.add_site(
+                new_samples.add_site(
                     position=pos,
-                    genotypes=sample_data.sites_genotypes[sd_site_id],
-                    alleles=sd_site_alleles,
+                    genotypes=target_samples.sites_genotypes[target_site_id],
+                    alleles=target_alleles,
                     ancestral_allele=0,
                     metadata=metadata,
                 )
             else:
-                logging.error(f"site at {pos} must be in the ts and/or sd.")
+                logging.error(f"site at {pos} must be in the ref. or target samples.")
 
     logging.info(f"case 1 (ref.-only): {num_case_1}")
     logging.info(f"case 2a (both, aligned): {num_case_2a}")
@@ -396,14 +391,13 @@ def make_compatible_sample_data(
     logging.info(f"mask sites: {num_mask_sites}")
     logging.info(f"unused sites: {num_unused_sites}")
 
-    assert (
-        num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_3
-        == len(all_site_pos)
+    assert num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_3 == len(
+        all_site_pos
     )
 
     if skip_unused_markers:
-        assert num_chip_sites + num_mask_sites == len(ts_site_pos)
+        assert num_chip_sites + num_mask_sites == len(ref_site_pos)
     else:
         assert num_chip_sites + num_mask_sites + num_unused_sites == len(all_site_pos)
 
-    return new_sample_data
+    return new_samples
