@@ -1082,14 +1082,14 @@ class ReichConverter(VcfConverter):
     help="Metadata file containing population and sample data.",
 )
 @click.option(
-    "--max-variants",
+    "--max_variants",
     "-n",
     type=int,
     default=None,
     help="Keep only the first n variants.",
 )
 @click.option(
-    "--target-samples",
+    "--target_samples",
     type=click.Path(exists=True),
     default=None,
     help="Target samples file, only variants present in this target file will \
@@ -1103,18 +1103,18 @@ class ReichConverter(VcfConverter):
     help="Show progress bars and output extra information when done.",
 )
 @click.option(
-    "--ancestral-states-url",
+    "--ancestral_states_url",
     default=None,
     help="Source of ancestral state information for provenance.",
 )
 @click.option(
-    "--reference-name",
+    "--reference_name",
     default=None,
     help="Name of the reference for provenance.",
 )
 @click.option("--exclude-indels", is_flag=True, default=False, help="Exclude indels?")
 @click.option(
-    "--num-threads",
+    "--num_threads",
     type=int,
     default=1,
     help="Number of threads to use.",
