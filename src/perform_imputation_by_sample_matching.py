@@ -227,7 +227,7 @@ def perform_imputation_by_sample_matching(
     logging.info(f"Loading target samples file: {in_target_samples_file}")
     sd_target = tsinfer.load(in_target_samples_file)
 
-    logging.info(f"Loading chip position file: {in_chip_file}")
+    logging.info(f"Loading chip site position file: {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
     # Set uniform genome-wide recombination rate
@@ -246,7 +246,7 @@ def perform_imputation_by_sample_matching(
     # Set uniform genome-wide mutation rate
     mutation_rates = np.repeat(1e-8, len(ref_site_pos))
 
-    logging.info("Defining chip and mask sites relative to the reference trees.")
+    logging.info("Defining chip and mask sites wrt the reference trees.")
     ref_sites_isin_chip = np.isin(
         ref_site_pos,
         chip_site_pos_all,
@@ -259,8 +259,8 @@ def perform_imputation_by_sample_matching(
         len(set(chip_site_pos) & set(mask_site_pos)) == 0
     ), f"Chip and mask site positions are not mutually exclusive."
 
-    logging.info("Making samples compatible with the reference trees.")
-    logging.info(f"Writing compatible samples to file: {compat_samples_file}")
+    logging.info("Making target samples compatible with the reference trees.")
+    logging.info(f"Writing ref.-compatible target samples: {compat_samples_file}")
     sd_compat = util.make_compatible_sample_data(
         sample_data=sd_target,
         ancestors_ts=ts_ref,
@@ -279,7 +279,7 @@ def perform_imputation_by_sample_matching(
         precision=precision,
     )
 
-    logging.info(f"Writing imputed samples to file: {out_samples_file}")
+    logging.info(f"Writing imputed samples: {out_samples_file}")
     write_genotype_matrix_to_samples(
         tree_sequence=ts_ref,
         genotype_matrix=gm_imputed,
