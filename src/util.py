@@ -183,34 +183,34 @@ def is_biallelic(ts_or_sd):
     return True
 
 
-def make_compatible_sample_data(
+def make_compatible_samples(
     target_samples,
-    ref_ts,
+    ref_tree_sequence,
     chip_site_pos,
     mask_site_pos,
     skip_unused_markers=True,
     path=None,
 ):
     """
-    Create `new_samples` from `target_samples` that is compatible with `ref_ts`.
+    Create `new_samples` from `target_samples` that is compatible with `ref_tree_sequence`.
 
     Create a new `SampleData` object from an existing `SampleData` object such that:
-    (1) the derived alleles in `target_samples` not in `ref_ts` are marked as `tskit.MISSING`;
-    (2) the allele list in `new_samples` corresponds to the allele list in `ref_ts`;
-    (3) sites in `ref_ts` but not in `target_samples` are added to `new_samples`
+    (1) the derived alleles in `target_samples` not in `ref_tree_sequence` are marked as `tskit.MISSING`;
+    (2) the allele list in `new_samples` corresponds to the allele list in `ref_tree_sequence`;
+    (3) sites in `ref_tree_sequence` but not in `target_samples` are added to `new_samples`
         with all the genotypes `tskit.MISSING`;
-    (4) sites in `target_samples` but not in `ref_ts` are added to `new_samples` as is,
+    (4) sites in `target_samples` but not in `ref_tree_sequence` are added to `new_samples` as is,
         but they can be optionally skipped.
 
     These assumptions must be met:
-    (1) `target_samples` and `ref_ts` must have the same sequence length.
-    (2) All the sites in `target_samples` and `ref_ts` must be biallelic.
+    (1) `target_samples` and `ref_tree_sequence` must have the same sequence length.
+    (2) All the sites in `target_samples` and `ref_tree_sequence` must be biallelic.
 
     Note that this code uses two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
     which are not explained in the tsinfer API doc.
 
     :param tsinfer.SampleData sample_data: Target samples possibly incompatible with ref. trees.
-    :param tskit.TreeSequence ref_ts: Ref. trees (may be ancestors trees).
+    :param tskit.TreeSequence ref_tree_sequence: Ref. trees (may be ancestors trees).
     :param numpy.ndarray chip_site_pos: Chip site positions.
     :param numpy.ndarray mask_site_pos: Mask site positions.
     :param bool skip_unused_markers: Skip markers only in target samples (default = True).
@@ -218,13 +218,13 @@ def make_compatible_sample_data(
     :return: Target samples compatible with the ref. trees.
     :rtype: tsinfer.SampleData
     """
-    assert target_samples.sequence_length == ref_ts.sequence_length, (
+    assert target_samples.sequence_length == ref_tree_sequence.sequence_length, (
         f"Target samples has sequence length of {target_samples.sequence_length}, "
-        + f"whereas ref. trees has {ref_ts.sequence_length}."
+        + f"whereas ref. trees has {ref_tree_sequence.sequence_length}."
     )
 
     sd_site_pos = target_samples.sites_position[:]
-    ts_site_pos = ref_ts.sites_position
+    ts_site_pos = ref_tree_sequence.sites_position
     all_site_pos = sorted(set(sd_site_pos).union(set(ts_site_pos)))
 
     logging.info(f"sites in target samples = {len(sd_site_pos)}")
@@ -239,12 +239,12 @@ def make_compatible_sample_data(
     num_case_3 = 0
 
     # Keep track of markers
-    num_chip_sites = 0  # In ref. and target
-    num_mask_sites = 0  # In ref. and target
+    num_chip_sites = 0  # In both ref. and target
+    num_mask_sites = 0  # Only in ref.
     num_unused_sites = 0  # Only in target
 
     with tsinfer.SampleData(
-        sequence_length=ref_ts.sequence_length, path=path
+        sequence_length=ref_tree_sequence.sequence_length, path=path
     ) as new_samples:
         # TODO: Add populations.
         # Add individuals
@@ -270,11 +270,11 @@ def make_compatible_sample_data(
 
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1: Reference markers.
-                # Site in `ref_ts` but not in `target_samples`.
+                # Site in `ref_tree_sequence` but not in `target_samples`.
                 # Add the site to `new_samples` with all genotypes `tskit.MISSING`.
                 num_case_1 += 1
 
-                ts_site = ref_ts.site(position=pos)
+                ts_site = ref_tree_sequence.site(position=pos)
                 assert (
                     len(ts_site.alleles) == 2
                 ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
@@ -290,10 +290,10 @@ def make_compatible_sample_data(
                 )
             elif pos in ts_site_pos and pos in sd_site_pos:
                 # Case 2: Target markers.
-                # Site in both `ref_ts` and `target_samples`.
+                # Site in both `ref_tree_sequence` and `target_samples`.
                 # Align the allele lists and genotypes if unaligned.
                 # Add the site to `new_samples` with (aligned) genotypes from `target_samples`.
-                ts_site = ref_ts.site(position=pos)
+                ts_site = ref_tree_sequence.site(position=pos)
                 assert (
                     len(ts_site.alleles) == 2
                 ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
@@ -324,8 +324,8 @@ def make_compatible_sample_data(
                         metadata=metadata,
                     )
                 elif [ts_derived_state, ts_ancestral_state] == sd_site_alleles:
-                    # Case 2b: Unaligned target markers
-                    # Both alleles are in `ref_ts` and `target_samples`.
+                    # Case 2b: Unaligned target markers.
+                    # Both alleles are in `ref_tree_sequence` and `target_samples`.
                     # Align them by flipping the alleles in `target_samples`.
                     num_case_2b += 1
 
@@ -343,8 +343,8 @@ def make_compatible_sample_data(
                         metadata=metadata,
                     )
                 else:
-                    # Case 2c: At least one allele in `sample_data` is not found in `ancestor_ts`.
-                    # Allele(s) in `sample_data` but not in `ancestor_ts` is always wrongly imputed.
+                    # Case 2c: At least one allele in `target_samples` is not found in `ref_tree_sequence`.
+                    # Allele(s) in `target_samples` but not in `ref_tree_sequence` is always wrongly imputed.
                     # It is best to ignore these sites when assessing imputation performance.
                     # Also, if there are many such sites, then it should be a red flag.
                     num_case_2c += 1
@@ -368,7 +368,7 @@ def make_compatible_sample_data(
                     )
             elif pos not in ts_site_pos and pos in sd_site_pos:
                 # Case 3: Unused (target-only) markers
-                # Site not in `ref_ts` but in `target_samples`.
+                # Site not in `ref_tree_sequence` but in `target_samples`.
                 # Add the site to `new_samples` with the original genotypes.
                 num_case_3 += 1
 
