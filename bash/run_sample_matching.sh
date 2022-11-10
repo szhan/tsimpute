@@ -9,6 +9,7 @@ out_dir="../analysis/sisu/"
 
 time python src/perform_imputation_by_sample_matching.py \
     -i1 ${in_dir}"sisu42_chr20_p.samples" \
+    --in_file_type samples
     -i2 ${in_dir}"sisu3_affylike_chr20_p.samples" \
     -c ${in_chip_file} \
     -o ${out_dir} \
@@ -17,6 +18,7 @@ time python src/perform_imputation_by_sample_matching.py \
 
 time python src/perform_imputation_by_sample_matching.py \
     -i1 ${in_dir}"sisu42_chr20_p.samples" \
+    --in_file_type samples
     -i2 ${in_dir}"sisu3_affylike_chr20_p.samples" \
     -c ${in_chip_file} \
     -o ${out_dir} \
