@@ -261,7 +261,7 @@ def perform_imputation_by_sample_matching(
 
     logging.info("Making target samples compatible with the reference trees.")
     logging.info(f"Writing ref.-compatible target samples: {compat_samples_file}")
-    sd_compat = util.make_compatible_sample_data(
+    sd_compat = util.make_compatible_samples(
         target_samples=sd_target,
         ref_tree_sequence=ts_ref,
         skip_unused_markers=True,
