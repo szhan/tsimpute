@@ -249,7 +249,7 @@ def make_compatible_samples(
         # TODO: Add populations.
         # Add individuals
         for ind in target_samples.individuals():
-            new_sample_data.add_individual(
+            new_samples.add_individual(
                 ploidy=len(ind.samples),
                 metadata=ind.metadata,
             )
