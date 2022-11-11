@@ -23,3 +23,4 @@ time python src/perform_imputation_by_sample_matching.py \
     -p chr20_p.sample_matched.genetic_map.precision10 \
     -g ${in_map_file} \
     --precision 10
+
