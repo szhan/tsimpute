@@ -5,8 +5,10 @@ from pathlib import Path
 import sys
 from git import Repo
 from tqdm import tqdm
+
 import numpy as np
 import msprime
+
 import _tskit
 import tskit
 import tsinfer
@@ -16,9 +18,16 @@ import masks
 import util
 
 
+_ACGT_ALPHABET_ = np.array([tskit.MISSING_DATA, 0, 1, 2, 3])
+
+
 def create_index_map(x):
     """
-    Maps from ancestral/derived allele space (i.e. 01) to ACGT space (i.e. 0123).
+    Prepare an allele map from ancestral/derived state space (i.e. 01) to ACGT space (i.e. 0123).
+
+    :param numpy.ndarray x: Alleles in ancestral/derived state space.
+    :return: Alleles in ACGT space.
+    :rtype: numpy.ndarray
     """
     alleles = ["A", "C", "G", "T", None]
     map_ACGT = [alleles.index(x[i]) for i in range(len(x))]
@@ -30,25 +39,31 @@ def create_index_map(x):
 
 
 def get_traceback_path(
-    tree_sequence, haplotype, recombination_rates, mutation_rates, precision
+    ts,
+    sample_sequence,
+    recombination_rates,
+    mutation_rates,
+    precision
 ):
     """
-    :param tskit.TreeSequence tree_sequence: Tree sequence with samples to match against.
-    :param numpy.ndarray haplotype: Haplotype in ACGT space.
+    Perform traceback on the HMM to get a path of sample IDs.
+
+    :param tskit.TreeSequence ts: Tree sequence with samples to match against.
+    :param numpy.ndarray sample_sequence: Sample sequence in ACGT space.
     :param numpy.ndarray recombination_rates: Site-specific recombination rates.
     :param numpy.ndarray mutation_rates: Site-specifc mutation rates.
     :param float precision: Precision of likelihood calculations.
-    :return: HMM path (a list of sample IDs).
+    :return: HMM path (list of sample IDs).
     :rtype: numpy.ndarray
     """
-    assert tree_sequence.num_sites == len(haplotype), (
-        f"Length of haplotype array {tree_sequence.num_sites} "
-        "differs from "
-        f"number of sites {len(haplotype)}."
+    assert ts.num_sites == len(sample_sequence), (
+        f"Length of tree sequence {ts.num_sites} "
+        f"differs from "
+        f"length of sample sequence {len(sample_sequence)}."
     )
-    assert len(haplotype) == len(recombination_rates), (
-        f"Length of haplotype array {len(haplotype)} "
-        "differs from "
+    assert len(sample_sequence) == len(recombination_rates), (
+        f"Length of sample sequence {len(sample_sequence)} "
+        f"differs from "
         f"length of recombination rate array {len(recombination_rates)}."
     )
     assert len(recombination_rates) == len(mutation_rates), (
@@ -56,67 +71,80 @@ def get_traceback_path(
         f"differs from"
         f"length of mutation rate array {len(mutation_rates)}."
     )
-    assert np.all(np.isin(haplotype, np.array([tskit.MISSING_DATA, 0, 1, 2, 3]))), (
-        f"Haplotype array contains only {tskit.MISSING_DATA}, 0, 1, 2, and 3 "
-        f"- {np.unique(haplotype)}."
+    assert np.all(np.isin(sample_sequence, _ACGT_ALPHABET_)), (
+        f"Sample sequence has character(s) not in {_ACGT_ALPHABET_},"
+        f"{np.unique(sample_sequence)}."
     )
 
-    ll_ts = tree_sequence.ll_tree_sequence
+    ll_ts = ts.ll_tree_sequence
 
     ls_hmm = _tskit.LsHmm(
         ll_ts,
         recombination_rate=recombination_rates,
         mutation_rate=mutation_rates,
         precision=precision,
-        acgt_alleles=True,  # Matrix is in ACGT (i.e. 0123) space
+        acgt_alleles=True,  # In ACGT space
     )
 
     vm = _tskit.ViterbiMatrix(ll_ts)
-    ls_hmm.viterbi_matrix(haplotype, vm)
+    ls_hmm.viterbi_matrix(sample_sequence, vm)
     path = vm.traceback()
 
-    assert len(path) == tree_sequence.num_sites, (
+    assert len(path) == ts.num_sites, (
         f"Length of HMM path {len(path)} "
         "differs from "
-        f"number of sites {tree_sequence.num_sites}."
+        f"number of sites {ts.num_sites}."
     )
-    assert np.all(
-        np.isin(path, tree_sequence.samples())
-    ), f"Some IDs in the path are not sample IDs."
+    assert np.all(np.isin(path, ts.samples())), \
+        f"Some IDs in the path are not sample IDs."
 
     return path
 
 
 def impute_by_sample_matching(
-    tree_sequence, sample_data, recombination_rates, mutation_rates, precision
+    ts, sd, recombination_rates, mutation_rates, precision
 ):
-    assert tree_sequence.num_sites == sample_data.num_sites
-    assert np.all(np.isin(tree_sequence.sites_position, sample_data.sites_position))
+    """
+    Match samples to a tree sequence using an exact HMM implementation
+    of the Li & Stephens model, and then impute into samples.
 
-    logging.info("Mapping samples to ACGT space.")
-    H1 = np.zeros((tree_sequence.num_sites, sample_data.num_samples), dtype=np.int32)
+    The tree sequence and sample data must have the same site positions.
+
+    :param tskit.TreeSequence ts: Tree sequence with samples to match against.
+    :param tsinfer.SampleData sd: Samples to impute.
+    :param numpy.ndarray recombination_rates: Site-specific recombination rates.
+    :param numpy.ndarray mutation_rates: Site-specifc mutation rates.
+    :param float precision: Precision of likelihood calculations.
+    """
+    assert set(ts.sites_position) == set(sd.sites_position), \
+        "Site positions in tree sequence and sample data do not match."
+
+    logging.info("Step 1: Mapping samples to ACGT space.")
+    # Set up a matrix of sites (rows) x samples (columns).
+    H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
     i = 0
-    for v in tqdm(sample_data.variants()):
-        if v.site.position in tree_sequence.sites_position:
+    for v in tqdm(sd.variants()):
+        if v.site.position in ts.sites_position:
             H1[i, :] = create_index_map(v.alleles)[v.genotypes]
             i += 1
+    # Transpose the matrix to get samples (rows) x sites (columns).
     H1 = H1.T
 
-    logging.info("Performing traceback.")
-    H2 = np.zeros((sample_data.num_samples, tree_sequence.num_sites), dtype=np.int32)
-    for i in tqdm(np.arange(sample_data.num_samples)):
+    logging.info("Step 2: Performing HMM traceback.")
+    H2 = np.zeros_like(H1)
+    for i in tqdm(np.arange(sd.num_samples)):
         H2[i, :] = get_traceback_path(
-            tree_sequence=tree_sequence,
+            ts=ts,
             haplotype=H1[i, :],
             recombination_rates=recombination_rates,
             mutation_rates=mutation_rates,
             precision=precision,
         )
 
-    logging.info("Imputing into samples.")
+    logging.info("Step 3: Imputing into samples.")
+    H3 = np.zeros_like(H1)
     i = 0
-    H3 = np.zeros((sample_data.num_samples, tree_sequence.num_sites), dtype=np.int32)
-    for v in tqdm(tree_sequence.variants()):
+    for v in tqdm(ts.variants()):
         H3[:, i] = v.genotypes[H2[:, i]]
         i += 1
 
@@ -124,29 +152,42 @@ def impute_by_sample_matching(
 
 
 def write_genotype_matrix_to_samples(
-    tree_sequence,
+    ts,
     genotype_matrix,
-    mask_site_pos,
-    chip_site_pos,
     out_file,
+    mask_site_pos=None,
+    chip_site_pos=None,
 ):
-    assert tree_sequence.num_sites == genotype_matrix.shape[1]
+    """
+    Write a genotype matrix to a sample data file.
 
-    out_file = str(out_file)
-    ts_iter = tree_sequence.variants()
+    :param tskit.TreeSequence ts: Tree sequence with sites to match against.
+    :param numpy.ndarray genotype_matrix: Genotype matrix in ancestral/derived state space.
+    :param pathlib.Path out_file: Path to output samples file.
+    :param array-like mask_site_pos: Site positions to mark as "mask".
+    :param array-like chip_site_pos: Site positions to mark as "chip".
+    """
+    assert ts.num_sites == genotype_matrix.shape[1]
+    assert len(set(mask_site_pos).intersection(set(chip_site_pos))) == 0, \
+        f"Mask and chip site positions are not mutually exclusive."
 
-    i = 0  # Track iterating through `genotype_matrix`
-    with tsinfer.SampleData(path=out_file) as sample_data:
-        for ts_v in tqdm(ts_iter):
+    if mask_site_pos is None:
+        mask_site_pos = []
+    if chip_site_pos is None:
+        chip_site_pos = []
+
+    i = 0
+    with tsinfer.SampleData(path=str(out_file)) as sd:
+        for ts_v in tqdm(ts.variants()):
             # TODO: Inherit site metadata from compatible samples.
-            # Set metadata
+            # Set site metadata
             metadata = {"marker": ""}
             if ts_v.site.position in mask_site_pos:
                 metadata["marker"] = "mask"
             elif ts_v.site.position in chip_site_pos:
                 metadata["marker"] = "chip"
             # Add site
-            sample_data.add_site(
+            sd.add_site(
                 position=ts_v.site.position,
                 genotypes=genotype_matrix[:, i],
                 alleles=ts_v.alleles,
@@ -158,13 +199,13 @@ def write_genotype_matrix_to_samples(
 @click.command()
 @click.option(
     "--in_reference_trees_file",
-    "-i1",
+    "-r",
     required=True,
-    help="Trees file with reference genomes.",
+    help="Trees file with reference panel genomes.",
 )
 @click.option(
     "--in_target_samples_file",
-    "-i2",
+    "-t",
     required=True,
     help="Samples file with target genomes.",
 )
@@ -230,9 +271,13 @@ def perform_imputation_by_sample_matching(
     logging.info(f"Loading chip site position file: {in_chip_file}")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
-    # Set uniform genome-wide recombination rate
-    recombination_rates = np.repeat(1e-8, len(ref_site_pos))
-    # Apply genetic map if supplied.
+    # Human-like rates
+    recombination_rate_constant = 1e8
+    mutation_rate_constant = 1e8
+
+    # Set genome-wide recombination rate.
+    recombination_rates = np.repeat(recombination_rate_constant, len(ref_site_pos))
+    # Apply genetic map, if supplied.
     if in_genetic_map_file is not None:
         logging.info(f"Loading genetic map file: {in_genetic_map_file}")
         genetic_map = msprime.RateMap.read_hapmap(in_genetic_map_file)
@@ -243,8 +288,9 @@ def perform_imputation_by_sample_matching(
         recombination_rates = np.where(
             np.isnan(recombination_rates), 0, recombination_rates
         )
-    # Set uniform genome-wide mutation rate
-    mutation_rates = np.repeat(1e-8, len(ref_site_pos))
+
+    # Set genome-wide mutation rate.
+    mutation_rates = np.repeat(mutation_rate_constant, len(ref_site_pos))
 
     logging.info("Defining chip and mask sites wrt the reference trees.")
     ref_sites_isin_chip = np.isin(
@@ -272,8 +318,8 @@ def perform_imputation_by_sample_matching(
 
     logging.info("Imputing into target samples.")
     gm_imputed = impute_by_sample_matching(
-        tree_sequence=ts_ref,
-        sample_data=sd_compat,
+        ts=ts_ref,
+        sd=sd_compat,
         recombination_rates=recombination_rates,
         mutation_rates=mutation_rates,
         precision=precision,
