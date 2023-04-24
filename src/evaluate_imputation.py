@@ -85,6 +85,10 @@ def evaluate_imputation(
     sd_true = tsinfer.load(in_true_samples_file)
     ts_ref = tskit.load(in_reference_trees_file)
 
+    logging.info(f"Sites in imputed samples: {data_imputed.num_sites}")
+    logging.info(f"Sites in ground-truth samples: {sd_true.num_sites}")
+    logging.info(f"Sites in ref. panel samples: {ts_ref.num_sites}")
+
     data_imputed_site_pos = (
         data_imputed.sites_position
         if in_file_type == "trees"
@@ -93,7 +97,7 @@ def evaluate_imputation(
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
 
-    logging.info("Defining chip and mask sites relative to the reference trees")
+    logging.info("Defining chip and mask sites relative to the ref. panel")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
     ts_ref_sites_isin_chip = np.isin(
         ts_ref_site_pos,
@@ -102,15 +106,15 @@ def evaluate_imputation(
     )
     chip_site_pos = ts_ref_site_pos[ts_ref_sites_isin_chip]
     mask_site_pos = ts_ref_site_pos[np.invert(ts_ref_sites_isin_chip)]
-    logging.info(f"Mask sites all: {len(mask_site_pos)}")
+    logging.info(f"mask sites all: {len(mask_site_pos)}")
 
     mask_site_pos = set(mask_site_pos) & set(sd_true_site_pos)  # Must be in truth set
-    logging.info(f"Mask sites in truth set: {len(mask_site_pos)}")
+    logging.info(f"mask sites in ground-truth samples: {len(mask_site_pos)}")
 
     mask_site_pos = np.sort(
         list(mask_site_pos & set(data_imputed_site_pos))
     )  # Must be in imputed set
-    logging.info(f"Mask sites also in imputed set: {len(mask_site_pos)}")
+    logging.info(f"mask sites also in imputed samples: {len(mask_site_pos)}")
 
     assert set(mask_site_pos).issubset(set(data_imputed_site_pos))
     assert set(mask_site_pos).issubset(set(sd_true_site_pos))
@@ -270,8 +274,8 @@ def evaluate_imputation(
 
     end_dt = datetime.now()
     end_dt_str = end_dt.strftime("%d/%m/%Y %H:%M:%S")
-    print(f"INFO: END {end_dt_str}")
-    print(f"INFO: DURATION {str(end_dt - start_dt)}")
+    logging.info(f"end: {end_dt_str}")
+    logging.info(f"duration: {str(end_dt - start_dt)}")
 
 
 if __name__ == "__main__":
