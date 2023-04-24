@@ -5,7 +5,10 @@ import logging
 import sys
 from git import Repo
 from tqdm import tqdm
+
 import numpy as np
+import pandas as pd
+
 import tskit
 import tsinfer
 
@@ -121,10 +124,18 @@ def evaluate_imputation(
     v_sd_true = next(vars_sd_true)
     v_ts_ref = next(vars_ts_ref)
 
-    # Get a simplified ts for arity calculations.
-    # ts_ref_simp = ts_ref.simplify()
+    pos = np.zeros(len(mask_site_pos), dtype=np.int32)
+    ref_ma_index = np.zeros_like(pos)
+    ref_ma_freq = np.zeros_like(pos, dtype=np.float32)
+    imputed_ma_index = np.zeros_like(pos)
+    imputed_ma_freq = np.zeros_like(pos, dtype=np.float32)
+    iqs = np.zeros_like(pos, dtype=np.float32)
+    num_muts = np.zeros_like(pos)
+    is_aa_ref = np.zeros_like(pos, dtype=np.bool)
+    is_aa_parsimonious = np.zeros_like(pos, dtype=np.bool)
+    num_wrongly_imputed_alleles = np.zeros_like(pos, dtype=np.int32)
+    prop_wrongly_imputed_alleles_0 = np.zeros_like(pos, dtype=np.float32)
 
-    results = None
     for pos in tqdm(mask_site_pos):
         while v_data_imputed.site.position != pos:
             v_data_imputed = next(vars_data_imputed)
@@ -211,25 +222,20 @@ def evaluate_imputation(
                 / num_wrongly_imputed_alleles
             )
 
-        line = np.array(
-            [
-                [
-                    pos,
-                    ref_ma_index,
-                    ref_ma_freq,
-                    imputed_ma_index,
-                    imputed_ma_freq,
-                    iqs,
-                    num_muts,
-                    is_aa_ref,
-                    is_aa_parsimonious,
-                    num_wrongly_imputed_alleles,
-                    prop_wrongly_imputed_alleles_0,
-                ],
-            ]
-        )
-
-        results = line if results is None else np.append(results, line, axis=0)
+    results = {
+        "pos": pos,
+        "ref_ma_index": ref_ma_index,
+        "ref_ma_freq": ref_ma_freq,
+        "imputed_ma_index": imputed_ma_index,
+        "imputed_ma_freq": imputed_ma_freq,
+        "iqs": iqs,
+        "num_muts": num_muts,
+        "is_aa_ref": is_aa_ref,
+        "is_aa_parsimonious": is_aa_parsimonious,
+        "num_wrongly_imputed_alleles": num_wrongly_imputed_alleles,
+        "prop_wrongly_imputed_alleles_0": prop_wrongly_imputed_alleles_0,
+    }
+    results = pd.DataFrame(results)
 
     # Write results to file
     header_text = (
@@ -258,31 +264,9 @@ def evaluate_imputation(
         + "\n"
     )
 
-    header_text += ",".join(
-        [
-            "position",
-            "ref_minor_allele_index",
-            "ref_minor_allele_freq",
-            "imputed_minor_allele_index",
-            "imputed_minor_allele_freq",
-            "iqs",
-            "num_muts",
-            "is_aa_ref",
-            "is_aa_parsimonious",
-            "num_wrongly_imputed_alleles",
-            "prop_wrongly_imputed_alleles_0",
-        ]
-    )
-
-    np.savetxt(
-        out_csv_file,
-        results,
-        fmt="%.10f",
-        delimiter=",",
-        newline="\n",
-        comments="",
-        header=header_text,
-    )
+    with open(out_csv_file, "w") as f:
+        f.write(header_text)
+        results.to_csv(f, header=True, index=False)
 
     end_dt = datetime.now()
     end_dt_str = end_dt.strftime("%d/%m/%Y %H:%M:%S")
