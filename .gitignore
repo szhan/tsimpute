@@ -1,6 +1,6 @@
 # Local directories
 analysis/
-assets/ensembl/
+assets/
 
 # Visual Studio Code files
 .vscode/
