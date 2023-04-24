@@ -59,6 +59,13 @@ import measures
     required=True,
     help="Output CSV file.",
 )
+@click.option(
+    "--out_log_file",
+    "-l",
+    type=click.Path(exists=False),
+    required=True,
+    help="Output log file.",
+)
 def evaluate_imputation(
     in_imputed_file,
     in_file_type,
@@ -66,7 +73,10 @@ def evaluate_imputation(
     in_reference_trees_file,
     in_chip_file,
     out_csv_file,
+    out_log_file,
 ):
+    logging.basicConfig(filename=out_log_file, filemode="w")
+
     start_dt = datetime.now()
     start_dt_str = start_dt.strftime("%d/%m/%Y %H:%M:%S")
     logging.info(f"start: {start_dt_str}")
@@ -85,9 +95,9 @@ def evaluate_imputation(
     sd_true = tsinfer.load(in_true_samples_file)
     ts_ref = tskit.load(in_reference_trees_file)
 
-    logging.info(f"Sites in imputed samples: {data_imputed.num_sites}")
-    logging.info(f"Sites in ground-truth samples: {sd_true.num_sites}")
-    logging.info(f"Sites in ref. panel samples: {ts_ref.num_sites}")
+    logging.info(f"sites in imputed samples: {data_imputed.num_sites}")
+    logging.info(f"sites in ground-truth samples: {sd_true.num_sites}")
+    logging.info(f"sites in ref. panel samples: {ts_ref.num_sites}")
 
     data_imputed_site_pos = (
         data_imputed.sites_position
@@ -97,7 +107,7 @@ def evaluate_imputation(
     sd_true_site_pos = sd_true.sites_position[:]
     ts_ref_site_pos = ts_ref.sites_position
 
-    logging.info("Defining chip and mask sites relative to the ref. panel")
+    logging.info("defining chip and mask sites relative to the ref. panel")
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
     ts_ref_sites_isin_chip = np.isin(
         ts_ref_site_pos,
