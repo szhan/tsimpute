@@ -75,7 +75,7 @@ def evaluate_imputation(
     out_csv_file,
     out_log_file,
 ):
-    logging.basicConfig(filename=out_log_file, filemode="w")
+    logging.basicConfig(filename=out_log_file, level=logging.INFO, filemode="w")
 
     start_dt = datetime.now()
     start_dt_str = start_dt.strftime("%d/%m/%Y %H:%M:%S")
@@ -150,6 +150,7 @@ def evaluate_imputation(
     num_wrongly_imputed_alleles = np.zeros_like(site_pos, dtype=np.int32)
     prop_wrongly_imputed_alleles_0 = np.zeros_like(site_pos, dtype=np.float32)
 
+    i = 0
     for pos in tqdm(mask_site_pos):
         while v_data_imputed.site.position != pos:
             v_data_imputed = next(vars_data_imputed)
@@ -157,6 +158,8 @@ def evaluate_imputation(
             v_sd_true = next(vars_sd_true)
         while v_ts_ref.site.position != pos:
             v_ts_ref = next(vars_ts_ref)
+
+        site_pos[i] = pos
 
         # Variant objects have ordered lists of alleles.
         ref_ancestral_allele = v_ts_ref.alleles[0]
@@ -182,8 +185,8 @@ def evaluate_imputation(
         ref_freqs = v_ts_ref.frequencies(remove_missing=True)
         ref_af_0 = ref_freqs[ref_ancestral_allele]
         ref_af_1 = ref_freqs[ref_derived_allele]
-        ref_ma_index = 1 if ref_af_1 < ref_af_0 else 0
-        ref_ma_freq = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
+        ref_ma_index[i] = 1 if ref_af_1 < ref_af_0 else 0
+        ref_ma_freq[i] = ref_af_1 if ref_af_1 < ref_af_0 else ref_af_0
 
         # Get Minor Allele index and frequency from `data_imputed`.
         if in_file_type == "trees":
@@ -194,20 +197,20 @@ def evaluate_imputation(
                 if ref_derived_allele in imputed_freqs
                 else 0.0
             )
-            imputed_ma_index = 1 if imputed_af_1 < imputed_af_0 else 0
-            imputed_ma_freq = (
+            imputed_ma_index[i] = 1 if imputed_af_1 < imputed_af_0 else 0
+            imputed_ma_freq[i] = (
                 imputed_af_1 if imputed_af_1 < imputed_af_0 else imputed_af_0
             )
         else:
             # Variant objects from SampleData do not have frequencies().
             # TODO: Update if they get such functionality.
-            imputed_ma_index = float("nan")
-            imputed_ma_freq = float("nan")
+            imputed_ma_index[i] = -1
+            imputed_ma_freq[i] = np.nan
 
         imputed_genotypes = v_data_imputed.genotypes
 
         # Calculate imputation performance metrics.
-        iqs = measures.compute_iqs(
+        iqs[i] = measures.compute_iqs(
             gt_true=v_sd_true.genotypes,
             gt_imputed=imputed_genotypes,
             ploidy=2,
@@ -215,29 +218,29 @@ def evaluate_imputation(
 
         # Obtain site information.
         # Get the mutations at this site.
-        num_muts = np.sum(ts_ref.mutations_site == v_ts_ref.site.id)
+        num_muts[i] = np.sum(ts_ref.mutations_site == v_ts_ref.site.id)
 
         # Check whether the ancestral allele used to build the ref. ts is REF.
         ts_ref_site_metadata = json.loads(v_ts_ref.site.metadata)
         assert "REF" in ts_ref_site_metadata
-        is_aa_ref = 1 if ts_ref_site_metadata["REF"] == ref_ancestral_allele else 0
+        is_aa_ref[i] = 1 if ts_ref_site_metadata["REF"] == ref_ancestral_allele else 0
 
         # Check whether the ancestral allele used to build the ref. ts
         # is best explained by parsimony using the imputed tree and genotypes.
-        is_aa_parsimonious = -1
+        is_aa_parsimonious[i] = -1
         if in_file_type == "trees":
             data_imputed_tree = data_imputed.at(position=pos)
             parsimonious_aa, _ = data_imputed_tree.map_mutations(
                 genotypes=v_data_imputed.genotypes, alleles=v_data_imputed.alleles
             )
-            is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
+            is_aa_parsimonious[i] = 1 if ref_ancestral_allele == parsimonious_aa else 0
 
         # Get proportion of wrongly imputed alleles that are ancestral.
-        prop_wrongly_imputed_alleles_0 = 0
+        prop_wrongly_imputed_alleles_0[i] = 0
         # Get total number of wrongly imputed alleles, ancestral or derived.
-        num_wrongly_imputed_alleles = np.sum(v_sd_true.genotypes != imputed_genotypes)
-        if num_wrongly_imputed_alleles > 0:
-            prop_wrongly_imputed_alleles_0 = (
+        num_wrongly_imputed_alleles[i] = np.sum(v_sd_true.genotypes != imputed_genotypes)
+        if num_wrongly_imputed_alleles[i] > 0:
+            prop_wrongly_imputed_alleles_0[i] = (
                 1
                 # Get proportion of wrongly imputed alleles that are derived.
                 - np.sum(
@@ -245,8 +248,10 @@ def evaluate_imputation(
                         np.where(v_sd_true.genotypes != imputed_genotypes)
                     ]
                 )
-                / num_wrongly_imputed_alleles
+                / num_wrongly_imputed_alleles[i]
             )
+
+        i += 1
 
     results = {
         "site_pos": site_pos,
