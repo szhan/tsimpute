@@ -163,8 +163,20 @@ def evaluate_imputation(
         ref_derived_allele = v_ts_ref.alleles[1]
 
         # Check ancestral alleles are identical.
-        assert ref_ancestral_allele == v_data_imputed.site.ancestral_state
-        assert ref_ancestral_allele == v_sd_true.site.ancestral_state
+        imputed_ancestral_allele = v_data_imputed.site.ancestral_state
+        true_ancestral_allele = v_sd_true.site.ancestral_state
+        if ref_ancestral_allele != imputed_ancestral_allele:
+            logging.error(
+                f"Ancestral alleles at {pos} differ in "
+                f"ref. panel {ref_ancestral_allele} and "
+                f"imputed samples {imputed_ancestral_allele}."
+            )
+        if ref_ancestral_allele != true_ancestral_allele:
+            logging.error(
+                f"Ancesstral alleles at {pos} differ in "
+                f"ref. panel {ref_ancestral_allele} and "
+                f"ground-truth samples {true_ancestral_allele}."
+            )
 
         # Get Minor Allele index and frequency from ref. ts.
         ref_freqs = v_ts_ref.frequencies(remove_missing=True)
