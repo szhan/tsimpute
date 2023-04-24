@@ -195,12 +195,14 @@ def evaluate_imputation(
             )
             is_aa_parsimonious = 1 if ref_ancestral_allele == parsimonious_aa else 0
 
-        # Determine the proportion of ancestral alleles wrongly imputed as derived alleles.
-        prop_wrong_alleles_0 = 0
+        # Get proportion of wrongly imputed alleles that are ancestral.
+        prop_wrongly_imputed_alleles_0 = 0
+        # Get total number of wrongly imputed alleles, ancestral or derived.
         num_wrongly_imputed_alleles = np.sum(v_sd_true.genotypes != imputed_genotypes)
         if num_wrongly_imputed_alleles > 0:
-            prop_wrong_alleles_0 = (
+            prop_wrongly_imputed_alleles_0 = (
                 1
+                # Get proportion of wrongly imputed alleles that are derived.
                 - np.sum(
                     v_sd_true.genotypes[
                         np.where(v_sd_true.genotypes != imputed_genotypes)
@@ -208,13 +210,6 @@ def evaluate_imputation(
                 )
                 / num_wrongly_imputed_alleles
             )
-
-        # Calculate the mean arity of the tree covering this site position.
-        # tree = ts_ref_simp.at(pos)  # Exclude unary nodes
-        # parent_id, count = np.unique(
-        #    tree.parent_array[tree.preorder()], return_counts=True
-        # )
-        # tree_arity = count[parent_id != tskit.NULL].mean()
 
         line = np.array(
             [
@@ -228,8 +223,8 @@ def evaluate_imputation(
                     num_muts,
                     is_aa_ref,
                     is_aa_parsimonious,
-                    prop_wrong_alleles_0,
-                    # tree_arity,
+                    num_wrongly_imputed_alleles,
+                    prop_wrongly_imputed_alleles_0,
                 ],
             ]
         )
@@ -274,8 +269,8 @@ def evaluate_imputation(
             "num_muts",
             "is_aa_ref",
             "is_aa_parsimonious",
-            "prop_wrong_alleles_0",
-            # "tree_arity",
+            "num_wrongly_imputed_alleles",
+            "prop_wrongly_imputed_alleles_0",
         ]
     )
 
