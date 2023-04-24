@@ -138,7 +138,7 @@ def evaluate_imputation(
     v_sd_true = next(vars_sd_true)
     v_ts_ref = next(vars_ts_ref)
 
-    pos = np.zeros(len(mask_site_pos), dtype=np.int32)
+    site_pos = np.zeros(len(mask_site_pos), dtype=np.int32)
     ref_ma_index = np.zeros_like(pos)
     ref_ma_freq = np.zeros_like(pos, dtype=np.float32)
     imputed_ma_index = np.zeros_like(pos)
@@ -249,7 +249,7 @@ def evaluate_imputation(
             )
 
     results = {
-        "pos": pos,
+        "site_pos": site_pos,
         "ref_ma_index": ref_ma_index,
         "ref_ma_freq": ref_ma_freq,
         "imputed_ma_index": imputed_ma_index,
