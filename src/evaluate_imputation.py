@@ -139,16 +139,16 @@ def evaluate_imputation(
     v_ts_ref = next(vars_ts_ref)
 
     site_pos = np.zeros(len(mask_site_pos), dtype=np.int32)
-    ref_ma_index = np.zeros_like(pos)
-    ref_ma_freq = np.zeros_like(pos, dtype=np.float32)
-    imputed_ma_index = np.zeros_like(pos)
-    imputed_ma_freq = np.zeros_like(pos, dtype=np.float32)
-    iqs = np.zeros_like(pos, dtype=np.float32)
-    num_muts = np.zeros_like(pos)
-    is_aa_ref = np.zeros_like(pos, dtype=bool)
-    is_aa_parsimonious = np.zeros_like(pos, dtype=bool)
-    num_wrongly_imputed_alleles = np.zeros_like(pos, dtype=np.int32)
-    prop_wrongly_imputed_alleles_0 = np.zeros_like(pos, dtype=np.float32)
+    ref_ma_index = np.zeros_like(site_pos)
+    ref_ma_freq = np.zeros_like(site_pos, dtype=np.float32)
+    imputed_ma_index = np.zeros_like(site_pos)
+    imputed_ma_freq = np.zeros_like(site_pos, dtype=np.float32)
+    iqs = np.zeros_like(site_pos, dtype=np.float32)
+    num_muts = np.zeros_like(site_pos)
+    is_aa_ref = np.zeros_like(site_pos, dtype=bool)
+    is_aa_parsimonious = np.zeros_like(site_pos, dtype=bool)
+    num_wrongly_imputed_alleles = np.zeros_like(site_pos, dtype=np.int32)
+    prop_wrongly_imputed_alleles_0 = np.zeros_like(site_pos, dtype=np.float32)
 
     for pos in tqdm(mask_site_pos):
         while v_data_imputed.site.position != pos:
