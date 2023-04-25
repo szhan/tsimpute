@@ -18,7 +18,8 @@ import masks
 import util
 
 
-_ACGT_ALPHABET_ = np.array([tskit.MISSING_DATA, 0, 1, 2, 3])
+_ACGT_INTEGERS_ = np.array([tskit.MISSING_DATA, 0, 1, 2, 3])
+_ACGT_LETTERS_ = ["A", "C", "G", "T", None]
 
 
 def create_index_map(x):
@@ -29,12 +30,10 @@ def create_index_map(x):
     :return: Alleles in ACGT space.
     :rtype: numpy.ndarray
     """
-    alleles = ["A", "C", "G", "T", None]
-    map_ACGT = [alleles.index(x[i]) for i in range(len(x))]
+    map_ACGT = np.array([_ACGT_LETTERS_.index(x[i]) for i in np.arange(len(x))], dtype=np.int32)
     if None in x:
         # Otherwise, the last element is 4.
         map_ACGT[-1] = tskit.MISSING_DATA
-    map_ACGT = np.array(map_ACGT)
     return map_ACGT
 
 
@@ -71,8 +70,8 @@ def get_traceback_path(
         f"differs from"
         f"length of mutation rate array {len(mutation_rates)}."
     )
-    assert np.all(np.isin(sample_sequence, _ACGT_ALPHABET_)), (
-        f"Sample sequence has character(s) not in {_ACGT_ALPHABET_},"
+    assert np.all(np.isin(sample_sequence, _ACGT_INTEGERS_)), (
+        f"Sample sequence has character(s) not in {_ACGT_INTEGERS_},"
         f"{np.unique(sample_sequence)}."
     )
 
