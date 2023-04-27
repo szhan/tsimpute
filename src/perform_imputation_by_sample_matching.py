@@ -136,7 +136,7 @@ def impute_by_sample_matching(
     for i in tqdm(np.arange(sd.num_samples)):
         H2[i, :] = get_traceback_path(
             ts=ts,
-            haplotype=H1[i, :],
+            sample_sequence=H1[i, :],
             recombination_rates=recombination_rates,
             mutation_rates=mutation_rates,
             precision=precision,
