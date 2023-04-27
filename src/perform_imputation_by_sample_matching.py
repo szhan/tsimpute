@@ -285,9 +285,9 @@ def perform_imputation_by_sample_matching(
         # Coordinates must be discrete, not continuous.
         assert np.all(np.round(ref_site_pos) == ref_site_pos)
         recombination_rates = genetic_map.get_rate(ref_site_pos)
-        # `_tskit.LsHmm()` cannot handle NaN, so replace them with zero.
+        # `_tskit.LsHmm()` cannot handle NaN, so replace them with a human-like rate.
         recombination_rates = np.where(
-            np.isnan(recombination_rates), 0, recombination_rates
+            np.isnan(recombination_rates), 1e-8, recombination_rates
         )
 
     # Set genome-wide mutation rate.
