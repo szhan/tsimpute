@@ -114,6 +114,8 @@ def impute_by_sample_matching(
     :param numpy.ndarray recombination_rates: Site-specific recombination rates.
     :param numpy.ndarray mutation_rates: Site-specifc mutation rates.
     :param float precision: Precision of likelihood calculations.
+    :return: A list of three matrices, one for each step of the imputation.
+    :rtype: list
     """
     assert set(ts.sites_position) == set(sd.sites_position), \
         "Site positions in tree sequence and sample data do not match."
@@ -147,7 +149,7 @@ def impute_by_sample_matching(
         H3[:, i] = v.genotypes[H2[:, i]]
         i += 1
 
-    return H3
+    return [H1, H2, H3]
 
 
 def write_genotype_matrix_to_samples(
@@ -316,7 +318,7 @@ def perform_imputation_by_sample_matching(
     )
 
     logging.info("Imputing into target samples.")
-    gm_imputed = impute_by_sample_matching(
+    _, _, gm_imputed = impute_by_sample_matching(
         ts=ts_ref,
         sd=sd_compat,
         recombination_rates=recombination_rates,
