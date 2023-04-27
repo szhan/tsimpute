@@ -30,7 +30,9 @@ def create_index_map(x):
     :return: Alleles in ACGT space.
     :rtype: numpy.ndarray
     """
-    map_ACGT = np.array([_ACGT_LETTERS_.index(x[i]) for i in np.arange(len(x))], dtype=np.int32)
+    map_ACGT = np.array(
+        [_ACGT_LETTERS_.index(x[i]) for i in np.arange(len(x))], dtype=np.int32
+    )
     if None in x:
         # Otherwise, the last element is 4.
         map_ACGT[-1] = tskit.MISSING_DATA
@@ -38,11 +40,7 @@ def create_index_map(x):
 
 
 def get_traceback_path(
-    ts,
-    sample_sequence,
-    recombination_rates,
-    mutation_rates,
-    precision
+    ts, sample_sequence, recombination_rates, mutation_rates, precision
 ):
     """
     Perform traceback on the HMM to get a path of sample IDs.
@@ -94,15 +92,14 @@ def get_traceback_path(
         "differs from "
         f"number of sites {ts.num_sites}."
     )
-    assert np.all(np.isin(path, ts.samples())), \
-        f"Some IDs in the path are not sample IDs."
+    assert np.all(
+        np.isin(path, ts.samples())
+    ), f"Some IDs in the path are not sample IDs."
 
     return path
 
 
-def impute_by_sample_matching(
-    ts, sd, recombination_rates, mutation_rates, precision
-):
+def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, precision):
     """
     Match samples to a tree sequence using an exact HMM implementation
     of the Li & Stephens model, and then impute into samples.
@@ -117,8 +114,9 @@ def impute_by_sample_matching(
     :return: A list of three matrices, one for each step of the imputation.
     :rtype: list
     """
-    assert set(ts.sites_position) == set(sd.sites_position), \
-        "Site positions in tree sequence and sample data do not match."
+    assert set(ts.sites_position) == set(
+        sd.sites_position
+    ), "Site positions in tree sequence and sample data do not match."
 
     logging.info("Step 1: Mapping samples to ACGT space.")
     # Set up a matrix of sites (rows) x samples (columns).
@@ -169,8 +167,9 @@ def write_genotype_matrix_to_samples(
     :param array-like chip_site_pos: Site positions to mark as "chip".
     """
     assert ts.num_sites == genotype_matrix.shape[1]
-    assert len(set(mask_site_pos).intersection(set(chip_site_pos))) == 0, \
-        f"Mask and chip site positions are not mutually exclusive."
+    assert (
+        len(set(mask_site_pos).intersection(set(chip_site_pos))) == 0
+    ), f"Mask and chip site positions are not mutually exclusive."
 
     if mask_site_pos is None:
         mask_site_pos = []
@@ -273,8 +272,8 @@ def perform_imputation_by_sample_matching(
     chip_site_pos_all = masks.parse_site_position_file(in_chip_file, one_based=False)
 
     # Human-like rates
-    recombination_rate_constant = 1e8
-    mutation_rate_constant = 1e8
+    recombination_rate_constant = 1e-8
+    mutation_rate_constant = 1e-8
 
     # Set genome-wide recombination rate.
     recombination_rates = np.repeat(recombination_rate_constant, len(ref_site_pos))
@@ -287,7 +286,9 @@ def perform_imputation_by_sample_matching(
         recombination_rates = genetic_map.get_rate(ref_site_pos)
         # `_tskit.LsHmm()` cannot handle NaN, so replace them with a human-like rate.
         recombination_rates = np.where(
-            np.isnan(recombination_rates), 1e-8, recombination_rates
+            np.isnan(recombination_rates),
+            recombination_rate_constant,
+            recombination_rates,
         )
 
     # Set genome-wide mutation rate.
