@@ -289,7 +289,7 @@ def perform_imputation_by_sample_matching(
 
     # Human-like rates
     recombination_rate_constant = 1e-8
-    mutation_rate_constant = 1e-8
+    mutation_rate_constant = 1e-20
 
     # Set genome-wide recombination rate.
     recombination_rates = np.repeat(recombination_rate_constant, len(ref_site_pos))
