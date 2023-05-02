@@ -99,7 +99,7 @@ def get_traceback_path(
     return path
 
 
-def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, precision):
+def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, precision, samples=None, sites=None):
     """
     Match samples to a tree sequence using an exact HMM implementation
     of the Li & Stephens model, and then impute into samples.
@@ -111,12 +111,26 @@ def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, preci
     :param numpy.ndarray recombination_rates: Site-specific recombination rates.
     :param numpy.ndarray mutation_rates: Site-specifc mutation rates.
     :param float precision: Precision of likelihood calculations.
+    :param list samples: List of sample IDs to impute into. If None, impute into all samples.
+    :param list sites: List of site IDs to impute. If None, impute into all sites.
     :return: A list of three matrices, one for each step of the imputation.
     :rtype: list
     """
     assert set(ts.sites_position) == set(
         sd.sites_position
     ), "Site positions in tree sequence and sample data do not match."
+
+    if samples is not None:
+        assert np.all(np.isin(samples, ts.samples())), \
+            "Some IDs in the samples list are not sample IDs."
+        sd = sd.subset(individuals=samples)
+
+    if sites is not None:
+        assert np.all(np.isin(sites, ts.sites())), \
+            "Some IDs in the sites list are not site IDs."
+        sites_to_delete = set(ts.sites_position) - set(sites)
+        ts = ts.delete_sites(site_ids=sites_to_delete)
+        sd = sd.subset(sites=sites)
 
     logging.info("Step 1: Mapping samples to ACGT space.")
     # Set up a matrix of sites (rows) x samples (columns).
