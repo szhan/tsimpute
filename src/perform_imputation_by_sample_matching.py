@@ -121,10 +121,11 @@ def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, preci
     assert np.all(np.equal(ts.sites_position, sd.sites_position)), \
         "Site positions in tree sequence and sample data do not match."
 
-    if samples is not None:
+    if samples is None:
+        samples = np.arange(sd.num_samples)
+    else:
         assert np.all(np.isin(samples, np.arange(sd.num_samples))), \
             "Some IDs in the samples list are not sample IDs."
-        sd = sd.subset(individuals=samples)
 
     if sites is not None:
         assert np.all(np.isin(sites, np.arange(ts.num_sites))), \
@@ -146,7 +147,7 @@ def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, preci
 
     logging.info("Step 2: Performing HMM traceback.")
     H2 = np.zeros_like(H1)
-    for i in tqdm(np.arange(sd.num_samples)):
+    for i in tqdm(samples):
         H2[i, :] = get_traceback_path(
             ts=ts,
             sample_sequence=H1[i, :],
