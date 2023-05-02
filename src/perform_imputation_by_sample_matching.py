@@ -116,19 +116,18 @@ def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, preci
     :return: A list of three matrices, one for each step of the imputation.
     :rtype: list
     """
-    assert set(ts.sites_position) == set(
-        sd.sites_position
-    ), "Site positions in tree sequence and sample data do not match."
+    assert np.all(np.equal(ts.sites_position == sd.sites_position)), \
+        "Site positions in tree sequence and sample data do not match."
 
     if samples is not None:
-        assert np.all(np.isin(samples, ts.samples())), \
+        assert np.all(np.isin(samples, sd.samples())), \
             "Some IDs in the samples list are not sample IDs."
         sd = sd.subset(individuals=samples)
 
     if sites is not None:
-        assert np.all(np.isin(sites, ts.sites())), \
+        assert np.all(np.isin(sites, np.arange(ts.num_sites))), \
             "Some IDs in the sites list are not site IDs."
-        sites_to_delete = set(ts.sites_position) - set(sites)
+        sites_to_delete = set(np.arange(ts.num_sites)) - set(sites)
         ts = ts.delete_sites(site_ids=sites_to_delete)
         sd = sd.subset(sites=sites)
 
