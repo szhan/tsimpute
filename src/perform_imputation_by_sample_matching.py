@@ -121,7 +121,7 @@ def remap_state_space(ts, sd, samples=None):
         samples = np.sort(np.array(samples))
 
     # Set up a matrix of sites (rows) x samples (columns).
-    H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
+    H1 = np.zeros((ts.num_sites, len(samples)), dtype=np.int32)
     i = 0
     for v in tqdm(sd.variants(), total=sd.num_sites):
         assert v.site.position in ts.sites_position
