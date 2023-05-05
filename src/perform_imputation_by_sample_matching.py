@@ -99,7 +99,95 @@ def get_traceback_path(
     return path
 
 
-def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, precision, samples=None, sites=None):
+def remap_state_space(ts, sd, samples=None):
+    """
+    Remap the alleles in the samples from ancestral/derived state space (01) to ACGT space.
+
+    :param tskit.TreeSequence ts: Tree sequence with samples to match against.
+    :param tsinfer.SampleData sd: Samples to impute into.
+    :return: Matrix of samples (rows) x sites (columns) in ACGT space.
+    :rtype: numpy.ndarray
+    """
+    assert ts.num_sites == sd.num_sites, \
+        f"Number of sites in tree sequence differs from that in sample data."
+    
+    if samples is None:
+        samples = np.arange(sd.num_samples)
+    else:
+        assert np.all(np.isin(samples, np.arange(sd.num_samples))), \
+            "Some IDs in the samples list are not sample IDs."
+    
+    # Set up a matrix of sites (rows) x samples (columns).
+    np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
+    i = 0
+    for v in tqdm(sd.variants(), total=sd.num_sites):
+        assert v.site.position in ts.sites_position
+        H1[i, :] = create_index_map(v.alleles)[v.genotypes]
+        i += 1
+    # Transpose the matrix to get samples (rows) x sites (columns).
+    H1 = H1.T
+
+    return(H1)
+
+
+def perform_hmm_traceback(ts, H1, switch_prob, mismatch_prob, precision):
+    """
+    Given a matrix of samples (rows) x sites (columns), trace through a Li & Stephens HMM, 
+    parameterised by per-site switch probabilities and mismatch probabilities,
+    to obtain the Viteri path of sample IDs.
+
+    :param tskit.TreeSequence ts: Tree sequence with samples to match against.
+    :param numpy.ndarray H1: Matrix of samples (rows) x sites (columns).
+    :param numpy.ndarray switch_prob: Per-site switch probabilities (related to recombination rate).
+    :param numpy.ndarray mismatch_prob: Per-site mutation rates (related to mutation rate).
+    :param float precision: Precision of HMM likelihood calculations.
+    :param samples: Optionally, list of samples specified by IDs.
+    :return: Viteri HMM path (array of sample IDs).
+    :rtype: numpy.ndarray
+    """
+    assert ts.num_sites == H1.shape[1], \
+        f"Number of sites in tree sequence differ from number of columns of H1."
+    assert len(switch_prob) == len(mismatch_prob), \
+        f"Length of switch probabilities differs from length of mismatch probabilities."
+    assert ts.num_sites == len(switch_prob), \
+        f"Length of switch probabilities and mismatch probabilities differ from number of sites."
+    
+    # Get the Viterbi path for each sample.
+    H2 = np.zeros_like(H1)
+    for i in tqdm(np.arange(H1.shape[0])):
+        H2[i, :] = get_traceback_path(
+            ts=ts,
+            sample_sequence=H1[i, :],
+            recombination_rates=switch_prob,
+            mutation_rates=mismatch_prob,
+            precision=precision,
+        )
+    
+    return(H2)
+
+
+def impute_samples(ts, H2):
+    """
+    Given a matrix of samples (rows) x sites (columns), impute into the samples.
+
+    :param tskit.TreeSequence ts: Tree sequence with samples to match against.
+    :param numpy.ndarray H2: Matrix of samples (rows) x sites (columns).
+    :return: Matrix of samples (rows) x sites (columns) with imputed alleles.
+    :rtype: numpy.ndarray
+    """
+    assert ts.num_sites == H2.shape[1], \
+        f"Number of sites in tree sequence and H2 differ."
+    
+    H3 = np.zeros_like(H2)
+    i = 0
+    for v in tqdm(ts.variants(), total=ts.num_sites):
+        H3[:, i] = v.genotypes[H2[:, i]]
+        i += 1
+    
+    return(H3)
+
+
+def impute_by_sample_matching(ts, sd, switch_prob, mismatch_prob, precision, samples=None, sites=None):
     """
     Match samples to a tree sequence using an exact HMM implementation
     of the Li & Stephens model, and then impute into samples.
@@ -107,26 +195,21 @@ def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, preci
     The tree sequence and sample data must have the same site positions.
 
     :param tskit.TreeSequence ts: Tree sequence with samples to match against.
-    :param tsinfer.SampleData sd: Samples to impute.
-    :param numpy.ndarray recombination_rates: Site-specific recombination rates.
-    :param numpy.ndarray mutation_rates: Site-specifc mutation rates.
+    :param tsinfer.SampleData sd: Samples to impute into.
+    :param numpy.ndarray switch_prob: Per-site switch probabilities.
+    :param numpy.ndarray mismatch_prob: Per-site mismatch probabilities.
     :param float precision: Precision of likelihood calculations.
     :param list samples: List of sample IDs to impute into. If None, impute into all samples.
     :param list sites: List of site IDs to impute. If None, impute into all sites.
-    :return: A list of three matrices, one for each step of the imputation.
+    :return: List of three matrices, one for each step of the imputation.
     :rtype: list
     """
     assert ts.num_sites == sd.num_sites, \
-        "Number of sites in tree sequence and sample data do not match."
+        "Number of sites in tree sequence and sample data differ."
     assert np.all(np.equal(ts.sites_position, sd.sites_position)), \
         "Site positions in tree sequence and sample data do not match."
 
-    if samples is None:
-        samples = np.arange(sd.num_samples)
-    else:
-        assert np.all(np.isin(samples, np.arange(sd.num_samples))), \
-            "Some IDs in the samples list are not sample IDs."
-
+    # TODO: Remove this.
     if sites is not None:
         assert np.all(np.isin(sites, np.arange(ts.num_sites))), \
             "Some IDs in the sites list are not site IDs."
@@ -135,33 +218,19 @@ def impute_by_sample_matching(ts, sd, recombination_rates, mutation_rates, preci
         sd = sd.subset(sites=sites)
 
     logging.info("Step 1: Mapping samples to ACGT space.")
-    # Set up a matrix of sites (rows) x samples (columns).
-    H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
-    i = 0
-    for v in tqdm(sd.variants()):
-        if v.site.position in ts.sites_position:
-            H1[i, :] = create_index_map(v.alleles)[v.genotypes]
-            i += 1
-    # Transpose the matrix to get samples (rows) x sites (columns).
-    H1 = H1.T
-
+    H1 = remap_state_space(ts, sd)
+    
     logging.info("Step 2: Performing HMM traceback.")
-    H2 = np.zeros_like(H1)
-    for i in tqdm(samples):
-        H2[i, :] = get_traceback_path(
-            ts=ts,
-            sample_sequence=H1[i, :],
-            recombination_rates=recombination_rates,
-            mutation_rates=mutation_rates,
-            precision=precision,
-        )
+    H2 = perform_hmm_traceback(
+        ts,
+        H1,
+        switch_prob=switch_prob,
+        mismatch_prob=mismatch_prob,
+        precision=precision,
+    )
 
     logging.info("Step 3: Imputing into samples.")
-    H3 = np.zeros_like(H1)
-    i = 0
-    for v in tqdm(ts.variants()):
-        H3[:, i] = v.genotypes[H2[:, i]]
-        i += 1
+    H3 = impute_samples(ts, H2)
 
     return [H1, H2, H3]
 
