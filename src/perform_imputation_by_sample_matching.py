@@ -103,6 +103,8 @@ def remap_state_space(ts, sd, samples=None):
     """
     Remap the alleles in the samples from ancestral/derived state space (01) to ACGT space.
 
+    Automatically sort the sample IDs.
+
     :param tskit.TreeSequence ts: Tree sequence with samples to match against.
     :param tsinfer.SampleData sd: Samples to impute into.
     :return: Matrix of samples (rows) x sites (columns) in ACGT space.
@@ -110,19 +112,20 @@ def remap_state_space(ts, sd, samples=None):
     """
     assert ts.num_sites == sd.num_sites, \
         f"Number of sites in tree sequence differs from that in sample data."
-    
+
     if samples is None:
         samples = np.arange(sd.num_samples)
     else:
         assert np.all(np.isin(samples, np.arange(sd.num_samples))), \
             "Some IDs in the samples list are not sample IDs."
-    
+        samples = np.sort(np.array(samples))
+
     # Set up a matrix of sites (rows) x samples (columns).
     H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
     i = 0
     for v in tqdm(sd.variants(), total=sd.num_sites):
         assert v.site.position in ts.sites_position
-        H1[i, :] = create_index_map(v.alleles)[v.genotypes]
+        H1[i, :] = create_index_map(v.alleles)[v.genotypes[samples]]
         i += 1
     # Transpose the matrix to get samples (rows) x sites (columns).
     H1 = H1.T
