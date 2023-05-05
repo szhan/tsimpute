@@ -190,7 +190,7 @@ def impute_samples(ts, H2):
     return(H3)
 
 
-def impute_by_sample_matching(ts, sd, switch_prob, mismatch_prob, precision, samples=None, sites=None):
+def impute_by_sample_matching(ts, sd, switch_prob, mismatch_prob, precision, samples=None):
     """
     Match samples to a tree sequence using an exact HMM implementation
     of the Li & Stephens model, and then impute into samples.
@@ -203,7 +203,6 @@ def impute_by_sample_matching(ts, sd, switch_prob, mismatch_prob, precision, sam
     :param numpy.ndarray mismatch_prob: Per-site mismatch probabilities.
     :param float precision: Precision of likelihood calculations.
     :param list samples: List of sample IDs to impute into. If None, impute into all samples.
-    :param list sites: List of site IDs to impute. If None, impute into all sites.
     :return: List of three matrices, one for each step of the imputation.
     :rtype: list
     """
@@ -211,14 +210,6 @@ def impute_by_sample_matching(ts, sd, switch_prob, mismatch_prob, precision, sam
         "Number of sites in tree sequence and sample data differ."
     assert np.all(np.equal(ts.sites_position, sd.sites_position)), \
         "Site positions in tree sequence and sample data do not match."
-
-    # TODO: Remove this.
-    if sites is not None:
-        assert np.all(np.isin(sites, np.arange(ts.num_sites))), \
-            "Some IDs in the sites list are not site IDs."
-        sites_to_delete = set(np.arange(ts.num_sites)) - set(sites)
-        ts = ts.delete_sites(site_ids=sites_to_delete)
-        sd = sd.subset(sites=sites)
 
     logging.info("Step 1: Mapping samples to ACGT space.")
     H1 = remap_state_space(ts, sd, samples=samples)
