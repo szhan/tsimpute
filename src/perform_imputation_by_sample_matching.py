@@ -118,7 +118,7 @@ def remap_state_space(ts, sd, samples=None):
             "Some IDs in the samples list are not sample IDs."
     
     # Set up a matrix of sites (rows) x samples (columns).
-    np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
+    H1 = np.zeros((ts.num_sites, sd.num_samples), dtype=np.int32)
     i = 0
     for v in tqdm(sd.variants(), total=sd.num_sites):
         assert v.site.position in ts.sites_position
@@ -218,8 +218,8 @@ def impute_by_sample_matching(ts, sd, switch_prob, mismatch_prob, precision, sam
         sd = sd.subset(sites=sites)
 
     logging.info("Step 1: Mapping samples to ACGT space.")
-    H1 = remap_state_space(ts, sd)
-    
+    H1 = remap_state_space(ts, sd, samples=samples)
+
     logging.info("Step 2: Performing HMM traceback.")
     H2 = perform_hmm_traceback(
         ts,
