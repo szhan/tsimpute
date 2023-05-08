@@ -83,7 +83,7 @@ def get_traceback_path(
     :param numpy.ndarray recombination_rates: Site-specific recombination rates.
     :param numpy.ndarray mutation_rates: Site-specifc mutation rates.
     :param float precision: Precision of likelihood calculations.
-    :return: List of sample IDs.
+    :return: List of sample IDs representing the HMM path.
     :rtype: numpy.ndarray
     """
     assert ts.num_sites == len(
