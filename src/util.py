@@ -411,3 +411,40 @@ def make_compatible_samples(
         assert num_chip_sites + num_mask_sites + num_unused_sites == len(all_site_pos)
 
     return new_samples
+
+
+def add_sample_to_tree_sequence(ts, path, metadata):
+    assert ts.num_sites == len(path), \
+        f"Sample path is of different length than tree sequence."
+    assert np.isin(path, np.arange(ts.num_samples)), \
+        f"Sample IDs in sample path are not found in tree sequence."
+
+    tables = ts.dump_tables()
+
+    # Add an individual to the individuals table
+    # TODO: Add metadata
+    ind_id = tables.individuals.add_row()
+
+    # Add a sample node to the nodes table
+    node_id = tables.nodes.add_row(
+        flags=1, # Flag for a sample
+        time=-1, # Arbitrarily set to be younger than samples in the existing ts
+        population=0,
+        individual=ind_id,
+        metadata=metadata
+    )
+
+    # Add edges to the edges table
+    for i in np.arange(ts.num_sites):
+        if i == ts.num_sites - 1:
+            break
+        tables.edges.add_row(
+            left=ts.sites_position[i],
+            right=ts.sites_position[i + 1],
+            parent=path[i],
+            child=node_id
+        )
+    # TODO: The proper way is to add the full edges rather than squashing.
+    tables.edges.squash()
+
+    return(tables.tree_sequence())
