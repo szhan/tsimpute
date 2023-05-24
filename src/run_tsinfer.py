@@ -7,7 +7,6 @@ See https://tsinfer.readthedocs.io/en/latest/index.html
 import click
 from datetime import datetime
 import logging
-from git import Repo
 import msprime
 import tskit
 import tsinfer
@@ -91,9 +90,6 @@ def run_tsinfer(
 
     logging.info(f"dep: tskit {tskit.__version__}")
     logging.info(f"dep: tsinfer {tsinfer.__version__}")
-    repo = Repo(search_parent_directories=True)
-    logging.info(f"dep: tsimpute URL = {repo.remotes.origin.url}")
-    logging.info(f"dep: tsimpute SHA = {repo.head.object.hexsha}")
 
     logging.info(f"par: recombination_rate = {recombination_rate}")
     logging.info(f"par: genetic_map = {genetic_map}")
