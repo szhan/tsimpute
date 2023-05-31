@@ -322,7 +322,13 @@ class Converter(object):
 
 
 class VcfConverter(Converter):
-    def convert_genotypes(self, row, ancestral_state, exclude_indels):
+    def convert_genotypes(
+            self,
+            row,
+            ancestral_state,
+            exclude_indels,
+            exclude_monoallelic_sites,
+        ):
         ret = None
         num_diploids = self.num_samples // 2
         a = np.zeros(self.num_samples, dtype=np.int8)
@@ -368,6 +374,7 @@ class VcfConverter(Converter):
                     self.num_triallelic += 1
                 else:
                     self.num_tetraallelic += 1
+                return ret  # None
             else:
                 # Check ancestral allele is either REF or ALT.
                 assert ancestral_state in [row.REF] + row.ALT, (
@@ -379,10 +386,12 @@ class VcfConverter(Converter):
                     # Indels is not the REF or AA.
                     self.num_indels += 1
                     if exclude_indels:
-                        return ret
+                        return ret  # None
                 if freq == self.num_samples or freq == 0:
                     # Monoallelic sites.
                     self.num_invariant += 1
+                    if exclude_monoallelic_sites:
+                        return ret  # None
                     if len(all_alleles) == 1:
                         # Ancestral allele is always in the set.
                         alleles = [ancestral_state]
@@ -390,6 +399,7 @@ class VcfConverter(Converter):
                         all_alleles.remove(ancestral_state)
                         alleles = [ancestral_state, all_alleles.pop()]
                 elif freq == self.num_samples - 1:
+                    # Biallelic sites.
                     self.num_biallelic += 1
                     # Flip the AA and the derived allele.
                     self.num_nmo_tons += 1
@@ -400,6 +410,7 @@ class VcfConverter(Converter):
                     all_alleles.remove(ancestral_state)
                     alleles = [all_alleles.pop(), ancestral_state]
                 else:
+                    # Biallelic sites.
                     self.num_biallelic += 1
                     if freq == 1:
                         self.num_singletons += 1
