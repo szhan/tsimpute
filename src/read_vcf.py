@@ -67,11 +67,14 @@ def print_samples_to_vcf(
         + [str(x.metadata["name"]) for x in sd.individuals()]
     )
 
+    pipes = np.repeat('|', sd.num_individuals)
+
     with open(out_file, "w") as f:
         f.write(header + "\n")
         for v in sd.variants():
             # Site positions are stored as float in tskit
             POS = int(v.site.position)
+            POS += 1  # VCF is 1-based, but tskit is 0-based.
             # If the ts was produced by simulation,
             # there's no ref. sequence other than the ancestral sequence.
             REF = v.site.ancestral_state
@@ -79,28 +82,20 @@ def print_samples_to_vcf(
             AA = v.site.ancestral_state
             ALT = ",".join(alt_alleles) if len(alt_alleles) > 0 else "."
             INFO = "AA" + "=" + AA
-            record = [
-                str(x) for x in [CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT]
-            ]
-            for ind in sd.individuals():
-                if ploidy == 1:
-                    gt = str(v.genotypes[ind.id])
-                else:
-                    # Assume phased.
-                    a1 = str(v.genotypes[2*ind.id])
-                    a2 = str(v.genotypes[2*ind.id + 1])
-                    gt = a1 + "|" + a2
 
-                if site_mask is not None:
-                    if site_mask.query_position(individual=ind.id, position=POS):
-                        if ploidy == 1:
-                            gt = "."
-                        else:
-                            # Assume phased.
-                            gt = ".|."  # Or "./."
-                record += [gt]
+            record = np.array([CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT], dtype=str)
 
-            f.write("\t".join(record) + "\n")
+            if site_mask is not None and POS in site_mask:
+                missing_gt = '.' if ploidy == 1 else '.|.'
+                gt = np.repeat(missing_gt, sd.num_individuals)
+            else:
+                gt = v.genotypes.astype(str)
+                if ploidy == 2:
+                    a1 = gt[np.arange(0, sd.num_samples, 2)]
+                    a2 = gt[np.arange(1, sd.num_samples, 2)]
+                    gt = np.char.join('|', np.char.add(a1, a2))
+
+            f.write("\t".join(np.concatenate([record, gt])) + "\n")
 
 
 def get_sequence_length(vcf, seq_name):
