@@ -19,7 +19,7 @@ def print_samples_to_vcf(
 
     Fields:
         CHROM contig_id
-        POS row index in genotype_matrix
+        POS
         ID .
         REF ancestral allele
         ALT derived allele(s)
@@ -34,7 +34,7 @@ def print_samples_to_vcf(
 
     :param tsinfer.SampleData sd: Samples.
     :param int ploidy: 1 or 2.
-    :param array_like site_mask: Boolean to exclude sites (True) or not (False).
+    :param array_like site_mask: Site positions to mask (1-based).
     :param str contig_id: Contig name.
     :param click.Path out_file: Path to output VCF file.
     """
@@ -47,20 +47,12 @@ def print_samples_to_vcf(
     assert ploidy in [1, 2], f"Ploidy {ploidy} is not recognized."
 
     header = (
-        "##fileformat=VCFv4.2\n"
-        + "##source=tskit "
-        + tskit.__version__
-        + "\n"
-        + '##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">\n'
-        + '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-    )
-    header += (
-        "##contig=<ID="
-        + contig_id
-        + ","
-        + "length="
-        + str(int(sd.sequence_length))
-        + ">\n"
+        "##fileformat=VCFv4.2\n" + \
+        "##source=tskit " + tskit.__version__ + "\n" + \
+        "##INFO=<ID=AA,Number=1,Type=String,Description=\"Ancestral Allele\">\n" + \
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" + \
+        "##contig=<ID=" + contig_id + "," + \
+        "length=" + str(int(sd.sequence_length)) + ">\n"
     )
     header += "\t".join(
         ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
