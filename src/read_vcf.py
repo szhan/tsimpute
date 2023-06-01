@@ -67,8 +67,6 @@ def print_samples_to_vcf(
         + [str(x.metadata["name"]) for x in sd.individuals()]
     )
 
-    pipes = np.repeat('|', sd.num_individuals)
-
     with open(out_file, "w") as f:
         f.write(header + "\n")
         for v in sd.variants():
