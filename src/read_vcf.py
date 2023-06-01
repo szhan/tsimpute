@@ -12,6 +12,7 @@ def print_samples_to_vcf(
     ploidy,
     out_file,
     site_mask=None,
+    exclude_monoallelic_sites=False,
     contig_id=None,
 ):
     """
@@ -35,6 +36,7 @@ def print_samples_to_vcf(
     :param tsinfer.SampleData sd: Samples.
     :param int ploidy: 1 or 2.
     :param array_like site_mask: Site positions to mask (1-based).
+    :param bool exclude_monoallelic_sites: Exclude monoallelic sites.
     :param str contig_id: Contig name.
     :param click.Path out_file: Path to output VCF file.
     """
@@ -74,6 +76,11 @@ def print_samples_to_vcf(
             INFO = "AA" + "=" + AA
 
             record = np.array([CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT], dtype=str)
+
+            if exclude_monoallelic_sites:
+                is_monoallelic = len(np.unique(v.genotypes)) == 1
+                if is_monoallelic:
+                    continue
 
             if site_mask is not None and POS in site_mask:
                 missing_gt = '.' if ploidy == 1 else '.|.'
