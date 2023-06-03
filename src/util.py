@@ -66,7 +66,10 @@ def make_compatible_samples(
     with tsinfer.SampleData(
         sequence_length=ts.sequence_length, path=path
     ) as new_sd:
-        # TODO: Add populations.
+        # Add populations.
+        for pop in sd.populations():
+            new_sd.add_population(metadata=pop.metadata)
+
         # Add individuals
         for ind in sd.individuals():
             new_sd.add_individual(
