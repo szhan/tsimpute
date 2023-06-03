@@ -1,4 +1,4 @@
-from tqdm import tqdm
+import tqdm
 import numpy as np
 import tskit
 
@@ -61,7 +61,7 @@ def print_samples_to_vcf(
 
     with open(out_file, "w") as f:
         f.write(header + "\n")
-        for v in sd.variants():
+        for v in tqdm.tqdm(sd.variants(), total=sd.num_sites):
             # Site positions are stored as float in tskit
             POS = int(v.site.position)
             POS += 1  # VCF is 1-based, but tskit is 0-based.
