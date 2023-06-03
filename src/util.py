@@ -82,7 +82,7 @@ def make_compatible_samples(
             else:
                 metadata = ind.metadata
             new_sd.add_individual(
-                ploidy=len(ind.sd),
+                ploidy=len(ind.nodes),
                 metadata=metadata,
             )
 
