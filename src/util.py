@@ -81,10 +81,10 @@ def make_compatible_samples(
         for pos in tqdm.tqdm(all_site_pos):
             # TODO: Append to existing metadata rather than overwriting it.
             metadata = {}
-            if pos in chip_site_pos:
+            if chip_site_pos is not None and pos in chip_site_pos:
                 metadata["marker"] = "chip"
                 num_chip_sites += 1
-            elif pos in mask_site_pos:
+            elif mask_site_pos is not None and pos in mask_site_pos:
                 metadata["marker"] = "mask"
                 num_mask_sites += 1
             else:
