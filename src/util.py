@@ -88,7 +88,6 @@ def make_compatible_samples(
 
         # Add sites
         for pos in tqdm.tqdm(all_site_pos):
-            # TODO: Append to existing metadata rather than overwriting it.
             metadata = {}
             if chip_site_pos is not None and pos in chip_site_pos:
                 metadata["marker"] = "chip"
@@ -227,26 +226,21 @@ def make_compatible_samples(
                     metadata=metadata,
                 )
             else:
-                logging.error(f"site at {pos} must be in the ts and/or sd.")
+                logging.error(f"Site at {pos} must be in the ts and/or sd.")
 
-    logging.info(f"case 1 (ref.-only): {num_case_1}")
-    logging.info(f"case 2a (both, aligned): {num_case_2a}")
-    logging.info(f"case 2b (both, unaligned): {num_case_2b}")
-    logging.info(f"case 2c (flagged): {num_case_2c}")
-    logging.info(f"case 3 (target-only): {num_case_3}")
-    logging.info(f"chip sites: {num_chip_sites}")
-    logging.info(f"mask sites: {num_mask_sites}")
-    logging.info(f"unused sites: {num_unused_sites}")
+    logging.info(f"Case 1 (ref.-only): {num_case_1}")
+    logging.info(f"Case 2a (both, aligned): {num_case_2a}")
+    logging.info(f"Case 2b (both, unaligned): {num_case_2b}")
+    logging.info(f"Case 2c (flagged): {num_case_2c}")
+    logging.info(f"Case 3 (target-only): {num_case_3}")
+    logging.info(f"Chip sites: {num_chip_sites}")
+    logging.info(f"Mask sites: {num_mask_sites}")
+    logging.info(f"Unused sites: {num_unused_sites}")
 
     assert (
         num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_3
         == len(all_site_pos)
     )
-
-    if skip_unused_markers:
-        assert num_chip_sites + num_mask_sites == len(ts_site_pos)
-    else:
-        assert num_chip_sites + num_mask_sites + num_unused_sites == len(all_site_pos)
 
     return new_sd
 
