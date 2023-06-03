@@ -1,3 +1,4 @@
+import json
 import logging
 import numpy as np
 import tqdm
@@ -68,13 +69,21 @@ def make_compatible_samples(
     ) as new_sd:
         # Add populations.
         for pop in sd.populations():
-            new_sd.add_population(metadata=pop.metadata)
+            if not isinstance(pop.metadata, dict):
+                metadata = json.loads(pop.metadata)
+            else:
+                metadata = pop.metadata
+            new_sd.add_population(metadata=metadata)
 
         # Add individuals
         for ind in sd.individuals():
+            if not isinstance(ind.metadata, dict):
+                metadata = json.loads(ind.metadata)
+            else:
+                metadata = ind.metadata
             new_sd.add_individual(
                 ploidy=len(ind.sd),
-                metadata=ind.metadata,
+                metadata=metadata,
             )
 
         # Add sites
@@ -104,6 +113,9 @@ def make_compatible_samples(
                 ts_ancestral_state = ts_site.ancestral_state
                 ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
 
+                if not isinstance(ts_site.metadata, dict):
+                    metadata = json.loads(ts_site.metadata) | metadata
+
                 new_sd.add_site(
                     position=pos,
                     genotypes=np.full(sd.num_samples, tskit.MISSING_DATA),
@@ -129,6 +141,9 @@ def make_compatible_samples(
                     len(sd_site_alleles) == 2
                 ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}"
                 sd_site_gt = sd.sites_genotypes[sd_site_id]
+
+                if not isinstance(ts_site.metadata, dict):
+                    metadata = json.loads(ts_site.metadata) | metadata
 
                 # Notes
                 # `ts_site.alleles` is an unordered set of alleles (without None).
