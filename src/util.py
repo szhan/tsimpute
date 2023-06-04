@@ -9,11 +9,11 @@ import tsinfer
 def print_samples_to_vcf(
     sd,
     ploidy,
+    contig_name,
     out_file,
     site_mask=None,
     exclude_mask_sites=False,
     exclude_monoallelic_sites=False,
-    contig_id=None,
 ):
     """
     Print the contents of a samples file in VCF 4.2 format.
@@ -35,13 +35,13 @@ def print_samples_to_vcf(
 
     :param tsinfer.SampleData sd: Samples.
     :param int ploidy: 1 or 2.
+    :param str contig_name: Contig name.
     :param array_like site_mask: Site positions to mask.
     :param bool exclude_mask_sites: Exclude masked sites.
     :param bool exclude_monoallelic_sites: Exclude monoallelic sites.
-    :param str contig_id: Contig name.
     :param click.Path out_file: Path to output VCF file.
     """
-    CHROM = contig_id
+    CHROM = contig_name
     ID = "."
     QUAL = "."
     FILTER = "PASS"
@@ -54,7 +54,7 @@ def print_samples_to_vcf(
         "##source=tskit " + tskit.__version__ + "\n" + \
         "##INFO=<ID=AA,Number=1,Type=String,Description=\"Ancestral Allele\">\n" + \
         "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" + \
-        "##contig=<ID=" + contig_id + "," + \
+        "##contig=<ID=" + contig_name + "," + \
         "length=" + str(int(sd.sequence_length)) + ">\n"
     )
     header += "\t".join(
