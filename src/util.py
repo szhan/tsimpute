@@ -35,7 +35,7 @@ def print_samples_to_vcf(
 
     :param tsinfer.SampleData sd: Samples.
     :param int ploidy: 1 or 2.
-    :param array_like site_mask: Site positions to mask (1-based).
+    :param array_like site_mask: Site positions to mask.
     :param bool exclude_mask_sites: Exclude masked sites.
     :param bool exclude_monoallelic_sites: Exclude monoallelic sites.
     :param str contig_id: Contig name.
@@ -59,7 +59,7 @@ def print_samples_to_vcf(
     )
     header += "\t".join(
         ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
-        + [str(x.metadata["name"]) for x in sd.individuals()]
+        + [str(x.metadata["sample"]) for x in sd.individuals()]
     )
 
     with open(out_file, "w") as f:
@@ -67,7 +67,6 @@ def print_samples_to_vcf(
         for v in tqdm.tqdm(sd.variants(), total=sd.num_sites):
             # Site positions are stored as float in tskit
             POS = int(v.site.position)
-            POS += 1  # VCF is 1-based, but tskit is 0-based.
             # If the ts was produced by simulation,
             # there's no ref. sequence other than the ancestral sequence.
             REF = v.site.ancestral_state
