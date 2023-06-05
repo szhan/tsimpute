@@ -1,3 +1,4 @@
+import gzip
 import json
 import logging
 import numpy as np
@@ -17,11 +18,11 @@ def print_samples_to_vcf(
     exclude_monoallelic_sites=False,
 ):
     """
-    Print the contents of a samples file in VCF 4.2 format.
+    Print the contents of a `SampleData` object in VCF 4.2.
 
     Fields:
-        CHROM contig_id
-        POS
+        CHROM contig_name
+        POS 1-based
         ID .
         REF ancestral allele
         ALT derived allele(s)
@@ -32,15 +33,15 @@ def print_samples_to_vcf(
             individual 0
             individual 1
             ...
-            individual n - 1; n = number of individuals
+            individual n - 1
 
     :param tsinfer.SampleData sd: Samples.
     :param int ploidy: 1 or 2.
     :param str contig_name: Contig name.
+    :param str out_file: Output VCF file.
     :param array_like site_mask: Site positions to mask.
     :param bool exclude_mask_sites: Exclude masked sites.
     :param bool exclude_monoallelic_sites: Exclude monoallelic sites.
-    :param click.Path out_file: Path to output VCF file.
     """
     CHROM = contig_name
     ID = "."
