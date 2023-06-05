@@ -6,6 +6,7 @@ import tskit
 import tsinfer
 
 
+# Functions for writing and reading contents
 def print_samples_to_vcf(
     sd,
     ploidy,
@@ -97,6 +98,7 @@ def print_samples_to_vcf(
             f.write("\t".join(np.concatenate([record, gt])) + "\n")
 
 
+# Functions concerning object compatibility
 def is_compatible(tsdata_1, tsdata_2):
     """
     Check if `tsdata_1` is compatible with `tsdata_2`.
@@ -138,7 +140,7 @@ def is_compatible(tsdata_1, tsdata_2):
     iter_2 = tsdata_2.variants()
     var_1 = next(iter_1)
     var_2 = next(iter_2)
-    for site_pos in tsdata_1.sites_position:
+    for site_pos in tqdm.tqdm(tsdata_1.sites_position):
         while var_1.site.position != site_pos:
             var_1 = next(iter_1)
         while var_2.site.position != site_pos:
@@ -157,7 +159,7 @@ def is_compatible(tsdata_1, tsdata_2):
 def make_compatible_samples(
     sd,
     ts,
-    skip_unused_markers=True,
+    skip_unused_markers=None,
     chip_site_pos=None,
     mask_site_pos=None,
     path=None,
@@ -166,11 +168,11 @@ def make_compatible_samples(
     Create `new_sd` from `sd` that is compatible with `ts`.
 
     Create a new `SampleData` object from an existing `SampleData` object such that:
-    (1) the derived alleles in `sd` not in `ts` are marked as `tskit.MISSING`;
-    (2) the allele list in `new_sd` corresponds to the allele list in `ts`;
-    (3) sites in `ts` but not in `sd` are added to `new_sd`
-        with all the genotypes `tskit.MISSING`;
-    (4) sites in `sd` but not in `ts` are added to `new_sd` as is,
+    (1) The derived alleles in `sd` not in `ts` are marked as `tskit.MISSING`.
+    (2) The allele list in `new_sd` corresponds to the allele list in `ts` at each site.
+    (3) Sites in `ts` but not in `sd` are added to `new_sd`
+        with all the genotypes `tskit.MISSING`.
+    (4) Sites in `sd` but not in `ts` are added to `new_sd` as is,
         but they can be optionally skipped.
 
     These assumptions must be met:
@@ -180,11 +182,11 @@ def make_compatible_samples(
     Note that this code uses two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
     which are not explained in the tsinfer API doc.
 
-    :param tsinfer.SampleData sd: Samples (possibly) incompatible with ts.
+    :param tsinfer.SampleData sd: Samples possibly incompatible with tree sequence.
     :param tskit.TreeSequence ts: Tree sequence.
-    :param bool skip_unused_markers: Skip markers only in samples (default = True).
-    :param array-like chip_site_pos: Chip site positions.
-    :param array-like mask_site_pos: Mask site positions.
+    :param bool skip_unused_markers: Skip markers only in samples. If None, set to True. (default = None).
+    :param array-like chip_site_pos: Chip site positions (default = None).
+    :param array-like mask_site_pos: Mask site positions (default = None).
     :param str path: Output samples file (default = None).
     :return: Samples compatible with ts.
     :rtype: tsinfer.SampleData
@@ -196,7 +198,7 @@ def make_compatible_samples(
     ts_site_pos = ts.sites_position
     all_site_pos = sorted(set(sd_site_pos).union(set(ts_site_pos)))
 
-    logging.info(f"Sites in samples = {len(sd_site_pos)}")
+    logging.info(f"Sites in sd = {len(sd_site_pos)}")
     logging.info(f"Sites in ts = {len(ts_site_pos)}")
     logging.info(f"Sites in both = {len(all_site_pos)}")
 
@@ -402,7 +404,7 @@ def get_switch_mask(path):
 
 def get_switch_site_positions(path, site_positions):
     assert len(path) == len(site_positions), \
-        f"Lengths of sample path and site positions are not the same."
+        f"Lengths of sample path and site positions are not equal."
     is_switch = get_switch_mask(path)
     return(site_positions[is_switch])
 
@@ -413,7 +415,7 @@ def get_num_switches(path):
 
 def add_sample_to_tree_sequence(ts, path, metadata):
     assert ts.num_sites == len(path), \
-        f"Sample path is of different length than tree sequence."
+        f"Lengths of sample path and tree sequence are not equal."
     assert np.all(np.isin(path, np.arange(ts.num_samples))), \
         f"Sample IDs in sample path are not found in tree sequence."
 
