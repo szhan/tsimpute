@@ -23,3 +23,31 @@ def plot_sample_path(path, site_pos, tracks=None, window=None):
         ax.set_xlim(window[0], window[1])
     ax.set_ylabel("Index of sample")
     ax.set_xlabel("Genomic position");
+
+
+def compare_sample_paths(path_1, path_2):
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20, 5,))
+
+    bool_identical_samples = np.equal(path_1, path_2)
+    bool_different_samples = np.invert(bool_identical_samples)
+
+    sample_indices = np.arange(len(path_1))
+
+    ax.plot(
+        sample_indices[bool_identical_samples],
+        path_1[bool_identical_samples],
+        color="black", marker="o", linestyle=""
+    )
+    ax.plot(
+        sample_indices[bool_different_samples],
+        path_1[bool_different_samples],
+        color="blue", marker="o", linestyle=""
+    )
+    ax.plot(
+        sample_indices[bool_different_samples],
+        path_2[bool_different_samples],
+        color="orange", marker="o", linestyle=""
+    )
+
+    ax.set_ylabel("Index of sample")
+    ax.set_xlabel("Index of site");
