@@ -203,7 +203,7 @@ def impute_by_sample_matching(
     :rtype: list
     """
     assert np.array_equal(
-        ts.sites_position, sd.sites_position
+        ts.sites_position, sd.sites_position[:]
     ), "Site positions in tree sequence and sample data are not identical."
 
     logging.info("Step 1: Mapping samples to ACGT space.")
