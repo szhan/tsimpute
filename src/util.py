@@ -105,6 +105,9 @@ def is_compatible(sd, ts):
     1. Same list of site positions.
     2. Same allele list at each site.
 
+    If `None` (`tskit.MISSING_DATA`) is present in the allele list,
+    it is removed before comparison.
+
     :param tsinfer.SampleData sd: Samples.
     :param tskit.TreeSequence ts: Tree sequence.
     :return: True if compatible, False otherwise.
@@ -125,8 +128,12 @@ def is_compatible(sd, ts):
             v_sd = next(iter_sd)
         while v_ts.site.position != site_pos:
             v_ts = next(iter_ts)
-        if v_sd.alleles != v_ts.alleles:
-            print(f"Allele lists at site {site_pos} are not equal.")
+        sd_alleles = v_sd.alleles[:-1] if v_sd.alleles[-1] is None else v_sd.alleles
+        ts_alleles = v_ts.alleles[:-1] if v_ts.alleles[-1] is None else v_ts.alleles
+        if sd_alleles != ts_alleles:
+            print(f"Allele lists at  {site_pos} are not equal.")
+            print(f"sd: {v_sd.alleles}")
+            print(f"ts: {v_ts.alleles}")
             return False
 
     return True
