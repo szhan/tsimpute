@@ -336,10 +336,28 @@ def make_compatible_samples(
     return new_sd
 
 
+# Functions for adding new sample edges to an existing tree sequence
+def get_switch_mask(path):
+    is_switch = np.zeros(len(path), dtype=bool)
+    is_switch[1:] = np.invert(np.equal(path[1:], path[:-1]))
+    return(is_switch)
+
+
+def get_switch_site_positions(path, site_positions):
+    assert len(path) == len(site_positions), \
+        f"Lengths of sample path and site positions are not the same."
+    is_switch = get_switch_mask(path)
+    return(site_positions[is_switch])
+
+
+def get_num_switches(path):
+    return(np.sum(get_switch_mask(path)))
+
+
 def add_sample_to_tree_sequence(ts, path, metadata):
     assert ts.num_sites == len(path), \
         f"Sample path is of different length than tree sequence."
-    assert np.isin(path, np.arange(ts.num_samples)), \
+    assert np.all(np.isin(path, np.arange(ts.num_samples))), \
         f"Sample IDs in sample path are not found in tree sequence."
 
     tables = ts.dump_tables()
@@ -358,16 +376,31 @@ def add_sample_to_tree_sequence(ts, path, metadata):
     )
 
     # Add edges to the edges table
-    for i in np.arange(ts.num_sites):
-        if i == ts.num_sites - 1:
-            break
+    is_switch = get_switch_mask(path)
+    switch_pos = ts.sites_position[is_switch]
+    parent_at_switch_pos = path[is_switch]
+    # Add the first edge
+    tables.edges.add_row(
+        left=0,
+        right=switch_pos[0],
+        parent=path[0],
+        child=node_id,
+    )
+    for i in np.arange(len(switch_pos) - 1):
         tables.edges.add_row(
-            left=ts.sites_position[i],
-            right=ts.sites_position[i + 1],
-            parent=path[i],
-            child=node_id
+            left=switch_pos[i],
+            right=switch_pos[i + 1],
+            parent=parent_at_switch_pos[i],
+            child=node_id,
         )
-    # TODO: The proper way is to add the full edges rather than squashing.
-    tables.edges.squash()
+    # Add last edge
+    tables.edges.add_row(
+        left=switch_pos[-1],
+        right=ts.sequence_length - 1,
+        parent=parent_at_switch_pos[-1],
+        child=node_id,
+    )
+    tables.sort()
 
+    # TODO: Return also individual ID.
     return(tables.tree_sequence())
