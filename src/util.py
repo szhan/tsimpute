@@ -97,43 +97,58 @@ def print_samples_to_vcf(
             f.write("\t".join(np.concatenate([record, gt])) + "\n")
 
 
-def is_compatible(sd, ts):
+def is_compatible(tsdata_1, tsdata_2):
     """
-    Check if `sd` is compatible with `ts`.
+    Check if `tsdata_1` is compatible with `tsdata_2`.
 
     Definition of compatibility:
     1. Same list of site positions.
     2. Same allele list at each site.
 
-    If `None` (`tskit.MISSING_DATA`) is present in the allele list,
+    If `None` (or `tskit.MISSING_DATA`) is present in the allele list,
     it is removed before comparison.
 
-    :param tsinfer.SampleData sd: Samples.
-    :param tskit.TreeSequence ts: Tree sequence.
+    :param tsinfer.SampleData/tskit.TreeSequence tsdata_1: Samples or tree sequence.
+    :param tsinfer.SampleData/tskit.TreeSequence tsdata_2: Samples or tree sequence.
     :return: True if compatible, False otherwise.
     :rtype: bool
     """
     # Check condition 1
-    is_site_positions_equal = np.array_equal(sd.sites_position[:], ts.sites_position)
-    if not is_site_positions_equal:
+    if isinstance(tsdata_1, tsinfer.SampleData):
+        site_pos_1 = tsdata_1.sites_position[:]
+    elif isinstance(tsdata_1, tskit.TreeSequence):
+        site_pos_1 = tsdata_1.sites_position
+    else:
+        raise TypeError(f"tsdata_1 must be a SampleData or TreeSequence object.")
+
+    if isinstance(tsdata_2, tsinfer.SampleData):
+        site_pos_2 = tsdata_2.sites_position[:]
+    elif isinstance(tsdata_2, tskit.TreeSequence):
+        site_pos_2 = tsdata_2.sites_position
+    else:
+        raise TypeError(f"tsdata_2 must be a SampleData or TreeSequence object.")
+
+    is_site_pos_equal = np.array_equal(site_pos_1, site_pos_2)
+    if not is_site_pos_equal:
+        print(f"Site positions are not equal.")
         return False
 
     # Check condition 2
-    iter_sd = sd.variants()
-    iter_ts = ts.variants()
-    v_sd = next(iter_sd)
-    v_ts = next(iter_ts)
-    for site_pos in ts.sites_position:
-        while v_sd.site.position != site_pos:
-            v_sd = next(iter_sd)
-        while v_ts.site.position != site_pos:
-            v_ts = next(iter_ts)
-        sd_alleles = v_sd.alleles[:-1] if v_sd.alleles[-1] is None else v_sd.alleles
-        ts_alleles = v_ts.alleles[:-1] if v_ts.alleles[-1] is None else v_ts.alleles
-        if sd_alleles != ts_alleles:
-            print(f"Allele lists at  {site_pos} are not equal.")
-            print(f"sd: {v_sd.alleles}")
-            print(f"ts: {v_ts.alleles}")
+    iter_1 = tsdata_1.variants()
+    iter_2 = tsdata_2.variants()
+    var_1 = next(iter_1)
+    var_2 = next(iter_2)
+    for site_pos in tsdata_1.sites_position:
+        while var_1.site.position != site_pos:
+            var_1 = next(iter_1)
+        while var_2.site.position != site_pos:
+            var_2 = next(iter_2)
+        alleles_1 = var_1.alleles[:-1] if var_1.alleles[-1] is None else var_1.alleles
+        alleles_2 = var_2.alleles[:-1] if var_2.alleles[-1] is None else var_2.alleles
+        if alleles_1 != alleles_2:
+            print(f"Allele lists at {site_pos} are not equal.")
+            print(f"tsdata_1: {var_1.alleles}")
+            print(f"tsdata_2: {var_2.alleles}")
             return False
 
     return True
