@@ -97,6 +97,41 @@ def print_samples_to_vcf(
             f.write("\t".join(np.concatenate([record, gt])) + "\n")
 
 
+def is_compatible(sd, ts):
+    """
+    Check if `sd` is compatible with `ts`.
+
+    Definition of compatibility:
+    1. Same list of site positions.
+    2. Same allele list at each site.
+
+    :param tsinfer.SampleData sd: Samples.
+    :param tskit.TreeSequence ts: Tree sequence.
+    :return: True if compatible, False otherwise.
+    :rtype: bool
+    """
+    # Check condition 1
+    is_site_positions_equal = np.array_equal(sd.sites_position[:], ts.sites_position)
+    if not is_site_positions_equal:
+        return False
+
+    # Check condition 2
+    iter_sd = sd.variants()
+    iter_ts = ts.variants()
+    v_sd = next(iter_sd)
+    v_ts = next(iter_ts)
+    for site_pos in ts.sites_position:
+        while v_sd.site.position != site_pos:
+            v_sd = next(iter_sd)
+        while v_ts.site.position != site_pos:
+            v_ts = next(iter_ts)
+        if v_sd.alleles != v_ts.alleles:
+            print(f"Allele lists at site {site_pos} are not equal.")
+            return False
+
+    return True
+
+
 def make_compatible_samples(
     sd,
     ts,
