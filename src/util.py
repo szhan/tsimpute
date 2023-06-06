@@ -210,6 +210,7 @@ def make_compatible_samples(
     num_case_2a = 0
     num_case_2b = 0
     num_case_2c = 0
+    num_case_2d = 0
     num_case_3 = 0
 
     # Keep track of markers
@@ -289,9 +290,6 @@ def make_compatible_samples(
 
                 sd_site_id = np.where(sd_site_pos == pos)[0][0]
                 sd_site_alleles = sd.sites_alleles[sd_site_id]
-                assert (
-                    len(sd_site_alleles) == 2
-                ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}"
                 sd_site_gt = sd.sites_genotypes[sd_site_id]
 
                 if not isinstance(ts_site.metadata, dict):
@@ -332,7 +330,7 @@ def make_compatible_samples(
                         ancestral_allele=0,
                         metadata=metadata,
                     )
-                else:
+                elif len(sd_site_alleles) == 2:
                     # Case 2c: At least one allele in `sd` is not found in `ts`.
                     # Allele(s) in `sd` but not in `ts` is always wrongly imputed.
                     # It is best to ignore these sites when assessing imputation performance.
@@ -356,6 +354,30 @@ def make_compatible_samples(
                         ancestral_allele=0,
                         metadata=metadata,
                     )
+                elif len(sd_site_alleles) == 1:
+                    # Case 2d: Only one allele in `sd`.
+                    num_case_2d += 1
+
+                    if sd_site_alleles[0] == ts_ancestral_state:
+                        new_sd.add_site(
+                            position=pos,
+                            genotypes=np.full(sd.num_samples, 0),
+                            alleles=[ts_ancestral_state, ts_derived_state],
+                            ancestral_allele=0,
+                            metadata=metadata,
+                        )
+                    elif sd_site_alleles[0] == ts_derived_state:
+                        new_sd.add_site(
+                            position=pos,
+                            genotypes=np.full(sd.num_samples, 1),
+                            alleles=[ts_ancestral_state, ts_derived_state],
+                            ancestral_allele=0,
+                            metadata=metadata,
+                        )
+                    else:
+                        raise ValueError(f"Allele in sd not found in ts at {pos}.")
+                else:
+                    raise ValueError(f"Unexpected patterns of allele lists at {pos}.")
             elif pos not in ts_site_pos and pos in sd_site_pos:
                 # Case 3: Unused (target-only) markers
                 # Site not in `ts` but in `sd`.
@@ -379,7 +401,7 @@ def make_compatible_samples(
                     metadata=metadata,
                 )
             else:
-                logging.error(f"Site at {pos} must be in the ts and/or sd.")
+                raise ValueError(f"Site at {pos} must be in the ts and/or sd.")
 
     logging.info(f"Case 1 (ref.-only): {num_case_1}")
     logging.info(f"Case 2a (both, aligned): {num_case_2a}")
