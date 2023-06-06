@@ -220,12 +220,9 @@ def filter_duplicates_target(vcf, target_sites_pos=None):
     are present in the target sampledata file.
     """
     if target_sites_pos is not None:
-
         def site_in_target(site):
             return site in target_sites_pos
-
     else:
-
         def site_in_target(site):
             return True
 
@@ -241,7 +238,7 @@ def filter_duplicates_target(vcf, target_sites_pos=None):
             elif bad_pos != next_row.POS:
                 bad_pos = -1
         row = next_row
-    if row is not None and bad_pos != -1 and site_in_target(row.POS):
+    if row is not None and bad_pos == -1 and site_in_target(row.POS):
         yield row
 
 
