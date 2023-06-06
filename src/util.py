@@ -413,7 +413,7 @@ def make_compatible_samples(
     logging.info(f"Unused sites: {num_unused_sites}")
 
     assert (
-        num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_3
+        num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_2d + num_case_3
         == len(all_site_pos)
     )
 
