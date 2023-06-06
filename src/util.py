@@ -1,4 +1,3 @@
-import gzip
 import json
 import logging
 import numpy as np
@@ -38,7 +37,7 @@ def print_samples_to_vcf(
     :param tsinfer.SampleData sd: Samples.
     :param int ploidy: 1 or 2.
     :param str contig_name: Contig name.
-    :param str out_prefix: Output file prefix (*.vcf.gz).
+    :param str out_prefix: Output file prefix (*.vcf).
     :param array_like site_mask: Site positions to mask.
     :param bool exclude_mask_sites: Exclude masked sites.
     :param bool exclude_monoallelic_sites: Exclude monoallelic sites.
@@ -64,8 +63,8 @@ def print_samples_to_vcf(
         + [str(x.metadata["sample"]) for x in sd.individuals()]
     )
 
-    out_file = out_prefix + ".vcf.gz"
-    with gzip.open(out_file, "wt") as f:
+    out_file = out_prefix + ".vcf"
+    with open(out_file, "w") as f:
         f.write(header + "\n")
         for v in tqdm.tqdm(sd.variants(), total=sd.num_sites):
             # Site positions are stored as float in tskit
