@@ -193,9 +193,6 @@ def make_compatible_samples(
     :return: Samples compatible with ts.
     :rtype: tsinfer.SampleData
     """
-    assert sd.sequence_length == ts.sequence_length, \
-        f"Sequence length of samples and ts differ."
-
     sd_site_pos = sd.sites_position[:]
     ts_site_pos = ts.sites_position
     all_site_pos = sorted(set(sd_site_pos).union(set(ts_site_pos)))
@@ -219,7 +216,7 @@ def make_compatible_samples(
     with tsinfer.SampleData(
         sequence_length=ts.sequence_length, path=path
     ) as new_sd:
-        # Add populations.
+        # Add populations
         for pop in sd.populations():
             if not isinstance(pop.metadata, dict):
                 metadata = json.loads(pop.metadata)
