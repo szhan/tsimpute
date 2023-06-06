@@ -189,9 +189,14 @@ def make_compatible_samples(
     :param array-like chip_site_pos: Chip site positions (default = None).
     :param array-like mask_site_pos: Mask site positions (default = None).
     :param str path: Output samples file (default = None).
-    :return: Samples compatible with ts.
+    :return: Samples compatible with tree sequence.
     :rtype: tsinfer.SampleData
     """
+    if not isinstance(sd, tsinfer.SampleData):
+        raise TypeError(f"sd must be a SampleData object.")
+    if not isinstance(ts, tskit.TreeSequence):
+        raise TypeError(f"ts must be a TreeSequence object.")
+
     sd_site_pos = sd.sites_position[:]
     ts_site_pos = ts.sites_position
     all_site_pos = sorted(set(sd_site_pos).union(set(ts_site_pos)))
