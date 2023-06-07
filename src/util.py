@@ -199,15 +199,15 @@ def make_compatible_samples(
     if not isinstance(ts, tskit.TreeSequence):
         raise TypeError(f"ts must be a TreeSequence object.")
 
-    # Check all sites in ts are biallelic.
-    for v in ts.variants():
-        if len(set(v.alleles) - {None}) != 2:
-            raise ValueError(f"All sites in ts must be biallelic.")
-
     # Check all sites in sd are mono- or biallelic.    
     for v in sd.variants():
         if len(set(v.alleles) - {None}) > 2:
             raise ValueError(f"All sites in sd must be mono- or biallelic.")
+
+    # Check all sites in ts are biallelic.
+    for v in ts.variants():
+        if len(set(v.alleles) - {None}) != 2:
+            raise ValueError(f"All sites in ts must be biallelic.")
 
     sd_site_pos = sd.sites_position[:]
     ts_site_pos = ts.sites_position
