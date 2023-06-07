@@ -48,7 +48,8 @@ def print_tsdata_to_vcf(
     FILTER = "PASS"
     FORMAT = "GT"
 
-    assert ploidy in [1, 2], f"Ploidy {ploidy} is not recognized."
+    if ploidy not in [1, 2]:
+        raise ValueError(f"Ploidy {ploidy} is not recognized.")
 
     if isinstance(tsdata, tsinfer.SampleData):
         individual_names = [x.metadata["sample"] for x in tsdata.individuals()]
@@ -217,7 +218,6 @@ def make_compatible_samples(
     # Keep track of types of markers
     num_chip_sites = 0
     num_mask_sites = 0
-    num_unused_sites = 0
 
     with tsinfer.SampleData(
         sequence_length=ts.sequence_length, path=path
@@ -252,7 +252,6 @@ def make_compatible_samples(
                 num_mask_sites += 1
             else:
                 metadata["marker"] = ""
-                num_unused_sites += 1
 
             if pos in ts_site_pos and pos not in sd_site_pos:
                 # Case 1: Reference markers.
@@ -411,7 +410,6 @@ def make_compatible_samples(
     logging.info(f"Case 3 (target-only): {num_case_3}")
     logging.info(f"Chip sites: {num_chip_sites}")
     logging.info(f"Mask sites: {num_mask_sites}")
-    logging.info(f"Unused sites: {num_unused_sites}")
 
     assert (
         num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_2d + num_case_3
