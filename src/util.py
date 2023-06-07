@@ -407,6 +407,7 @@ def make_compatible_samples(
     print(f"Case 2a (both, aligned): {num_case_2a}")
     print(f"Case 2b (both, unaligned): {num_case_2b}")
     print(f"Case 2c (flagged): {num_case_2c}")
+    print(f"Case 2d (monoallelic in target): {num_case_2d}")
     print(f"Case 3 (target-only): {num_case_3}")
     print(f"Chip sites: {num_chip_sites}")
     print(f"Mask sites: {num_mask_sites}")
