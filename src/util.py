@@ -199,6 +199,16 @@ def make_compatible_samples(
     if not isinstance(ts, tskit.TreeSequence):
         raise TypeError(f"ts must be a TreeSequence object.")
 
+    # Check all sites in ts are biallelic.
+    for v in ts.variants():
+        if len(set(v.alleles) - {None}) != 2:
+            raise ValueError(f"All sites in ts must be biallelic.")
+
+    # Check all sites in sd are mono- or biallelic.    
+    for v in sd.variants():
+        if len(set(v.alleles) - {None}) > 2:
+            raise ValueError(f"All sites in sd must be mono- or biallelic.")
+
     sd_site_pos = sd.sites_position[:]
     ts_site_pos = ts.sites_position
     all_site_pos = sorted(set(sd_site_pos).union(set(ts_site_pos)))
@@ -260,9 +270,6 @@ def make_compatible_samples(
                 num_case_1 += 1
 
                 ts_site = ts.site(position=pos)
-                assert (
-                    len(ts_site.alleles) == 2
-                ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
                 ts_ancestral_state = ts_site.ancestral_state
                 ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
 
@@ -282,9 +289,6 @@ def make_compatible_samples(
                 # Align the allele lists and genotypes if unaligned.
                 # Add the site to `new_sd` with (aligned) genotypes from `sd`.
                 ts_site = ts.site(position=pos)
-                assert (
-                    len(ts_site.alleles) == 2
-                ), f"Non-biallelic site at {pos} in ts: {ts_site.alleles}"
                 ts_ancestral_state = ts_site.ancestral_state
                 ts_derived_state = list(ts_site.alleles - {ts_ancestral_state})[0]
 
@@ -389,9 +393,6 @@ def make_compatible_samples(
 
                 sd_site_id = np.where(sd_site_pos == pos)[0][0]
                 sd_site_alleles = sd.sites_alleles[sd_site_id]
-                assert (
-                    len(sd_site_alleles) == 2
-                ), f"Non-biallelic site at {pos} in sd: {sd_site_alleles}."
 
                 new_sd.add_site(
                     position=pos,
