@@ -7,8 +7,8 @@ import tsinfer
 
 
 # Functions for writing and reading contents
-def print_samples_to_vcf(
-    sd,
+def print_tsdata_to_vcf(
+    tsdata,
     ploidy,
     contig_name,
     out_prefix,
@@ -17,7 +17,7 @@ def print_samples_to_vcf(
     exclude_monoallelic_sites=False,
 ):
     """
-    Print the contents of a `SampleData` object in VCF 4.2.
+    Print the contents of a `SampleData` or `TreeSequence` object in VCF 4.2.
 
     Fields:
         CHROM contig_name
@@ -34,7 +34,7 @@ def print_samples_to_vcf(
             ...
             individual n - 1
 
-    :param tsinfer.SampleData sd: Samples.
+    :param tskit.TreeSequence/tsinfer.SampleData tsdata: Tree sequence or samples.
     :param int ploidy: 1 or 2.
     :param str contig_name: Contig name.
     :param str out_prefix: Output file prefix (*.vcf).
@@ -50,23 +50,30 @@ def print_samples_to_vcf(
 
     assert ploidy in [1, 2], f"Ploidy {ploidy} is not recognized."
 
+    if isinstance(tsdata, tsinfer.SampleData):
+        individual_names = [x.metadata["sample"] for x in tsdata.individuals()]
+    elif isinstance(tsdata, tskit.TreeSequence):
+        individual_names = [json.loads(x.metadata)["sample"] for x in tsdata.individuals()]
+    else:
+        raise TypeError(f"tsdata must be a SampleData or TreeSequence object.")
+
     header = (
         "##fileformat=VCFv4.2\n" + \
         "##source=tskit " + tskit.__version__ + "\n" + \
         "##INFO=<ID=AA,Number=1,Type=String,Description=\"Ancestral Allele\">\n" + \
         "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" + \
         "##contig=<ID=" + contig_name + "," + \
-        "length=" + str(int(sd.sequence_length)) + ">\n"
+        "length=" + str(int(tsdata.sequence_length)) + ">\n"
     )
     header += "\t".join(
         ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
-        + [str(x.metadata["sample"]) for x in sd.individuals()]
+        + individual_names
     )
 
     out_file = out_prefix + ".vcf"
     with open(out_file, "w") as f:
         f.write(header + "\n")
-        for v in tqdm.tqdm(sd.variants(), total=sd.num_sites):
+        for v in tqdm.tqdm(tsdata.variants(), total=tsdata.num_sites):
             # Site positions are stored as float in tskit
             POS = int(v.site.position)
             # If the ts was produced by simulation,
@@ -88,12 +95,12 @@ def print_samples_to_vcf(
                 if exclude_mask_sites:
                     continue
                 missing_gt = '.' if ploidy == 1 else '.|.'
-                gt = np.repeat(missing_gt, sd.num_individuals)
+                gt = np.repeat(missing_gt, tsdata.num_individuals)
             else:
                 gt = v.genotypes.astype(str)
                 if ploidy == 2:
-                    a1 = gt[np.arange(0, sd.num_samples, 2)]
-                    a2 = gt[np.arange(1, sd.num_samples, 2)]
+                    a1 = gt[np.arange(0, tsdata.num_samples, 2)]
+                    a2 = gt[np.arange(1, tsdata.num_samples, 2)]
                     gt = np.char.join('|', np.char.add(a1, a2))
 
             f.write("\t".join(np.concatenate([record, gt])) + "\n")
