@@ -390,9 +390,10 @@ class VcfConverter(Converter):
                     self.num_biallelic += 1
                     # Flip the AA and the derived allele.
                     self.num_nmo_tons += 1
-                    flipped_a = np.where(a == 0, 1, 0)
-                    flipped_a = np.where(
-                        a == tskit.MISSING_DATA, tskit.MISSING_DATA, flipped_a
+                    a = np.where(
+                        a == tskit.MISSING_DATA,
+                        tskit.MISSING_DATA,
+                        np.where(a == 0, 1, 0)
                     )
                     all_alleles.remove(ancestral_state)
                     alleles = [all_alleles.pop(), ancestral_state]
