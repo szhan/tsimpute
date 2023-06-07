@@ -203,9 +203,9 @@ def make_compatible_samples(
     ts_site_pos = ts.sites_position
     all_site_pos = sorted(set(sd_site_pos).union(set(ts_site_pos)))
 
-    logging.info(f"Sites in sd = {len(sd_site_pos)}")
-    logging.info(f"Sites in ts = {len(ts_site_pos)}")
-    logging.info(f"Sites in both = {len(all_site_pos)}")
+    print(f"Sites in sd = {len(sd_site_pos)}")
+    print(f"Sites in ts = {len(ts_site_pos)}")
+    print(f"Sites in both = {len(all_site_pos)}")
 
     # Keep track of properly aligned sites
     num_case_1 = 0
@@ -403,13 +403,13 @@ def make_compatible_samples(
             else:
                 raise ValueError(f"Site at {pos} must be in the ts and/or sd.")
 
-    logging.info(f"Case 1 (ref.-only): {num_case_1}")
-    logging.info(f"Case 2a (both, aligned): {num_case_2a}")
-    logging.info(f"Case 2b (both, unaligned): {num_case_2b}")
-    logging.info(f"Case 2c (flagged): {num_case_2c}")
-    logging.info(f"Case 3 (target-only): {num_case_3}")
-    logging.info(f"Chip sites: {num_chip_sites}")
-    logging.info(f"Mask sites: {num_mask_sites}")
+    print(f"Case 1 (ref.-only): {num_case_1}")
+    print(f"Case 2a (both, aligned): {num_case_2a}")
+    print(f"Case 2b (both, unaligned): {num_case_2b}")
+    print(f"Case 2c (flagged): {num_case_2c}")
+    print(f"Case 3 (target-only): {num_case_3}")
+    print(f"Chip sites: {num_chip_sites}")
+    print(f"Mask sites: {num_mask_sites}")
 
     assert (
         num_case_1 + num_case_2a + num_case_2b + num_case_2c + num_case_2d + num_case_3
