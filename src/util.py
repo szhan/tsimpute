@@ -173,9 +173,7 @@ def make_compatible_samples(
     path=None,
 ):
     """
-    Create `new_sd` from `sd` that is compatible with `ts`.
-
-    Create a new `SampleData` object from an existing `SampleData` object such that:
+    Create a new `SampleData` object (`new_sd`) from an existing one (`sd`) such that:
     (1) The derived alleles in `sd` not in `ts` are marked as `tskit.MISSING`.
     (2) The allele list in `new_sd` corresponds to the allele list in `ts` at each site.
     (3) Sites in `ts` but not in `sd` are added to `new_sd`
@@ -183,16 +181,12 @@ def make_compatible_samples(
     (4) Sites in `sd` but not in `ts` are added to `new_sd` as is,
         but they can be optionally skipped.
 
-    These assumptions must be met:
-    (1) `sd` and `ts` must have the same sequence length.
-    (2) All the sites in `sd` and `ts` must be biallelic.
-
     Note that this code uses two `SampleData` attributes `sites_alleles` and `sites_genotypes`,
     which are not explained in the tsinfer API doc.
 
     :param tsinfer.SampleData sd: Samples possibly incompatible with tree sequence.
     :param tskit.TreeSequence ts: Tree sequence.
-    :param bool skip_unused_markers: Skip markers only in samples. If None, set to True. (default = None).
+    :param bool skip_unused_markers: Skip markers only in samples. If None, don't skip (default = None).
     :param array-like chip_site_pos: Chip site positions (default = None).
     :param array-like mask_site_pos: Mask site positions (default = None).
     :param str path: Output samples file (default = None).
@@ -220,10 +214,10 @@ def make_compatible_samples(
     num_case_2d = 0
     num_case_3 = 0
 
-    # Keep track of markers
-    num_chip_sites = 0  # In both ref. and target
-    num_mask_sites = 0  # Only in ref.
-    num_unused_sites = 0  # Only in target
+    # Keep track of types of markers
+    num_chip_sites = 0
+    num_mask_sites = 0
+    num_unused_sites = 0
 
     with tsinfer.SampleData(
         sequence_length=ts.sequence_length, path=path
