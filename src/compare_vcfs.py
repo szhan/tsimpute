@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 import numpy as np
 import xarray as xr
 
@@ -68,7 +70,7 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
     )
 
     i = 0
-    for ds1_idx, ds2_idx in common_site_idx:
+    for ds1_idx, ds2_idx in tqdm(common_site_idx):
         # Get the allele lists at matching positions
         ds1_alleles = _ACGT_ALLELES if acgt_alleles else \
             np.array([a for a in ds1.variant_allele[ds1_idx].values if a != ''])
