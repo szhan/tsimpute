@@ -23,7 +23,7 @@ _ACGT_LETTERS_ = ["A", "C", "G", "T", None]
 
 def create_index_map(x):
     """
-    DEPRECATED
+    DEPRECATED: DON'T USE
 
     Prepare an allele map from ancestral/derived state space (i.e. 01) to ACGT space (i.e. 0123).
 
@@ -40,7 +40,7 @@ def create_index_map(x):
 
 def remap_state_space(ts, sd, samples=None):
     """
-    DEPRECATED
+    DEPRECATED: DON'T USE
 
     Remap the alleles in the samples from ancestral/derived state space (01) to ACGT space.
 
@@ -74,6 +74,54 @@ def remap_state_space(ts, sd, samples=None):
     H1 = H1.T
 
     return H1
+
+
+def write_genotype_matrix_to_samples(
+    ts,
+    genotype_matrix,
+    out_file,
+    mask_site_pos=None,
+    chip_site_pos=None,
+):
+    """
+    DEPRECATED: DON'T USE
+
+    Write a genotype matrix to a sample data file.
+
+    :param tskit.TreeSequence ts: Tree sequence with sites to match against.
+    :param numpy.ndarray genotype_matrix: Genotype matrix in ancestral/derived state space.
+    :param pathlib.Path out_file: Path to output samples file.
+    :param array-like mask_site_pos: Site positions to mark as "mask".
+    :param array-like chip_site_pos: Site positions to mark as "chip".
+    """
+    assert ts.num_sites == genotype_matrix.shape[1]
+    assert (
+        len(set(mask_site_pos).intersection(set(chip_site_pos))) == 0
+    ), f"Mask and chip site positions are not mutually exclusive."
+
+    if mask_site_pos is None:
+        mask_site_pos = []
+    if chip_site_pos is None:
+        chip_site_pos = []
+
+    i = 0
+    with tsinfer.SampleData(path=str(out_file)) as sd:
+        for ts_v in tqdm(ts.variants()):
+            # TODO: Inherit site metadata from compatible samples.
+            # Set site metadata
+            metadata = {"marker": ""}
+            if ts_v.site.position in mask_site_pos:
+                metadata["marker"] = "mask"
+            elif ts_v.site.position in chip_site_pos:
+                metadata["marker"] = "chip"
+            # Add site
+            sd.add_site(
+                position=ts_v.site.position,
+                genotypes=genotype_matrix[:, i],
+                alleles=ts_v.alleles,
+                metadata=metadata,
+            )
+            i += 1
 
 
 def get_traceback_path(
@@ -223,14 +271,13 @@ def prepare_input_matrix(ref_ts, target_ds):
 
 
 def impute_by_sample_matching(
-    ref_ts, ref_ds, target_ds, switch_prob, mismatch_prob, precision
+    ref_ts, target_ds, switch_prob, mismatch_prob, precision
 ):
     """
     Match samples to a tree sequence using an exact HMM implementation
     of the Li & Stephens model, and then impute into samples.
 
     :param tskit.TreeSequence ref_ts: Tree sequence with reference samples to match against.
-    :param xarray.Dataset ref_ds: Reference samples to match against (corresponding to above).
     :param xarray.Dataset target_ds: Samples to impute into.
     :param numpy.ndarray switch_prob: Per-site switch probabilities.
     :param numpy.ndarray mismatch_prob: Per-site mismatch probabilities.
@@ -254,52 +301,6 @@ def impute_by_sample_matching(
     H3 = impute_samples(ref_ts, H2)
 
     return [H1, H2, H3]
-
-
-def write_genotype_matrix_to_samples(
-    ts,
-    genotype_matrix,
-    out_file,
-    mask_site_pos=None,
-    chip_site_pos=None,
-):
-    """
-    Write a genotype matrix to a sample data file.
-
-    :param tskit.TreeSequence ts: Tree sequence with sites to match against.
-    :param numpy.ndarray genotype_matrix: Genotype matrix in ancestral/derived state space.
-    :param pathlib.Path out_file: Path to output samples file.
-    :param array-like mask_site_pos: Site positions to mark as "mask".
-    :param array-like chip_site_pos: Site positions to mark as "chip".
-    """
-    assert ts.num_sites == genotype_matrix.shape[1]
-    assert (
-        len(set(mask_site_pos).intersection(set(chip_site_pos))) == 0
-    ), f"Mask and chip site positions are not mutually exclusive."
-
-    if mask_site_pos is None:
-        mask_site_pos = []
-    if chip_site_pos is None:
-        chip_site_pos = []
-
-    i = 0
-    with tsinfer.SampleData(path=str(out_file)) as sd:
-        for ts_v in tqdm(ts.variants()):
-            # TODO: Inherit site metadata from compatible samples.
-            # Set site metadata
-            metadata = {"marker": ""}
-            if ts_v.site.position in mask_site_pos:
-                metadata["marker"] = "mask"
-            elif ts_v.site.position in chip_site_pos:
-                metadata["marker"] = "chip"
-            # Add site
-            sd.add_site(
-                position=ts_v.site.position,
-                genotypes=genotype_matrix[:, i],
-                alleles=ts_v.alleles,
-                metadata=metadata,
-            )
-            i += 1
 
 
 @click.command()
