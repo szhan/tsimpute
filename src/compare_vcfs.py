@@ -1,12 +1,15 @@
 import numpy as np
 import xarray as xr
 
+from numba import njit
+
 import sgkit as sg
 
 
 _ACGT_ALLELES = np.array([b'A', b'C', b'G', b'T'])
 
 
+@njit
 def get_matching_indices(arr1, arr2):
     """
     Get the indices of `arr1` and `arr2`,
@@ -51,8 +54,8 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
     :rtype: xarray.DataArray
     """
     common_site_idx = get_matching_indices(
-        ds1.variant_position,
-        ds2.variant_position
+        ds1.variant_position.values,
+        ds2.variant_position.values
     )
 
     remapped_ds2_variant_allele = xr.DataArray(
@@ -127,8 +130,8 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False):
     """
     # TODO: Refactor, routine run again when calling `remap_genotypes`
     common_site_idx = get_matching_indices(
-        ds1.variant_position,
-        ds2.variant_position
+        ds1.variant_position.values,
+        ds2.variant_position.values
     )
     ds1_idx, ds2_idx = np.split(common_site_idx, 2, axis=1)
     ds1_idx = np.array(ds1_idx.flatten())
