@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import json
 import logging
 import numpy as np
@@ -421,71 +422,124 @@ def make_compatible_samples(
     return new_sd
 
 
-# Functions for adding new sample edges to an existing tree sequence
+# Functions for adding a new individual to an existing tree sequence
+@dataclass
+class SamplePath:
+    """
+    Class for storing the sample paths of an individual.
+    Each sample path is defined by a list of node ids.
+    
+    individual: Name of individual
+    nodes: Path (list of node ids)
+    site_positions: Site positions corresponding to the path
+    """
+    individual: str
+    nodes: np.ndarray
+    site_positions: np.ndarray
+    metadata: dict = None
+
+    def __len__(self):
+        return(self.nodes.size)
+
+    def is_valid(self):
+        return self.nodes.size == self.site_positions.size
+
+
 def get_switch_mask(path):
+    """
+    Called by `get_switch_site_positions` and `get_num_switches`.
+    
+    :param SamplePath path: Sample path.
+    :return: Boolean indicating whether the path switches at each site.
+    :rtype: numpy.ndarray
+    """
     is_switch = np.zeros(len(path), dtype=bool)
-    is_switch[1:] = np.invert(np.equal(path[1:], path[:-1]))
+    is_switch[1:] = np.invert(np.equal(path.samples[1:], path.samples[:-1]))
     return(is_switch)
 
 
-def get_switch_site_positions(path, site_positions):
-    assert len(path) == len(site_positions), \
-        f"Lengths of sample path and site positions are not equal."
+def get_switch_site_positions(path):
+    """
+    Get the positions of the sites at which the individual switches.
+
+    :param SamplePath path: Sample path.
+    :return: Site positions where the path switches.
+    :rtype: numpy.ndarray
+    """
     is_switch = get_switch_mask(path)
-    return(site_positions[is_switch])
+    return(path.site_positions[is_switch])
 
 
 def get_num_switches(path):
+    """
+    :param SamplePath path: Sample path.
+    :return: Number of switches in the path.
+    :rtype: int
+    """
     return(np.sum(get_switch_mask(path)))
 
 
-def add_sample_to_tree_sequence(ts, path, metadata):
-    assert ts.num_sites == len(path), \
-        f"Lengths of sample path and tree sequence are not equal."
-    assert np.all(np.isin(path, np.arange(ts.num_samples))), \
-        f"Sample IDs in sample path are not found in tree sequence."
+def add_individual_to_tree_sequence(ts, paths, metadata=None):
+    """
+    Add an individual, which has at least one sample path,
+    to an existing tree sequence.
+
+    :param tskit.TreeSequence ts: Tree sequence to which the individual is added.
+    :param list(util.SamplePath) paths: List of SamplePath objects.
+    :param dict metadata: Metadata for the individual.
+    """
+    if not len(paths) > 0:
+        raise ValueError("At least one sample path must be provided.")
+
+    for i in np.arange(len(paths)):
+        if ts.num_sites != paths[i].size:
+            raise ValueError("Lengths of path and ts are not equal.")
+        if np.all(np.isin(paths[i].nodes, np.arange(ts.num_nodes))):
+            raise ValueError("Not all node ids in path are not in ts.")
 
     tables = ts.dump_tables()
 
     # Add an individual to the individuals table
-    # TODO: Add metadata
-    ind_id = tables.individuals.add_row()
+    new_ind_id = tables.individuals.add_row(metadata=metadata)
 
-    # Add a sample node to the nodes table
-    node_id = tables.nodes.add_row(
-        flags=1, # Flag for a sample
-        time=-1, # Arbitrarily set to be younger than samples in the existing ts
-        population=0,
-        individual=ind_id,
-        metadata=metadata
-    )
-
-    # Add edges to the edges table
-    is_switch = get_switch_mask(path)
-    switch_pos = ts.sites_position[is_switch]
-    parent_at_switch_pos = path[is_switch]
-    # Add the first edge
-    tables.edges.add_row(
-        left=0,
-        right=switch_pos[0],
-        parent=path[0],
-        child=node_id,
-    )
-    for i in np.arange(len(switch_pos) - 1):
-        tables.edges.add_row(
-            left=switch_pos[i],
-            right=switch_pos[i + 1],
-            parent=parent_at_switch_pos[i],
-            child=node_id,
+    for i in np.arange(len(paths)):
+        # Add a new sample node to the nodes table
+        new_node_id = tables.nodes.add_row(
+            flags=1, # Flag for a sample
+            time=-1, # Arbitrarily set to be younger than samples in ts
+            population=0,   # TODO: Associate it with a specific population
+            individual=new_ind_id,
+            metadata=paths[i].metadata,
         )
-    # Add last edge
-    tables.edges.add_row(
-        left=switch_pos[-1],
-        right=ts.sequence_length - 1,
-        parent=parent_at_switch_pos[-1],
-        child=node_id,
-    )
-    tables.sort()
 
-    # TODO: Return also individual ID.
-    return(tables.tree_sequence())
+        # Add new edges to the edges table
+        is_switch = get_switch_mask(paths[i])
+        switch_pos = ts.sites_position[is_switch]
+        parent_at_switch_pos = paths[i].nodes[is_switch]
+
+        for j in np.arange(len(switch_pos)):
+            if j == 0:
+                # Add first edge
+                tmp_left = 0
+                tmp_right = switch_pos[j]
+                tmp_parent = paths[i].nodes[0]
+            elif j == len(switch_pos) - 1:
+                # Add last edge, if any
+                tmp_left = switch_pos[j]
+                tmp_right = ts.sequence_length - 1
+                tmp_parent = parent_at_switch_pos[j]
+            else:
+                # Add middle edge(s), if any
+                tmp_left = switch_pos[j]
+                tmp_right = switch_pos[j + 1]
+                tmp_parent = parent_at_switch_pos[j]
+            edge_id = tables.edges.add_row(
+                left=tmp_left,
+                right=tmp_right,
+                parent=tmp_parent,
+                child=new_node_id,
+            )
+
+        tables.sort()
+
+    return((new_ind_id, tables.tree_sequence()))
