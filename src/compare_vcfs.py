@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from numba import njit
+from numba import jit
 
 import sgkit as sg
 
@@ -9,7 +9,7 @@ import sgkit as sg
 _ACGT_ALLELES = np.array(['A', 'C', 'G', 'T'])
 
 
-@njit
+@jit(nopython=True)
 def get_matching_indices(arr1, arr2):
     """
     Get the indices of `arr1` and `arr2`,
@@ -53,26 +53,56 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
     :return: Remapped genotypes of `ds2`.
     :rtype: xarray.DataArray
     """
-    common_site_idx = get_matching_indices(
-        ds1.variant_position.values,
-        ds2.variant_position.values
+    ds1_variant_position = ds1.variant_position.values
+    ds1_variant_allele = ds1.variant_allele.values
+    ds2_variant_position = ds2.variant_position.values
+    ds2_variant_allele = ds2.variant_allele.values
+    ds2_call_genotype = ds2.call_genotype.values
+    ds2_samples = ds2.dims["samples"]
+    ds2_ploidy = ds2.dims["ploidy"]
+
+    remap_ds2_variant_allele, remap_ds2_call_genotype = _remap_genotypes_numba(
+        ds1_variant_position,
+        ds1_variant_allele,
+        ds2_variant_position,
+        ds2_variant_allele,
+        ds2_call_genotype,
+        ds2_samples,
+        ds2_ploidy,
+        acgt_alleles=acgt_alleles
     )
 
-    remapped_ds2_variant_allele = xr.DataArray(
-        np.empty([len(common_site_idx), 4], dtype='|S1'),   # ACGT
-        dims=["variants", "alleles"]
+    return remap_ds2_variant_allele, remap_ds2_call_genotype
+
+
+@jit(nopython=False)
+def _remap_genotypes_numba(
+    ds1_variant_position,
+    ds1_variant_allele,
+    ds2_variant_position,
+    ds2_variant_allele,
+    ds2_call_genotype,
+    ds2_samples,
+    ds2_ploidy,
+    acgt_alleles=False
+):
+    """
+    TODO
+    """
+    common_site_idx = get_matching_indices(
+        ds1_variant_position,
+        ds2_variant_position
     )
-    remapped_ds2_call_genotype = xr.DataArray(
-        np.zeros([len(common_site_idx), ds2.dims["samples"], ds2.dims["ploidy"]]),
-        dims=["variants", "samples", "ploidy"]
-    )
+
+    remap_ds2_variant_allele = np.zeros([len(common_site_idx), 4], dtype='|S1'),   # ACGT
+    remap_ds2_call_genotype = np.zeros([len(common_site_idx), ds2_samples, ds2_ploidy])
 
     i = 0
     for ds1_idx, ds2_idx in common_site_idx:
         # Get the allele lists at matching positions
         ds1_alleles = _ACGT_ALLELES if acgt_alleles else \
-            np.array([a for a in ds1.variant_allele[ds1_idx].values if a != ''])
-        ds2_alleles = np.array([a for a in ds2.variant_allele[ds2_idx].values if a != ''])
+            np.array([a for a in ds1_variant_allele[ds1_idx] if a != ''], dtype='|S1')
+        ds2_alleles = np.array([a for a in ds2_variant_allele[ds2_idx] if a != ''], dtype='|S1')
 
         if not np.all(np.isin(ds1_alleles, _ACGT_ALLELES)) or \
             not np.all(np.isin(ds2_alleles, _ACGT_ALLELES)):
@@ -97,12 +127,12 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
             ds1_alleles = np.append(ds1_alleles, np.full(4 - len(ds1_alleles), ''))
 
         # Remap genotypes 2 to genotypes 1
-        remapped_ds2_variant_allele[i] = ds1_alleles
-        ds2_genotype = ds2.call_genotype[ds2_idx].values
-        remapped_ds2_call_genotype[i] = index_array[ds2_genotype].tolist()
+        remap_ds2_variant_allele[i,:] = ds1_alleles
+        ds2_genotype = ds2_call_genotype[ds2_idx]
+        remap_ds2_call_genotype[i,:,:] = index_array[ds2_genotype]
         i += 1
 
-    return (remapped_ds2_variant_allele, remapped_ds2_call_genotype)
+    return (remap_ds2_variant_allele, remap_ds2_call_genotype)
 
 
 def make_compatible_genotypes(ds1, ds2, acgt_alleles=False):
