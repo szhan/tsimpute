@@ -23,6 +23,8 @@ _ACGT_LETTERS_ = ["A", "C", "G", "T", None]
 
 def create_index_map(x):
     """
+    DEPRECATED
+
     Prepare an allele map from ancestral/derived state space (i.e. 01) to ACGT space (i.e. 0123).
 
     :param numpy.ndarray x: Alleles in ancestral/derived state space.
@@ -38,6 +40,8 @@ def create_index_map(x):
 
 def remap_state_space(ts, sd, samples=None):
     """
+    DEPRECATED
+
     Remap the alleles in the samples from ancestral/derived state space (01) to ACGT space.
 
     Automatically sort the sample IDs.
@@ -184,34 +188,62 @@ def impute_samples(ts, H2):
     return H3
 
 
+def prepare_input_matrix(ref_ds, target_ds):
+    """
+    Prepare a matrix that has number of target sample genomes (rows)
+    by number of variable sites in reference panel (columns).
+
+    The elements in the matrix correspond to indices in `_ACGT_LETTERS_`
+    Note that -1 (or None) is used to denote missing data.
+
+    :param xarray.Dataset ref_ds: Reference samples to match against.
+    :param xarray.Dataset target_ds: Samples to impute into.
+    :return: Matrix of samples (rows) x sites (columns).
+    :rtype: numpy.ndarray
+    """
+    num_sites = ref_ds.dims["variants"]
+    num_samples = target_ds.dims["samples"] * target_ds.dims["ploidy"]
+
+    H1 = np.fill(
+        (num_sites, num_samples),
+        tskit.MISSING_DATA,
+        dtype=np.int8
+    )
+
+    i = 0
+    for pos in target_ds.variant_position.values:
+        assert pos in ref_ds.sites_position
+        ref_site_idx = np.where(ref_ds.sites_position == pos)[0]
+        assert len(ref_site_idx) == 1
+        ref_site_idx = ref_site_idx[0]
+        H1[ref_site_idx, :] = target_ds.call_genotype[i].values.flatten()
+        i += 1
+
+    return H1.T
+
+
 def impute_by_sample_matching(
-    ts, sd, switch_prob, mismatch_prob, precision, samples=None
+    ref_ts, ref_ds, target_ds, switch_prob, mismatch_prob, precision
 ):
     """
     Match samples to a tree sequence using an exact HMM implementation
     of the Li & Stephens model, and then impute into samples.
 
-    The tree sequence and sample data must have the same site positions.
-
-    :param tskit.TreeSequence ts: Tree sequence with samples to match against.
-    :param tsinfer.SampleData sd: Samples to impute into.
+    :param tskit.TreeSequence ref_ts: Tree sequence with reference samples to match against.
+    :param xarray.Dataset ref_ds: Reference samples to match against (corresponding to above).
+    :param xarray.Dataset target_ds: Samples to impute into.
     :param numpy.ndarray switch_prob: Per-site switch probabilities.
     :param numpy.ndarray mismatch_prob: Per-site mismatch probabilities.
     :param float precision: Precision of likelihood calculations.
-    :param list samples: List of sample IDs to impute into. If None, impute into all samples.
     :return: List of three matrices, one for each step of the imputation.
     :rtype: list
     """
-    assert np.array_equal(
-        ts.sites_position, sd.sites_position[:]
-    ), "Site positions in tree sequence and sample data are not identical."
-
-    logging.info("Step 1: Mapping samples to ACGT space.")
-    H1 = remap_state_space(ts, sd, samples=samples)
+    logging.info("Step 1: Prepare input matrix.")
+    H1 = prepare_input_matrix(ref_ds, target_ds)
 
     logging.info("Step 2: Performing HMM traceback.")
     H2 = perform_hmm_traceback(
-        ts,
+        ref_ts,
         H1,
         switch_prob=switch_prob,
         mismatch_prob=mismatch_prob,
@@ -219,7 +251,7 @@ def impute_by_sample_matching(
     )
 
     logging.info("Step 3: Imputing into samples.")
-    H3 = impute_samples(ts, H2)
+    H3 = impute_samples(ref_ts, H2)
 
     return [H1, H2, H3]
 
