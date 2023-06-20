@@ -130,7 +130,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False):
         ds1.variant_position,
         ds2.variant_position
     )
-    ds1_idx, ds2_idx = np.split(common_site_idx, len(common_site_idx), axis=1)
+    ds1_idx, ds2_idx = np.split(common_site_idx, 2, axis=1)
     ds1_idx = np.array(ds1_idx.flatten())
     ds2_idx = np.array(ds2_idx.flatten())
     assert len(ds1_idx) == len(ds2_idx) == len(common_site_idx)
