@@ -188,7 +188,7 @@ def impute_samples(ts, H2):
     return H3
 
 
-def prepare_input_matrix(ref_ds, target_ds):
+def prepare_input_matrix(ref_ts, target_ds):
     """
     Prepare a matrix that has number of target sample genomes (rows)
     by number of variable sites in reference panel (columns).
@@ -196,15 +196,15 @@ def prepare_input_matrix(ref_ds, target_ds):
     The elements in the matrix correspond to indices in `_ACGT_LETTERS_`
     Note that -1 (or None) is used to denote missing data.
 
-    :param xarray.Dataset ref_ds: Reference samples to match against.
+    :param tsinfer.TreeSequence ref_ts: Tree sequence with ref. samples to match against.
     :param xarray.Dataset target_ds: Samples to impute into.
     :return: Matrix of samples (rows) x sites (columns).
     :rtype: numpy.ndarray
     """
-    num_sites = ref_ds.dims["variants"]
+    num_sites = ref_ts.num_sites
     num_samples = target_ds.dims["samples"] * target_ds.dims["ploidy"]
 
-    H1 = np.fill(
+    H1 = np.full(
         (num_sites, num_samples),
         tskit.MISSING_DATA,
         dtype=np.int8
@@ -212,8 +212,8 @@ def prepare_input_matrix(ref_ds, target_ds):
 
     i = 0
     for pos in target_ds.variant_position.values:
-        assert pos in ref_ds.sites_position
-        ref_site_idx = np.where(ref_ds.sites_position == pos)[0]
+        assert pos in ref_ts.sites_position
+        ref_site_idx = np.where(ref_ts.sites_position == pos)[0]
         assert len(ref_site_idx) == 1
         ref_site_idx = ref_site_idx[0]
         H1[ref_site_idx, :] = target_ds.call_genotype[i].values.flatten()
@@ -239,7 +239,7 @@ def impute_by_sample_matching(
     :rtype: list
     """
     logging.info("Step 1: Prepare input matrix.")
-    H1 = prepare_input_matrix(ref_ds, target_ds)
+    H1 = prepare_input_matrix(ref_ts, target_ds)
 
     logging.info("Step 2: Performing HMM traceback.")
     H2 = perform_hmm_traceback(
