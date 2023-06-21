@@ -8,7 +8,7 @@ from numba import njit
 import sgkit as sg
 
 
-_ACGT_ALLELES = np.array(['A', 'C', 'G', 'T'])
+_ACGT_ALLELES_ = np.array(['A', 'C', 'G', 'T'])
 
 
 @njit
@@ -61,7 +61,7 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
     )
 
     remapped_ds2_variant_allele = xr.DataArray(
-        np.empty([len(common_site_idx), 4], dtype='|S1'),   # ACGT
+        np.full([len(common_site_idx), 4], ''),   # ACGT
         dims=["variants", "alleles"]
     )
     remapped_ds2_call_genotype = xr.DataArray(
@@ -72,12 +72,12 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
     i = 0
     for ds1_idx, ds2_idx in tqdm(common_site_idx):
         # Get the allele lists at matching positions
-        ds1_alleles = _ACGT_ALLELES if acgt_alleles else \
+        ds1_alleles = _ACGT_ALLELES_ if acgt_alleles else \
             np.array([a for a in ds1.variant_allele[ds1_idx].values if a != ''])
         ds2_alleles = np.array([a for a in ds2.variant_allele[ds2_idx].values if a != ''])
 
-        if not np.all(np.isin(ds1_alleles, _ACGT_ALLELES)) or \
-            not np.all(np.isin(ds2_alleles, _ACGT_ALLELES)):
+        if not np.all(np.isin(ds1_alleles, _ACGT_ALLELES_)) or \
+            not np.all(np.isin(ds2_alleles, _ACGT_ALLELES_)):
             raise ValueError(f"Alleles {ds1_alleles} and {ds2_alleles} are not all ACGT.")
 
         # Modify the allele lists such that both lists contain the same alleles
@@ -96,7 +96,7 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
 
         # Pad allele list so that it is length 4
         if len(ds1_alleles) < 4:
-            ds1_alleles = np.append(ds1_alleles, np.full(4 - len(ds1_alleles), ''))
+            ds1_alleles = np.append(ds1_alleles, np.full(4 - len(ds1_alleles), b''))
 
         # Remap genotypes 2 to genotypes 1
         remapped_ds2_variant_allele[i] = ds1_alleles

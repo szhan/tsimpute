@@ -27,8 +27,8 @@ def make_test_case():
     variant_contig = np.array([0, 0], dtype=np.int64)
     variant_position = np.array([5, 10], dtype=np.int64)
     variant_allele = np.array([
-        [b'A', b'C'],
-        [b'G', b'T'],
+        ['A', 'C'],
+        ['G', 'T'],
     ])
     sample_id = np.array([
         'tsk0',
@@ -117,10 +117,10 @@ def test_both_biallelic_different_alleles():
     ds1 = make_test_case()
     ds2 = ds1.copy(deep=True)
     # At the first site, one allele is shared.
-    ds2.variant_allele[0] = xr.DataArray([b'C', b'G'])
+    ds2.variant_allele[0] = xr.DataArray(['C', 'G'])
     ds2.call_genotype[0] = xr.DataArray([[0, 1], [1, 0]])
     # At the second site, no allele is shared.
-    ds2.variant_allele[1] = xr.DataArray([b'A', b'C'])
+    ds2.variant_allele[1] = xr.DataArray(['A', 'C'])
     ds2.call_genotype[1] = xr.DataArray([[0, 1], [1, 0]])
     # Subtest 1
     _, actual = compare_vcfs.remap_genotypes(ds1, ds2)
@@ -150,7 +150,7 @@ def test_biallelic_monoallelic():
     # At the first site, one allele is shared.
     # At the second site, no allele is shared.
     for i in np.arange(ds2.variant_contig.size):
-        ds2.variant_allele[i] = xr.DataArray([b'C', b''])
+        ds2.variant_allele[i] = xr.DataArray(['C', ''])
         ds2.call_genotype[i] = xr.DataArray(np.zeros_like(ds2.call_genotype[i]))
     # Subtest 1
     _, actual = compare_vcfs.remap_genotypes(ds1, ds2)
@@ -179,14 +179,14 @@ def test_both_monoallelic():
     ds2 = ds1.copy(deep=True)
     # Overwrite certain data variables in ds1 and ds2.
     # At the first site, one allele is shared.
-    ds1.variant_allele[0] = xr.DataArray([b'C', b''])
+    ds1.variant_allele[0] = xr.DataArray(['C', ''])
     ds1.call_genotype[0] = xr.DataArray(np.zeros_like(ds1.call_genotype[0]))
-    ds2.variant_allele[0] = xr.DataArray([b'C', b''])
+    ds2.variant_allele[0] = xr.DataArray(['C', ''])
     ds2.call_genotype[0] = xr.DataArray(np.zeros_like(ds2.call_genotype[0]))
     # At the second site, no allele is shared.
-    ds1.variant_allele[1] = xr.DataArray([b'C', b''])
+    ds1.variant_allele[1] = xr.DataArray(['C', ''])
     ds1.call_genotype[1] = xr.DataArray(np.zeros_like(ds1.call_genotype[1]))
-    ds2.variant_allele[1] = xr.DataArray([b'G', b''])
+    ds2.variant_allele[1] = xr.DataArray(['G', ''])
     ds2.call_genotype[1] = xr.DataArray(np.zeros_like(ds2.call_genotype[1]))
     _, actual = compare_vcfs.remap_genotypes(ds1, ds2)
     expected = xr.DataArray(
@@ -204,8 +204,8 @@ def test_acgt_alleles_true():
     ds2 = ds1.copy(deep=True)
     actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds1, ds2, acgt_alleles=True)
     expected_alleles = np.array([
-        compare_vcfs._ACGT_ALLELES,
-        compare_vcfs._ACGT_ALLELES,
+        compare_vcfs._ACGT_ALLELES_,
+        compare_vcfs._ACGT_ALLELES_,
     ])
     expected_genotypes = xr.DataArray(
         [
@@ -249,8 +249,8 @@ def test_make_compatible_genotypes_acgt_alleles_true():
     ds2 = ds1.copy(deep=True)
     ds1_compat, ds2_compat = compare_vcfs.make_compatible_genotypes(ds1, ds2, acgt_alleles=True)
     expected_alleles = np.array([
-        compare_vcfs._ACGT_ALLELES,
-        compare_vcfs._ACGT_ALLELES,
+        compare_vcfs._ACGT_ALLELES_,
+        compare_vcfs._ACGT_ALLELES_,
     ])
     assert np.array_equal(ds1_compat.variant_allele, expected_alleles)
     assert np.array_equal(ds1_compat.variant_allele, ds2_compat.variant_allele)
