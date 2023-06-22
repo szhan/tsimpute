@@ -145,7 +145,7 @@ def prepare_input_matrix(ref_ts, target_ds):
     H1 = np.full(
         (num_sites, num_samples),
         tskit.MISSING_DATA,
-        dtype=np.int8
+        dtype=np.int64
     )
 
     i = 0
