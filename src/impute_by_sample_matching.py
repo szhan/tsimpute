@@ -124,6 +124,42 @@ def write_genotype_matrix_to_samples(
             i += 1
 
 
+def prepare_input_matrix(ref_ts, target_ds):
+    """
+    Step 1.
+
+    Prepare a matrix that has number of target sample genomes (rows)
+    by number of variable sites in reference panel (columns).
+
+    The elements in the matrix correspond to indices in `_ACGT_LETTERS_`
+    Note that -1 (or None) is used to denote missing data.
+
+    :param tsinfer.TreeSequence ref_ts: Tree sequence with ref. samples to match against.
+    :param xarray.Dataset target_ds: Samples to impute into.
+    :return: Matrix of samples (rows) x sites (columns).
+    :rtype: numpy.ndarray
+    """
+    num_sites = ref_ts.num_sites
+    num_samples = target_ds.dims["samples"] * target_ds.dims["ploidy"]
+
+    H1 = np.full(
+        (num_sites, num_samples),
+        tskit.MISSING_DATA,
+        dtype=np.int8
+    )
+
+    i = 0
+    for pos in tqdm(target_ds.variant_position.values):
+        assert pos in ref_ts.sites_position
+        ref_site_idx = np.where(ref_ts.sites_position == pos)[0]
+        assert len(ref_site_idx) == 1
+        ref_site_idx = ref_site_idx[0]
+        H1[ref_site_idx, :] = target_ds.call_genotype[i].values.flatten()
+        i += 1
+
+    return H1.T
+
+
 def get_traceback_path(
     ts, sample_sequence, recombination_rates, mutation_rates, precision
 ):
@@ -177,6 +213,8 @@ def get_traceback_path(
 
 def perform_hmm_traceback(ts, H1, switch_prob, mismatch_prob, precision):
     """
+    Step 2.
+
     Given a matrix of samples (rows) x sites (columns), trace through a Li & Stephens HMM,
     parameterised by per-site switch probabilities and mismatch probabilities,
     to obtain the Viteri HMM path of sample IDs.
@@ -212,6 +250,8 @@ def perform_hmm_traceback(ts, H1, switch_prob, mismatch_prob, precision):
 
 def impute_samples(ts, H2):
     """
+    Step 3.
+
     Given a matrix of samples (rows) x sites (columns), impute into the samples.
 
     :param tskit.TreeSequence ts: Tree sequence with samples to match against.
@@ -230,40 +270,6 @@ def impute_samples(ts, H2):
         i += 1
 
     return H3
-
-
-def prepare_input_matrix(ref_ts, target_ds):
-    """
-    Prepare a matrix that has number of target sample genomes (rows)
-    by number of variable sites in reference panel (columns).
-
-    The elements in the matrix correspond to indices in `_ACGT_LETTERS_`
-    Note that -1 (or None) is used to denote missing data.
-
-    :param tsinfer.TreeSequence ref_ts: Tree sequence with ref. samples to match against.
-    :param xarray.Dataset target_ds: Samples to impute into.
-    :return: Matrix of samples (rows) x sites (columns).
-    :rtype: numpy.ndarray
-    """
-    num_sites = ref_ts.num_sites
-    num_samples = target_ds.dims["samples"] * target_ds.dims["ploidy"]
-
-    H1 = np.full(
-        (num_sites, num_samples),
-        tskit.MISSING_DATA,
-        dtype=np.int8
-    )
-
-    i = 0
-    for pos in target_ds.variant_position.values:
-        assert pos in ref_ts.sites_position
-        ref_site_idx = np.where(ref_ts.sites_position == pos)[0]
-        assert len(ref_site_idx) == 1
-        ref_site_idx = ref_site_idx[0]
-        H1[ref_site_idx, :] = target_ds.call_genotype[i].values.flatten()
-        i += 1
-
-    return H1.T
 
 
 def impute_by_sample_matching(
