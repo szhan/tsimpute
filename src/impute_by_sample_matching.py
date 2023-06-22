@@ -183,22 +183,18 @@ def perform_hmm_traceback(ts, H1, switch_prob, mismatch_prob, precision):
 
     :param tskit.TreeSequence ts: Tree sequence with samples to match against.
     :param numpy.ndarray H1: Matrix of samples (rows) x sites (columns).
-    :param numpy.ndarray switch_prob: Per-site switch probabilities (related to recombination rate).
-    :param numpy.ndarray mismatch_prob: Per-site mutation rates (related to mutation rate).
+    :param numpy.ndarray switch_prob: Per-site switch probabilities.
+    :param numpy.ndarray mismatch_prob: Per-site mutation rates.
     :param float precision: Precision of HMM likelihood calculations.
-    :param samples: Optionally, list of samples specified by IDs.
-    :return: List of sample IDs representing the HMM path.
+    :return: Sample IDs representing the HMM path.
     :rtype: numpy.ndarray
     """
-    assert (
-        ts.num_sites == H1.shape[1]
-    ), f"Number of sites in tree sequence differ from number of columns of H1."
-    assert len(switch_prob) == len(
-        mismatch_prob
-    ), f"Length of switch probabilities differs from length of mismatch probabilities."
-    assert ts.num_sites == len(
-        switch_prob
-    ), f"Length of switch probabilities and mismatch probabilities differ from number of sites."
+    assert ts.num_sites == H1.shape[1], \
+        f"Number of sites in ts differ from number of columns in H1."
+    assert len(switch_prob) == len(mismatch_prob), \
+        f"Length of switch prob. differs from length of mismatch prob."
+    assert ts.num_sites == len(switch_prob), \
+        f"Length of switch prob. and mismatch prob. differ from number of sites."
 
     # Get the Viterbi path for each sample.
     H2 = np.zeros_like(H1)
