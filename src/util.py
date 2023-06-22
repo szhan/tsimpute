@@ -454,7 +454,7 @@ def get_switch_mask(path):
     :rtype: numpy.ndarray
     """
     is_switch = np.zeros(len(path), dtype=bool)
-    is_switch[1:] = np.invert(np.equal(path.samples[1:], path.samples[:-1]))
+    is_switch[1:] = np.invert(np.equal(path.nodes[1:], path.nodes[:-1]))
     return(is_switch)
 
 
@@ -492,9 +492,9 @@ def add_individual_to_tree_sequence(ts, paths, metadata=None):
         raise ValueError("At least one sample path must be provided.")
 
     for i in np.arange(len(paths)):
-        if ts.num_sites != paths[i].size:
+        if ts.num_sites != len(paths[i]):
             raise ValueError("Lengths of path and ts are not equal.")
-        if np.all(np.isin(paths[i].nodes, np.arange(ts.num_nodes))):
+        if not np.all(np.isin(paths[i].nodes, np.arange(ts.num_nodes))):
             raise ValueError("Not all node ids in path are not in ts.")
 
     tables = ts.dump_tables()
