@@ -1,7 +1,6 @@
 import pytest
-
+import msprime
 import numpy as np
-
 import sys
 sys.path.append('../src/')
 import util
@@ -93,3 +92,56 @@ def test_get_switch_mask_multiple_switches():
 
 # TODO: More tests
 # Empty sample path.
+
+
+def test_add_individual_to_tree_sequence():
+    # TODO: Hardcode an example ts.
+    # e.g., sites_position = array([ 5.,  9., 35., 68., 77., 95.])
+    ts = msprime.sim_mutations(
+        msprime.sim_ancestry(
+            5,
+            sequence_length=100,
+            random_seed=1234
+        ),
+        rate=1e-2,
+        random_seed=1234
+    )
+    assert ts.num_individuals == 5
+    assert ts.num_samples == 10
+    assert ts.num_nodes == 19
+    assert ts.num_sites == 6
+    assert ts.sequence_length == 100
+
+    # Examples of three different types of paths.
+    individual_name = "Triploid test"
+    path_1 = util.SamplePath(
+        individual=individual_name,
+        nodes=np.array([2, 2, 2, 2, 2, 2]), # No switch
+        site_positions=ts.sites_position
+    )
+    path_2 = util.SamplePath(
+        individual=individual_name,
+        nodes=np.array([2, 2, 0, 0, 0, 0]), # One switch
+        site_positions=ts.sites_position
+    )
+    path_3 = util.SamplePath(
+        individual=individual_name,
+        nodes=np.array([2, 2, 0, 0, 1, 1]), # Two switches
+        site_positions=ts.sites_position
+    )
+
+    ind_id, new_ts = util.add_individual_to_tree_sequence(
+        ts,
+        paths=[path_1, path_2, path_3]
+    )
+
+    assert ind_id == 5
+    assert new_ts.num_individuals == ts.num_individuals + 1
+    assert new_ts.num_samples == ts.num_samples + 3
+    assert new_ts.num_nodes == ts.num_nodes + 3
+    assert np.sum(new_ts.edges_parent == 0) == 2
+    assert np.sum(new_ts.edges_parent == 1) == 1
+    assert np.sum(new_ts.edges_parent == 2) == 3
+    assert np.sum(new_ts.edges_child == 19) == 1
+    assert np.sum(new_ts.edges_child == 20) == 2
+    assert np.sum(new_ts.edges_child == 21) == 3
