@@ -522,22 +522,24 @@ def add_individual_to_tree_sequence(ts, paths, metadata=None):
             assert len(np.unique(paths[i].nodes)) == 1
             edge_id = tables.edges.add_row(
                 left=0,
-                right=ts.sequence_length - 1,
+                right=ts.sequence_length,
                 parent=paths[i].nodes[0],
                 child=new_node_id,
             )
         else:
             # Add multiple edges when there is at least one switch
+            # Add first edge
+            edge_id = tables.edges.add_row(
+                left=0,
+                right=switch_pos[0],
+                parent=paths[i].nodes[0],
+                child=new_node_id,
+            )
             for j in np.arange(len(switch_pos)):
-                if j == 0:
-                    # Add first edge
-                    tmp_left = 0
-                    tmp_right = switch_pos[j]
-                    tmp_parent = paths[i].nodes[0]
-                elif j == len(switch_pos) - 1:
-                    # Add last edge, if any
+                if j == len(switch_pos) - 1:
+                    # Add last edge
                     tmp_left = switch_pos[j]
-                    tmp_right = ts.sequence_length - 1
+                    tmp_right = ts.sequence_length
                     tmp_parent = parent_at_switch_pos[j]
                 else:
                     # Add middle edge(s), if any
