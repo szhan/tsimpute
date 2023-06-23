@@ -517,28 +517,39 @@ def add_individual_to_tree_sequence(ts, paths, metadata=None):
         switch_pos = ts.sites_position[is_switch]
         parent_at_switch_pos = paths[i].nodes[is_switch]
 
-        for j in np.arange(len(switch_pos)):
-            if j == 0:
-                # Add first edge
-                tmp_left = 0
-                tmp_right = switch_pos[j]
-                tmp_parent = paths[i].nodes[0]
-            elif j == len(switch_pos) - 1:
-                # Add last edge, if any
-                tmp_left = switch_pos[j]
-                tmp_right = ts.sequence_length - 1
-                tmp_parent = parent_at_switch_pos[j]
-            else:
-                # Add middle edge(s), if any
-                tmp_left = switch_pos[j]
-                tmp_right = switch_pos[j + 1]
-                tmp_parent = parent_at_switch_pos[j]
+        if len(switch_pos) == 0:
+            # Add one edge when there is no switch
+            assert len(np.unique(paths[i].nodes)) == 1
             edge_id = tables.edges.add_row(
-                left=tmp_left,
-                right=tmp_right,
-                parent=tmp_parent,
+                left=0,
+                right=ts.sequence_length - 1,
+                parent=paths[i].nodes[0],
                 child=new_node_id,
             )
+        else:
+            # Add multiple edges when there is at least one switch
+            for j in np.arange(len(switch_pos)):
+                if j == 0:
+                    # Add first edge
+                    tmp_left = 0
+                    tmp_right = switch_pos[j]
+                    tmp_parent = paths[i].nodes[0]
+                elif j == len(switch_pos) - 1:
+                    # Add last edge, if any
+                    tmp_left = switch_pos[j]
+                    tmp_right = ts.sequence_length - 1
+                    tmp_parent = parent_at_switch_pos[j]
+                else:
+                    # Add middle edge(s), if any
+                    tmp_left = switch_pos[j]
+                    tmp_right = switch_pos[j + 1]
+                    tmp_parent = parent_at_switch_pos[j]
+                edge_id = tables.edges.add_row(
+                    left=tmp_left,
+                    right=tmp_right,
+                    parent=tmp_parent,
+                    child=new_node_id,
+                )
 
         tables.sort()
 
