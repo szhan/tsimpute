@@ -7,7 +7,7 @@ import sgkit as sg
 
 import sys
 sys.path.append('../src/')
-import compare_vcfs
+import compare_vcfs as cv
 
 
 # Assumptions:
@@ -78,14 +78,14 @@ def make_test_case():
     ]
 )
 def test_get_matching_indices(arr1, arr2, expected):
-    actual = compare_vcfs.get_matching_indices(arr1, arr2)
+    actual = cv.get_matching_indices(arr1, arr2)
     assert np.array_equal(actual, expected)
 
 
 def test_both_biallelic_same_alleles_same_order():
     ds1 = make_test_case()
     ds2 = ds1.copy(deep=True)
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds1, ds2)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds1, ds2)
     expected_alleles = np.array([
         ['A', 'C', '', ''],
         ['G', 'T', '', ''],
@@ -107,7 +107,7 @@ def test_both_biallelic_same_alleles_different_order():
     for i in np.arange(ds2.variant_contig.size):
         ds2.variant_allele[i] = xr.DataArray(np.flip(ds2.variant_allele[i]))
         ds2.call_genotype[i] = xr.DataArray(np.where(ds2.call_genotype[i] == 0, 1, 0))
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds1, ds2)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds1, ds2)
     expected_alleles = np.array([
         ['A', 'C', '', ''],
         ['G', 'T', '', ''],
@@ -133,7 +133,7 @@ def test_both_biallelic_different_alleles():
     ds2.variant_allele[1] = xr.DataArray(['A', 'C'])
     ds2.call_genotype[1] = xr.DataArray([[0, 1], [1, 0]])
     # Subtest 1
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds1, ds2)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds1, ds2)
     expected_alleles = np.array([
         ['A', 'C', 'G', ''],
         ['G', 'T', 'A', 'C'],
@@ -148,7 +148,7 @@ def test_both_biallelic_different_alleles():
     assert np.array_equal(actual_alleles, expected_alleles)
     assert np.array_equal(actual_genotypes, expected_genotypes)
     # Subtest 2
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds2, ds1)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds2, ds1)
     expected_alleles = np.array([
         ['C', 'G', 'A', ''],
         ['A', 'C', 'G', 'T'],
@@ -173,7 +173,7 @@ def test_biallelic_monoallelic():
         ds2.variant_allele[i] = xr.DataArray(['C', ''])
         ds2.call_genotype[i] = xr.DataArray(np.zeros_like(ds2.call_genotype[i]))
     # Subtest 1
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds1, ds2)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds1, ds2)
     expected_alleles = np.array([
         ['A', 'C', '', ''],
         ['G', 'T', 'C', ''],
@@ -188,7 +188,7 @@ def test_biallelic_monoallelic():
     assert np.array_equal(actual_alleles, expected_alleles)
     assert np.array_equal(actual_genotypes, expected_genotypes)
     # Subtest 2
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds2, ds1)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds2, ds1)
     expected_alleles = np.array([
         ['C', 'A', '', ''],
         ['C', 'G', 'T', ''],
@@ -218,7 +218,7 @@ def test_both_monoallelic():
     ds1.call_genotype[1] = xr.DataArray(np.zeros_like(ds1.call_genotype[1]))
     ds2.variant_allele[1] = xr.DataArray(['G', ''])
     ds2.call_genotype[1] = xr.DataArray(np.zeros_like(ds2.call_genotype[1]))
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds1, ds2)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds1, ds2)
     expected_alleles = np.array([
         ['C', '', '', ''],
         ['C', 'G', '', ''],
@@ -234,14 +234,13 @@ def test_both_monoallelic():
     assert np.array_equal(actual_genotypes, expected_genotypes)
 
 
-
 def test_acgt_alleles_true():
     ds1 = make_test_case()
     ds2 = ds1.copy(deep=True)
-    actual_alleles, actual_genotypes = compare_vcfs.remap_genotypes(ds1, ds2, acgt_alleles=True)
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds1, ds2, acgt_alleles=True)
     expected_alleles = np.array([
-        compare_vcfs._ACGT_ALLELES_,
-        compare_vcfs._ACGT_ALLELES_,
+        cv._ACGT_ALLELES_,
+        cv._ACGT_ALLELES_,
     ])
     expected_genotypes = xr.DataArray(
         [
@@ -275,7 +274,7 @@ def test_make_compatible_genotypes():
     for i in np.arange(ds2.variant_contig.size):
         ds2.variant_allele[i] = xr.DataArray(np.flip(ds2.variant_allele[i]))
         ds2.call_genotype[i] = xr.DataArray(np.where(ds2.call_genotype[i] == 0, 1, 0))
-    ds1_compat, ds2_compat = compare_vcfs.make_compatible_genotypes(ds1, ds2)
+    ds1_compat, ds2_compat = cv.make_compatible_genotypes(ds1, ds2)
     assert np.array_equal(ds1_compat.variant_allele, ds2_compat.variant_allele)
     assert np.array_equal(ds1_compat.call_genotype, ds2_compat.call_genotype)
 
@@ -283,11 +282,46 @@ def test_make_compatible_genotypes():
 def test_make_compatible_genotypes_acgt_alleles_true():
     ds1 = make_test_case()
     ds2 = ds1.copy(deep=True)
-    ds1_compat, ds2_compat = compare_vcfs.make_compatible_genotypes(ds1, ds2, acgt_alleles=True)
+    ds1_compat, ds2_compat = cv.make_compatible_genotypes(ds1, ds2, acgt_alleles=True)
     expected_alleles = np.array([
-        compare_vcfs._ACGT_ALLELES_,
-        compare_vcfs._ACGT_ALLELES_,
+        cv._ACGT_ALLELES_,
+        cv._ACGT_ALLELES_,
     ])
     assert np.array_equal(ds1_compat.variant_allele, expected_alleles)
+    assert np.array_equal(ds1_compat.variant_allele, ds2_compat.variant_allele)
+    assert np.array_equal(ds1_compat.call_genotype, ds2_compat.call_genotype)
+
+
+# Parallelisation
+# TODO: Refactor. Should be able to parametrise `num_workers`.
+def test_remap_genotypes_parallelise():
+    ds1 = make_test_case()
+    ds2 = ds1.copy(deep=True)
+    for i in np.arange(ds2.variant_contig.size):
+        ds2.variant_allele[i] = xr.DataArray(np.flip(ds2.variant_allele[i]))
+        ds2.call_genotype[i] = xr.DataArray(np.where(ds2.call_genotype[i] == 0, 1, 0))
+    actual_alleles, actual_genotypes = cv.remap_genotypes(ds1, ds2, num_workers=2)
+    expected_alleles = np.array([
+        ['A', 'C', '', ''],
+        ['G', 'T', '', ''],
+    ])
+    expected_genotypes = xr.DataArray(
+        [
+            [[0, 1], [1, 0]],
+            [[1, 0], [0, 1]],
+        ],
+        dims=["variants", "samples", "ploidy"]
+    )
+    assert np.array_equal(actual_alleles, expected_alleles)
+    assert np.array_equal(actual_genotypes, expected_genotypes)
+
+
+def test_make_compatible_genotypes_parallelise():
+    ds1 = make_test_case()
+    ds2 = ds1.copy(deep=True)
+    for i in np.arange(ds2.variant_contig.size):
+        ds2.variant_allele[i] = xr.DataArray(np.flip(ds2.variant_allele[i]))
+        ds2.call_genotype[i] = xr.DataArray(np.where(ds2.call_genotype[i] == 0, 1, 0))
+    ds1_compat, ds2_compat = cv.make_compatible_genotypes(ds1, ds2, num_workers=2)
     assert np.array_equal(ds1_compat.variant_allele, ds2_compat.variant_allele)
     assert np.array_equal(ds1_compat.call_genotype, ds2_compat.call_genotype)

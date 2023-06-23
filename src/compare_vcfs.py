@@ -8,6 +8,11 @@ from numba import njit
 import sgkit as sg
 
 
+import sys
+sys.path.append('../')
+import parallelise
+
+
 _ACGT_ALLELES_ = np.array(['A', 'C', 'G', 'T'])
 
 
@@ -36,7 +41,7 @@ def get_matching_indices(arr1, arr2):
     return np.array(idx_pairs)
 
 
-def remap_genotypes(ds1, ds2, acgt_alleles=False):
+def remap_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     """
     Remap genotypes of `ds2` to `ds1` for each site, such that:
     1. There are only genotypes shared between `ds1` and `ds2`.
@@ -52,6 +57,7 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
     :param xarray.Dataset ds1: sgkit-style dataset.
     :param xarray.Dataset ds2: sgkit-style dataset.
     :param bool acgt_alleles: All allele lists are set to ACGT (default = False).
+    :param int num_workers: Number of workers to use for parallelisation (default = 1).
     :return: Remapped genotypes of `ds2`.
     :rtype: xarray.DataArray
     """
@@ -60,21 +66,24 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
         ds2.variant_position.values
     )
 
-    remapped_ds2_variant_allele = xr.DataArray(
+    remap_ds2_variant_allele = xr.DataArray(
         np.full([len(common_site_idx), 4], ''),   # ACGT
         dims=["variants", "alleles"]
     )
-    remapped_ds2_call_genotype = xr.DataArray(
+    remap_ds2_call_genotype = xr.DataArray(
         np.zeros([len(common_site_idx), ds2.dims["samples"], ds2.dims["ploidy"]]),
         dims=["variants", "samples", "ploidy"]
     )
 
-    i = 0
-    for ds1_idx, ds2_idx in tqdm(common_site_idx):
+    def _remap_genotype_per_site(idx):
+        assert len(idx) == 2
+        ds1_idx, ds2_idx = idx
+
         # Get the allele lists at matching positions
         ds1_alleles = _ACGT_ALLELES_ if acgt_alleles else \
             np.array([a for a in ds1.variant_allele[ds1_idx].values if a != ''])
-        ds2_alleles = np.array([a for a in ds2.variant_allele[ds2_idx].values if a != ''])
+        ds2_alleles = np.array(
+            [a for a in ds2.variant_allele[ds2_idx].values if a != ''])
 
         if not np.all(np.isin(ds1_alleles, _ACGT_ALLELES_)) or \
             not np.all(np.isin(ds2_alleles, _ACGT_ALLELES_)):
@@ -99,15 +108,35 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False):
             ds1_alleles = np.append(ds1_alleles, np.full(4 - len(ds1_alleles), b''))
 
         # Remap genotypes 2 to genotypes 1
-        remapped_ds2_variant_allele[i] = ds1_alleles
         ds2_genotype = ds2.call_genotype[ds2_idx].values
-        remapped_ds2_call_genotype[i] = index_array[ds2_genotype].tolist()
-        i += 1
+        remap_ds2_genotype = index_array[ds2_genotype].tolist()
 
-    return (remapped_ds2_variant_allele, remapped_ds2_call_genotype)
+        return ds1_alleles, remap_ds2_genotype
+
+    # Parallelise this using a threaded map
+    if num_workers > 1:
+        results = parallelise.threaded_map(
+            _remap_genotype_per_site,
+            common_site_idx,
+            num_workers=num_workers
+        )
+        i = 0
+        for result in tqdm(results, total=len(common_site_idx)):
+            remap_ds2_variant_allele[i] = result[0]
+            remap_ds2_call_genotype[i] = result[1]
+            i += 1
+    else:
+        i = 0
+        for idx in tqdm(common_site_idx):
+            result = _remap_genotype_per_site(idx)
+            remap_ds2_variant_allele[i] = result[0]
+            remap_ds2_call_genotype[i] = result[1]
+            i += 1
+
+    return (remap_ds2_variant_allele, remap_ds2_call_genotype)
 
 
-def make_compatible_genotypes(ds1, ds2, acgt_alleles=False):
+def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     """
     Make `ds2` compatible with `ds1` by remapping genotypes.
 
@@ -127,6 +156,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False):
     :param xarray.Dataset ds1: sgkit-style dataset.
     :param xarray.Dataset ds2: sgkit-style dataset.
     :param bool acgt_alleles: All allele lists are set to ACGT (default = False).
+    :param int num_workers: Number of workers to use for parallelisation (default = 1).
     :return: Compatible `ds1` and `ds2`.
     :rtype: tuple(xarray.Dataset, xarray.Dataset)
     """
@@ -140,7 +170,12 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False):
     ds2_idx = np.array(ds2_idx.flatten())
     assert len(ds1_idx) == len(ds2_idx) == len(common_site_idx)
 
-    remap_ds2_alleles, remap_ds2_genotypes = remap_genotypes(ds1, ds2, acgt_alleles=acgt_alleles)
+    remap_ds2_alleles, remap_ds2_genotypes = remap_genotypes(
+        ds1,
+        ds2,
+        acgt_alleles=acgt_alleles,
+        num_workers=num_workers
+    )
     assert remap_ds2_alleles.shape == (len(common_site_idx), 4)
     assert remap_ds2_genotypes.shape == (len(common_site_idx), ds2.dims["samples"], ds2.dims["ploidy"])
 
@@ -149,7 +184,12 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False):
     ds1_variant_contig = ds1.variant_contig.isel(variants=ds1_idx).values
     ds1_variant_position = ds1.variant_position.isel(variants=ds1_idx).values
     if acgt_alleles:
-        remap_ds1_alleles, remap_ds1_genotypes = remap_genotypes(ds2, ds1, acgt_alleles=acgt_alleles)
+        remap_ds1_alleles, remap_ds1_genotypes = remap_genotypes(
+            ds2,
+            ds1,
+            acgt_alleles=acgt_alleles,
+            num_workers=num_workers
+        )
         assert remap_ds1_alleles.shape == (len(common_site_idx), 4)
         assert remap_ds1_genotypes.shape == (len(common_site_idx), ds1.dims["samples"], ds1.dims["ploidy"])
         ds1_variant_allele = remap_ds1_alleles.values
