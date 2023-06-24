@@ -17,7 +17,7 @@ def test_initialise_sample_path():
     assert np.array_equal(s.nodes, np.repeat(2, 5))
     assert np.array_equal(s.site_positions, np.arange(5))
     assert len(s) == 5
-    assert s.is_valid()
+    assert s.is_valid
 
 
 def test_initialise_sample_path_invalid():
@@ -30,7 +30,7 @@ def test_initialise_sample_path_invalid():
     assert np.array_equal(s.nodes, np.repeat(2, 4))
     assert np.array_equal(s.site_positions, np.arange(5))
     assert len(s) == 4
-    assert not s.is_valid()
+    assert not s.is_valid
 
 
 # TODO: More tests
@@ -45,7 +45,7 @@ def test_get_switch_mask_no_switch():
         nodes=np.repeat(2, 5),
         site_positions=np.arange(5)
     )
-    assert s.is_valid()
+    assert s.is_valid
     actual = util.get_switch_mask(s)
     expected = np.repeat(False, 5)
     assert np.array_equal(actual, expected)
@@ -57,7 +57,7 @@ def test_get_switch_mask_one_switch():
         nodes=np.array([2, 2, 3, 3, 3]),
         site_positions=np.arange(5)
     )
-    assert s.is_valid()
+    assert s.is_valid
     actual = util.get_switch_mask(s)
     expected = np.repeat(False, 5)
     expected[2] = True
@@ -70,7 +70,7 @@ def test_get_switch_mask_one_switches_end():
         nodes=np.array([2, 2, 2, 2, 3]),
         site_positions=np.arange(5)
     )
-    assert s.is_valid()
+    assert s.is_valid
     actual = util.get_switch_mask(s)
     expected = np.repeat(False, 5)
     expected[4] = True
@@ -83,7 +83,7 @@ def test_get_switch_mask_multiple_switches():
         nodes=np.array([2, 2, 3, 4, 4]),
         site_positions=np.arange(5)
     )
-    assert s.is_valid()
+    assert s.is_valid
     actual = util.get_switch_mask(s)
     expected = np.repeat(False, 5)
     expected[2] = expected[3] = True
