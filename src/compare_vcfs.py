@@ -179,6 +179,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
 
     # Subset `ds1` to common sites
     ds1_contig_id = ds1.contig_id.values
+    ds1_contig_length = ds1.contig_length.values
     ds1_variant_contig = ds1.variant_contig.isel(variants=ds1_idx).values
     ds1_variant_position = ds1.variant_position.isel(variants=ds1_idx).values
     if acgt_alleles:
@@ -201,6 +202,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     remap_ds1 = xr.Dataset(
         {
             "contig_id": ("contigs", ds1_contig_id),
+            "contig_length": ("contigs", ds1_contig_length),
             "variant_contig": ("variants", ds1_variant_contig),
             "variant_position": ("variants", ds1_variant_position),
             "variant_allele": (["variants", "alleles"], ds1_variant_allele),
@@ -210,6 +212,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
         },
         attrs={
             "contigs": ds1_contig_id,
+            "contig_lengths": ds1_contig_length,
             "vcf_header": ds1.vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
@@ -217,6 +220,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
 
     # Subset `ds2` to common sites
     ds2_contig_id = ds2.contig_id.values
+    ds2_contig_length = ds2.contig_length.values
     ds2_variant_contig = ds2.variant_contig.isel(variants=ds2_idx).values
     ds2_variant_position = ds2.variant_position.isel(variants=ds2_idx).values
     ds2_variant_allele = remap_ds2_alleles.values
@@ -227,6 +231,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     remap_ds2 = xr.Dataset(
         {
             "contig_id": ("contigs", ds2_contig_id),
+            "contig_length": ("contigs", ds2_contig_length),
             "variant_contig": ("variants", ds2_variant_contig),
             "variant_position": ("variants", ds2_variant_position),
             "variant_allele": (["variants", "alleles"], ds2_variant_allele),
@@ -236,6 +241,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
         },
         attrs={
             "contigs": ds2_contig_id,
+            "contig_lengths": ds2_contig_length,
             "vcf_header": ds2.vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }

@@ -24,6 +24,7 @@ def make_test_case():
     :rtype: xr.Dataset
     """
     contig_id = ['20']
+    contig_length = [200]
     variant_contig = np.array([0, 0], dtype=np.int64)
     variant_position = np.array([5, 10], dtype=np.int64)
     variant_allele = np.array([
@@ -51,12 +52,13 @@ def make_test_case():
 
     vcf_header = f"##fileformat=VCFv4.2\n" \
         f"##FILTER=<ID=PASS,Description=\"All filters passed\">\n" \
-        f"##contig=<ID={contig_id[0]},length=200>\n" \
+        f"##contig=<ID={contig_id[0]},length={str(contig_length[0])}>\n" \
         f"#FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" \
         f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_id[0]}\t{sample_id[1]}\n"
     ds = xr.Dataset(
         {
             "contig_id": ("contigs", contig_id),
+            "contig_length": ("contigs", contig_length),
             "variant_contig": ("variants", variant_contig),
             "variant_position": ("variants", variant_position),
             "variant_allele": (["variants", "alleles"], variant_allele),
@@ -66,6 +68,7 @@ def make_test_case():
         },
         attrs={
             "contigs": contig_id,
+            "contig_lengths": contig_length,
             "vcf_header": vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
