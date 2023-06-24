@@ -103,7 +103,7 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
 
         # Pad allele list so that it is length 4
         if len(ds1_alleles) < 4:
-            ds1_alleles = np.append(ds1_alleles, np.full(4 - len(ds1_alleles), b''))
+            ds1_alleles = np.append(ds1_alleles, np.full(4 - len(ds1_alleles), ''))
 
         # Remap genotypes 2 to genotypes 1
         ds2_genotype = ds2.call_genotype[ds2_idx].values
