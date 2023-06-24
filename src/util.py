@@ -423,7 +423,7 @@ def make_compatible_samples(
 
 
 # Functions for adding a new individual to an existing tree sequence
-@dataclass
+@dataclass(frozen=True)
 class SamplePath:
     """
     Convenience class for storing the sample paths of an individual.
@@ -449,11 +449,11 @@ class SamplePath:
         return(self.nodes.size)
 
     def __post_init__(self):
-        self.is_valid = False
+        object.__setattr__(self, 'is_valid', False)
         is_nodes_site_positions_equal_length = self.nodes.size == self.site_positions.size
         is_site_positions_sorted = np.all(self.site_positions[:-1] < self.site_positions[1:])
         if is_nodes_site_positions_equal_length and is_site_positions_sorted:
-            self.is_valid = True
+            object.__setattr__(self, 'is_valid', True)
 
 
 def get_switch_mask(path):

@@ -1,3 +1,4 @@
+from dataclasses import FrozenInstanceError
 import pytest
 import msprime
 import numpy as np
@@ -32,6 +33,19 @@ def test_initialise_sample_path_invalid():
     assert len(s) == 4
     assert not s.is_valid
 
+
+def test_frozen_instance_sample_path():
+    s = util.SamplePath(
+        individual="test",
+        nodes=np.repeat(2, 5),
+        site_positions=np.arange(5)
+    )
+    with pytest.raises(FrozenInstanceError):
+        s.individual = "test2"
+    with pytest.raises(FrozenInstanceError):
+        s.nodes = np.repeat(3, 5)
+    with pytest.raises(FrozenInstanceError):
+        s.site_positions = np.arange(5)
 
 # TODO: More tests
 # Individual name not specified.
