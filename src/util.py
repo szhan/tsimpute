@@ -502,68 +502,52 @@ def add_individual_to_tree_sequence(ts, paths, metadata=None):
     if not len(paths) > 0:
         raise ValueError("At least one sample path must be provided.")
 
-    for i in np.arange(len(paths)):
-        if ts.num_sites != len(paths[i]):
+    for path in paths:
+        if ts.num_sites != len(path):
             raise ValueError("Lengths of path and ts are not equal.")
-        if not np.all(np.isin(paths[i].nodes, np.arange(ts.num_nodes))):
+        if not np.all(np.isin(path.nodes, np.arange(ts.num_nodes))):
             raise ValueError("Not all node ids in path are not in ts.")
 
-    tables = ts.dump_tables()
+    new_tables = ts.dump_tables()
 
     # Add an individual to the individuals table
-    new_ind_id = tables.individuals.add_row(metadata=metadata)
+    new_ind_id = new_tables.individuals.add_row(metadata=metadata)
 
-    for i in np.arange(len(paths)):
+    for path in paths:
         # Add a new sample node to the nodes table
-        new_node_id = tables.nodes.add_row(
+        new_node_id = new_tables.nodes.add_row(
             flags=1, # Flag for a sample
-            time=-1, # Arbitrarily set to be younger than samples in ts
+            time=-1, # Arbitrarily set to be younger than samples at t = 0 in ts
             population=0,   # TODO: Associate it with a specific population
             individual=new_ind_id,
-            metadata=paths[i].metadata,
+            metadata=path.metadata,
         )
 
         # Add new edges to the edges table
-        is_switch = get_switch_mask(paths[i])
-        switch_pos = ts.sites_position[is_switch]
-        parent_at_switch_pos = paths[i].nodes[is_switch]
+        is_switch = get_switch_mask(path)
+        parent_at_switch = path.nodes[is_switch]    # Parent node ids
+        pos_at_switch = path.site_positions[is_switch]
 
-        if len(switch_pos) == 0:
-            # Add one edge when there is no switch
-            assert len(np.unique(paths[i].nodes)) == 1
-            edge_id = tables.edges.add_row(
-                left=0,
-                right=ts.sequence_length,
-                parent=paths[i].nodes[0],
+        if len(pos_at_switch) > 0:
+            if pos_at_switch[0] == 0:
+                raise ValueError("Switch cannot occur at the first site in the sequence.")
+            if pos_at_switch[-1] == ts.sequence_length - 1:
+                raise ValueError("Switch cannot occur at the last site in the sequence.")
+
+        # Recall that edge span is expressed as half-open,
+        # so the right position is exclusive
+        pos = np.concatenate(([0], pos_at_switch, [ts.sequence_length]))
+        parents = np.concatenate(([path.nodes[0]], parent_at_switch))
+
+        for parent, left, right in zip(parents, pos[:-1], pos[1:]):
+            new_edge_id = new_tables.edges.add_row(
+                left=left,
+                right=right,
+                parent=parent,
                 child=new_node_id,
             )
-        else:
-            # Add multiple edges when there is at least one switch
-            # Add first edge
-            edge_id = tables.edges.add_row(
-                left=0,
-                right=switch_pos[0],
-                parent=paths[i].nodes[0],
-                child=new_node_id,
-            )
-            for j in np.arange(len(switch_pos)):
-                if j == len(switch_pos) - 1:
-                    # Add last edge
-                    tmp_left = switch_pos[j]
-                    tmp_right = ts.sequence_length
-                    tmp_parent = parent_at_switch_pos[j]
-                else:
-                    # Add middle edge(s), if any
-                    tmp_left = switch_pos[j]
-                    tmp_right = switch_pos[j + 1]
-                    tmp_parent = parent_at_switch_pos[j]
-                edge_id = tables.edges.add_row(
-                    left=tmp_left,
-                    right=tmp_right,
-                    parent=tmp_parent,
-                    child=new_node_id,
-                )
 
-        tables.sort()
+        new_tables.sort()
+        new_ts = new_tables.tree_sequence()
 
-    return((new_ind_id, tables.tree_sequence()))
+    return((new_ind_id, new_ts))
