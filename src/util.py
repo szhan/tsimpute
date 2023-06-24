@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 import logging
 import numpy as np
@@ -426,23 +426,34 @@ def make_compatible_samples(
 @dataclass
 class SamplePath:
     """
-    Class for storing the sample paths of an individual.
-    Each sample path is defined by a list of node ids.
+    Convenience class for storing the sample paths of an individual.
+    Each sample path is defined by a list of ids of nodes in a tree sequence.
     
-    individual: Name of individual
-    nodes: Path (list of node ids)
-    site_positions: Site positions corresponding to the path
+    Definition of a valid `SamplePath` object:
+    1. The sizes of the `nodes` and `site_positions` attributes are equal.
+    2. The `site_positions` attribute is sorted in ascending order.
+
+    individual: Name of individual.
+    nodes: Sample path (list of node ids).
+    site_positions: Site positions corresponding to the path.
+    is_valid: Boolean indicating whether the path is valid.
+    metadata: Metadata associated with the path (optional).
     """
     individual: str
     nodes: np.ndarray
     site_positions: np.ndarray
     metadata: dict = None
+    is_valid: bool = field(init=False)
 
     def __len__(self):
         return(self.nodes.size)
 
-    def is_valid(self):
-        return self.nodes.size == self.site_positions.size
+    def __post_init__(self):
+        self.is_valid = False
+        is_nodes_site_positions_equal_length = self.nodes.size == self.site_positions.size
+        is_site_positions_sorted = np.all(self.site_positions[:-1] < self.site_positions[1:])
+        if is_nodes_site_positions_equal_length and is_site_positions_sorted:
+            self.is_valid = True
 
 
 def get_switch_mask(path):
