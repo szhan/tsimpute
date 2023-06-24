@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+# Functions for making static visualizations
 def plot_sample_path(path, site_pos, tracks=None, window=None):
     fig, ax = plt.subplots(1, 1, figsize=(20, 5))
     ax.plot(
@@ -103,3 +104,8 @@ def plot_iqs_versus_maf(
 
     if out_png_file is not None:
         g.get_figure().savefig(out_png_file, dpi=dpi)
+
+
+# Functions for making interactive visualizations
+def plot_sample_path_interactive(path, site_pos, tracks=None, window=None):
+    pass
