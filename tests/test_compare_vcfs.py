@@ -49,6 +49,11 @@ def make_test_case():
     )
     call_genotype_mask = np.zeros_like(call_genotype, dtype=bool)   # no mask
 
+    vcf_header = f"##fileformat=VCFv4.2\n" \
+        f"##FILTER=<ID=PASS,Description=\"All filters passed\">\n" \
+        f"##contig=<ID={contig_id[0]},length=200>\n" \
+        f"#FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" \
+        f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_id[0]}\t{sample_id[1]}\n"
     ds = xr.Dataset(
         {
             "contig_id": ("contigs", contig_id),
@@ -61,6 +66,7 @@ def make_test_case():
         },
         attrs={
             "contigs": contig_id,
+            "vcf_header": vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
     )

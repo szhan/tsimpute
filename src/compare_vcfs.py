@@ -1,12 +1,10 @@
 from tqdm import tqdm
 
+from numba import njit
 import numpy as np
 import xarray as xr
 
-from numba import njit
-
 import sgkit as sg
-
 
 import sys
 sys.path.append('../')
@@ -212,6 +210,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
         },
         attrs={
             "contigs": ds1_contig_id,
+            "vcf_header": ds1.vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
     )
@@ -237,6 +236,7 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
         },
         attrs={
             "contigs": ds2_contig_id,
+            "vcf_header": ds2.vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
     )
