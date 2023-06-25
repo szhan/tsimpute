@@ -42,7 +42,7 @@ def get_matching_indices(arr1, arr2):
 def remap_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     """
     Remap genotypes of `ds2` to `ds1` for each site, such that:
-    1. There are only genotypes shared between `ds1` and `ds2`.
+    1. There are only genotypes at sites shared between `ds1` and `ds2`.
     2. The allele lists always have length 4 (full or padded).
 
     Assumptions:
@@ -55,20 +55,21 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     :param xarray.Dataset ds1: sgkit-style dataset.
     :param xarray.Dataset ds2: sgkit-style dataset.
     :param bool acgt_alleles: All allele lists are set to ACGT (default = False).
-    :param int num_workers: Number of workers to use for parallelisation (default = 1).
-    :return: Remapped genotypes of `ds2`.
-    :rtype: xarray.DataArray
+    :param int num_workers: Number of workers (default = 1).
+    :return: Allele lists of `ds1` and remapped genotypes for `ds2`.
+    :rtype: tuple(xarray.DataArray, xarray.DataArray)
     """
     common_site_idx = get_matching_indices(
         ds1.variant_position.values,
         ds2.variant_position.values
     )
 
-    remap_ds2_variant_allele = xr.DataArray(
+    new_ds2_variant_allele = xr.DataArray(
         np.full([len(common_site_idx), 4], ''),   # ACGT
         dims=["variants", "alleles"]
     )
-    remap_ds2_call_genotype = xr.DataArray(
+
+    new_ds2_call_genotype = xr.DataArray(
         np.zeros([len(common_site_idx), ds2.dims["samples"], ds2.dims["ploidy"]]),
         dims=["variants", "samples", "ploidy"]
     )
@@ -78,38 +79,37 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
         ds1_idx, ds2_idx = idx
 
         # Get the allele lists at matching positions
-        ds1_alleles = _ACGT_ALLELES_ if acgt_alleles else \
+        ds1_allel = _ACGT_ALLELES_ if acgt_alleles else \
             np.array([a for a in ds1.variant_allele[ds1_idx].values if a != ''])
-        ds2_alleles = np.array(
-            [a for a in ds2.variant_allele[ds2_idx].values if a != ''])
+        ds2_allel = np.array([a for a in ds2.variant_allele[ds2_idx].values if a != ''])
 
-        if not np.all(np.isin(ds1_alleles, _ACGT_ALLELES_)) or \
-            not np.all(np.isin(ds2_alleles, _ACGT_ALLELES_)):
-            raise ValueError(f"Alleles {ds1_alleles} and {ds2_alleles} are not all ACGT.")
+        if not np.all(np.isin(ds1_allel, _ACGT_ALLELES_)) or \
+            not np.all(np.isin(ds2_allel, _ACGT_ALLELES_)):
+            raise ValueError(f"Alleles {ds1_allel} and {ds2_allel} are not all ACGT.")
 
         # Modify the allele lists such that both lists contain the same alleles
-        ds1_uniq = np.setdiff1d(ds1_alleles, ds2_alleles)
-        ds2_uniq = np.setdiff1d(ds2_alleles, ds1_alleles)
-        ds1_alleles = np.append(ds1_alleles, ds2_uniq)
-        ds2_alleles = np.append(ds2_alleles, ds1_uniq)
+        ds1_uniq = np.setdiff1d(ds1_allel, ds2_allel)
+        ds2_uniq = np.setdiff1d(ds2_allel, ds1_allel)
+        ds1_allel = np.append(ds1_allel, ds2_uniq)
+        ds2_allel = np.append(ds2_allel, ds1_uniq)
 
-        if not np.array_equal(np.sort(ds1_alleles), np.sort(ds2_alleles)):
+        if not np.array_equal(np.sort(ds1_allel), np.sort(ds2_allel)):
             raise ValueError("Allele lists are not the same.")
 
         # Get index map from the allele list of ds2 to the allele list of ds1
-        ds1_sort_idx = np.argsort(ds1_alleles)
-        ds2_sort_idx = np.argsort(ds2_alleles)
-        index_array = np.argsort(ds2_sort_idx)[ds1_sort_idx]
+        ds1_sort_idx = np.argsort(ds1_allel)
+        ds2_sort_idx = np.argsort(ds2_allel)
+        idx_arr = np.argsort(ds2_sort_idx)[ds1_sort_idx]
 
         # Pad allele list so that it is length 4
-        if len(ds1_alleles) < 4:
-            ds1_alleles = np.append(ds1_alleles, np.full(4 - len(ds1_alleles), ''))
+        if len(ds1_allel) < 4:
+            ds1_allel = np.append(ds1_allel, np.full(4 - len(ds1_allel), ''))
 
         # Remap genotypes 2 to genotypes 1
-        ds2_genotype = ds2.call_genotype[ds2_idx].values
-        remap_ds2_genotype = index_array[ds2_genotype].tolist()
+        ds2_gt = ds2.call_genotype[ds2_idx].values
+        new_ds2_gt = idx_arr[ds2_gt].tolist()
 
-        return ds1_alleles, remap_ds2_genotype
+        return (ds1_allel, new_ds2_gt)
 
     # Parallelise this using a threaded map
     if num_workers > 1:
@@ -120,21 +120,21 @@ def remap_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
         )
         i = 0
         for result in tqdm(results, total=len(common_site_idx)):
-            remap_ds2_variant_allele[i] = result[0]
-            remap_ds2_call_genotype[i] = result[1]
+            new_ds2_variant_allele[i] = result[0]
+            new_ds2_call_genotype[i] = result[1]
             i += 1
     else:
         i = 0
         for idx in tqdm(common_site_idx):
             result = _remap_genotype_per_site(idx)
-            remap_ds2_variant_allele[i] = result[0]
-            remap_ds2_call_genotype[i] = result[1]
+            new_ds2_variant_allele[i] = result[0]
+            new_ds2_call_genotype[i] = result[1]
             i += 1
 
-    return (remap_ds2_variant_allele, remap_ds2_call_genotype)
+    return (new_ds2_variant_allele, new_ds2_call_genotype)
 
 
-def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
+def make_compatible(ds1, ds2, num_workers=1):
     """
     Make `ds2` compatible with `ds1` by remapping genotypes.
 
@@ -148,15 +148,11 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     1. Only ACGT alleles.
     2. No mixed ploidy.
 
-    Additionally, if `actg_alleles` is set to True,
-    all allele lists in `ds1` and `ds2` are set to ACGT.
-
     :param xarray.Dataset ds1: sgkit-style dataset.
     :param xarray.Dataset ds2: sgkit-style dataset.
-    :param bool acgt_alleles: All allele lists are set to ACGT (default = False).
-    :param int num_workers: Number of workers to use for parallelisation (default = 1).
-    :return: Compatible `ds1` and `ds2`.
-    :rtype: tuple(xarray.Dataset, xarray.Dataset)
+    :param int num_workers: Number of workers (default = 1).
+    :return: New `ds2` compatible with `ds1`.
+    :rtype: xarray.Dataset
     """
     # TODO: Refactor, routine run again when calling `remap_genotypes`
     common_site_idx = get_matching_indices(
@@ -168,83 +164,81 @@ def make_compatible_genotypes(ds1, ds2, acgt_alleles=False, num_workers=1):
     ds2_idx = np.array(ds2_idx.flatten())
     assert len(ds1_idx) == len(ds2_idx) == len(common_site_idx)
 
-    remap_ds2_alleles, remap_ds2_genotypes = remap_genotypes(
+    new_ds2_allel, new_ds2_gt = remap_genotypes(
         ds1,
         ds2,
-        acgt_alleles=acgt_alleles,
+        acgt_alleles=False,
         num_workers=num_workers
     )
-    assert remap_ds2_alleles.shape == (len(common_site_idx), 4)
-    assert remap_ds2_genotypes.shape == (len(common_site_idx), ds2.dims["samples"], ds2.dims["ploidy"])
-
-    # Subset `ds1` to common sites
-    ds1_contig_id = ds1.contig_id.values
-    ds1_contig_length = ds1.contig_length.values
-    ds1_variant_contig = ds1.variant_contig.isel(variants=ds1_idx).values
-    ds1_variant_position = ds1.variant_position.isel(variants=ds1_idx).values
-    if acgt_alleles:
-        remap_ds1_alleles, remap_ds1_genotypes = remap_genotypes(
-            ds2,
-            ds1,
-            acgt_alleles=acgt_alleles,
-            num_workers=num_workers
-        )
-        assert remap_ds1_alleles.shape == (len(common_site_idx), 4)
-        assert remap_ds1_genotypes.shape == (len(common_site_idx), ds1.dims["samples"], ds1.dims["ploidy"])
-        ds1_variant_allele = remap_ds1_alleles.values
-        ds1_call_genotype = remap_ds1_genotypes.values
-    else:
-        ds1_variant_allele = remap_ds2_alleles.values
-        ds1_call_genotype = ds1.call_genotype.isel(variants=ds1_idx).values
-    ds1_sample_id = ds1.sample_id.values
-    ds1_call_genotype_mask = ds1.call_genotype_mask.isel(variants=ds1_idx).values
-
-    remap_ds1 = xr.Dataset(
-        {
-            "contig_id": ("contigs", ds1_contig_id),
-            "contig_length": ("contigs", ds1_contig_length),
-            "variant_contig": ("variants", ds1_variant_contig),
-            "variant_position": ("variants", ds1_variant_position),
-            "variant_allele": (["variants", "alleles"], ds1_variant_allele),
-            "sample_id": ("samples", ds1_sample_id),
-            "call_genotype": (["variants", "samples", "ploidy"], ds1_call_genotype),
-            "call_genotype_mask": (["variants", "samples", "ploidy"], ds1_call_genotype_mask),
-        },
-        attrs={
-            "contigs": ds1_contig_id,
-            "contig_lengths": ds1_contig_length,
-            "vcf_header": ds1.vcf_header,
-            "source": "sgkit" + "-" + str(sg.__version__),
-        }
-    )
+    assert new_ds2_allel.shape == (len(common_site_idx), 4)
+    assert new_ds2_gt.shape == (len(common_site_idx), ds2.dims["samples"], ds2.dims["ploidy"])
 
     # Subset `ds2` to common sites
-    ds2_contig_id = ds2.contig_id.values
-    ds2_contig_length = ds2.contig_length.values
     ds2_variant_contig = ds2.variant_contig.isel(variants=ds2_idx).values
     ds2_variant_position = ds2.variant_position.isel(variants=ds2_idx).values
-    ds2_variant_allele = remap_ds2_alleles.values
-    ds2_sample_id = ds2.sample_id.values
-    ds2_call_genotype = remap_ds2_genotypes.values
+    ds2_variant_allele = new_ds2_allel.values   # New allele lists
+    ds2_call_genotype = new_ds2_gt.values   # New remappged genotypes
     ds2_call_genotype_mask = ds2.call_genotype_mask.isel(variants=ds2_idx).values
 
     remap_ds2 = xr.Dataset(
         {
-            "contig_id": ("contigs", ds2_contig_id),
-            "contig_length": ("contigs", ds2_contig_length),
+            "contig_id": ("contigs", ds2.contig_id.values),
+            "contig_length": ("contigs", ds2.contig_length.values),
             "variant_contig": ("variants", ds2_variant_contig),
             "variant_position": ("variants", ds2_variant_position),
             "variant_allele": (["variants", "alleles"], ds2_variant_allele),
-            "sample_id": ("samples", ds2_sample_id),
+            "sample_id": ("samples", ds2.sample_id.values),
             "call_genotype": (["variants", "samples", "ploidy"], ds2_call_genotype),
             "call_genotype_mask": (["variants", "samples", "ploidy"], ds2_call_genotype_mask),
         },
         attrs={
-            "contigs": ds2_contig_id,
-            "contig_lengths": ds2_contig_length,
+            "contigs": ds2.contig_id.values,
+            "contig_lengths": ds2.contig_length.values,
             "vcf_header": ds2.vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
     )
 
-    return (remap_ds1, remap_ds2)
+    return remap_ds2
+
+
+def remap_to_acgt(ds1, num_workers=1):
+    """
+    Remap `ds1` so that all sites have the same ACGT allele list.
+
+    Assumptions:
+    1. Only ACGT alleles.
+    2. No mixed ploidy.
+
+    :param xarray.Dataset ds1: sgkit-style dataset.
+    :param int num_workers: Number of workers to use for parallelisation (default = 1).
+    :return: New `ds1`.
+    :rtype: xarray.Dataset
+    """
+    new_ds1_allel, new_ds1_gt = remap_genotypes(
+        ds1,
+        ds1,
+        acgt_alleles=True,
+        num_workers=num_workers
+    )
+
+    new_ds1 = xr.Dataset(
+        {
+            "contig_id": ("contigs", ds1.contig_id.values),
+            "contig_length": ("contigs", ds1.contig_length.values),
+            "variant_contig": ("variants", ds1.variant_contig.values),
+            "variant_position": ("variants", ds1.variant_position.values),
+            "variant_allele": (["variants", "alleles"], new_ds1_allel.values),
+            "sample_id": ("samples", ds1.sample_id.values),
+            "call_genotype": (["variants", "samples", "ploidy"], new_ds1_gt.values),
+            "call_genotype_mask": (["variants", "samples", "ploidy"], ds1.call_genotype_mask.values),
+        },
+        attrs={
+            "contigs": ds1.contig_id.values,
+            "contig_lengths": ds1.contig_length.values,
+            "vcf_header": ds1.vcf_header,
+            "source": "sgkit" + "-" + str(sg.__version__),
+        }
+    )
+
+    return new_ds1
