@@ -120,10 +120,9 @@ def _get_data():
     raise NotImplementedError
 
 
-def create_step_chart_app(
+def create_sample_path_vis_app(
     path,
     ts,
-    markers,
     tracks,
     legend_labels,
     colors,
@@ -137,19 +136,20 @@ def create_step_chart_app(
     def modify_doc(doc):
         #ctrl_args = {name: ctrl.value for name, ctrl in controls.items()}
         is_sample = np.array(ts.nodes_flags[path.nodes], dtype=bool)
+        path_site_ids = np.arange(len(path))
         source_all = ColumnDataSource(data=dict(
             node_id=path.nodes,
-            site_id=np.arange(len(path)),
+            site_id=path_site_ids,
             site_pos=path.site_positions,
         ))
         source_sample = ColumnDataSource(data=dict(
             node_id=path.nodes[is_sample],
-            site_id=np.arange(len(path))[is_sample],
+            site_id=path_site_ids[is_sample],
             site_pos=path.site_positions[is_sample],
         ))
         source_nonsample = ColumnDataSource(data=dict(
             node_id=path.nodes[~is_sample],
-            site_id=np.arange(len(path))[~is_sample],
+            site_id=path_site_ids[~is_sample],
             site_pos=path.site_positions[~is_sample],
         ))
         if matrix is not None:
@@ -202,8 +202,8 @@ def create_step_chart_app(
         p1.xaxis.formatter = NumeralTickFormatter(format='0.00a')
         p1.grid.visible = False
 
+        # Show probability matrix
         if matrix is not None:
-            # Show probability matrix
             p1.rect(
                 x='site_id',
                 y='node_id',
@@ -219,25 +219,19 @@ def create_step_chart_app(
                 fill_alpha=0.25,
             )
 
-        # Show path
+        # Show copying path
         x_axis_choice = 'site_id' if matrix is not None else 'site_pos'
         r1 = p1.step(
-            x=x_axis_choice,
-            y='node_id',
-            source=source_all,
+            x=x_axis_choice, y='node_id', source=source_all,
             line_width=2, line_color='red', mode='after',
         )
         r2 = p1.square(
-            x=x_axis_choice,
-            y='node_id',
-            source=source_sample,
-            fill_color='black', size=8, line_width=0,
+            x=x_axis_choice, y='node_id', source=source_sample,
+            fill_color='black', size=6, line_width=0,
         )
         r3 = p1.circle(
-            x=x_axis_choice,
-            y='node_id',
-            source=source_nonsample,
-            fill_color='orange', size=8, line_width=0,
+            x=x_axis_choice, y='node_id', source=source_nonsample,
+            fill_color='orange', size=6, line_width=0,
         )
 
         # Add legend
@@ -247,17 +241,6 @@ def create_step_chart_app(
             ('Non-sample nodes', [r3]),
         ], location='center')
         p1.add_layout(legend1, 'right')
-
-        # Show annotation tracks
-        # TODO: Change to vbar.
-        if matrix is None:
-            p1.ray(
-                x=markers,
-                y=np.repeat(0, len(markers)),
-                angle=np.repeat(90, len(markers)), angle_units="deg",
-                color='red', line_dash='dashed',
-                line_width=1, line_alpha=0.5,
-            )
 
         # Show additional data
         p2 = figure(
@@ -285,8 +268,7 @@ def create_step_chart_app(
         p2.grid.visible = False
 
         # Add legend
-        renderers = [(label, [r])
-                     for label, r in zip(legend_labels, p2.renderers)]
+        renderers = [(l, [r]) for l, r in zip(legend_labels, p2.renderers)]
         renderers.reverse()
         legend2 = Legend(items=renderers, location='center')
         legend2.click_policy = 'mute'
