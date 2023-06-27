@@ -128,10 +128,20 @@ def create_sample_path_vis_app(
     colors,
     controls,
     matrix=None,
+    range_node_id=None,
+    range_site_id=None, # TODO: Implement.
+    range_site_pos=None,
 ):
     """
     TODO: Add docstring.
     TODO: Major refactor.
+
+    :param util.SamplePath path: Sample path.
+    :param tskit.TreeSequence ts: Tree sequence containing parent nodes of the sample path.
+    :param tuple(int, int) range_nodes: Range of parent node ids to display.
+    :param tuple(float, float) range_site_pos: Range of site positions to display.
+    :return: Bokeh application.
+    :rtype: bokeh.application.Application
     """
     def modify_doc(doc):
         #ctrl_args = {name: ctrl.value for name, ctrl in controls.items()}
@@ -170,18 +180,22 @@ def create_sample_path_vis_app(
         # Create the main plot
         if matrix is not None:
             x_axis_label = 'Site index'
-            site_id_offset = 1
+            offset = 1
             x_range = Range1d(
-                0 - site_id_offset, len(path) + site_id_offset,
-                bounds=(0 - site_id_offset, len(path) + site_id_offset),
+                0 - offset, len(path) + offset,
+                bounds=(0 - offset, len(path) + offset),
             )
         else:
             x_axis_label = 'Genomic position'
-            site_pos_offset = 10**4
+            offset = 10**3
+            min_site_pos = 1
+            max_site_pos = ts.sequence_length
+            if range_site_pos is not None:
+                min_site_pos = range_site_pos[0]
+                max_site_pos = range_site_pos[1]
             x_range = Range1d(
-                0 - site_pos_offset, ts.sequence_length + site_pos_offset,
-                bounds=(0 - site_pos_offset,
-                        ts.sequence_length + site_pos_offset),
+                min_site_pos - offset, max_site_pos + offset,
+                bounds=(min_site_pos - offset, max_site_pos + offset),
             )
 
         p1 = figure(
@@ -191,9 +205,14 @@ def create_sample_path_vis_app(
             tooltips=TOOLTIPS,
         )
         p1.x_range = x_range
+        min_node_id = 0
+        max_node_id = ts.num_nodes - 1
+        if range_node_id is not None:
+            min_node_id = range_node_id[0]
+            max_node_id = range_node_id[1]
         p1.y_range = Range1d(
-            0, ts.num_nodes,
-            bounds=(0, ts.num_nodes)
+            min_node_id, max_node_id,
+            bounds=(min_node_id, max_node_id),
         )
         p1.xaxis.axis_label_text_font_style = 'normal'
         p1.yaxis.axis_label_text_font_style = 'normal'
