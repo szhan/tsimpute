@@ -526,7 +526,7 @@ def add_individuals_to_tree_sequence(ts, paths, individual_names, metadata=None)
     new_edges_child_nodes = np.array([], dtype=np.int32)
 
     num_individuals = paths.shape[0] // 2
-    for i in np.arange(num_individuals):
+    for i in tqdm.tqdm(np.arange(num_individuals)):
         metadata_path = f"\"name\": \"{individual_names[i]}\", "
         metadata_path += f"\"status\": \"imputed\", "
         metadata_path += f"\"recomb\": \"uniform\""
