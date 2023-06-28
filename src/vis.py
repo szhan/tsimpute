@@ -125,7 +125,6 @@ def create_sample_path_vis_app(
     ts,
     tracks,
     legend_labels,
-    colors,
     controls,
     matrix=None,
     range_node_id=None,
@@ -138,6 +137,7 @@ def create_sample_path_vis_app(
 
     :param util.SamplePath path: Sample path.
     :param tskit.TreeSequence ts: Tree sequence containing parent nodes of the sample path.
+    :param list(dict) tracks: List of dicts with keys 'site_pos' and 'site_base'.
     :param tuple(int, int) range_nodes: Range of parent node ids to display.
     :param tuple(float, float) range_site_pos: Range of site positions to display.
     :return: Bokeh application.
@@ -242,7 +242,7 @@ def create_sample_path_vis_app(
         x_axis_choice = 'site_id' if matrix is not None else 'site_pos'
         r1 = p1.step(
             x=x_axis_choice, y='node_id', source=source_all,
-            line_width=2, line_color='red', mode='after',
+            line_width=2, line_color='purple', mode='after',
         )
         r2 = p1.square(
             x=x_axis_choice, y='node_id', source=source_sample,
@@ -250,7 +250,7 @@ def create_sample_path_vis_app(
         )
         r3 = p1.circle(
             x=x_axis_choice, y='node_id', source=source_nonsample,
-            fill_color='orange', size=6, line_width=0,
+            fill_color='gray', size=6, line_width=0,
         )
 
         # Add legend
@@ -258,7 +258,7 @@ def create_sample_path_vis_app(
             ('Copying path', [r1]),
             ('Sample nodes', [r2]),
             ('Non-sample nodes', [r3]),
-        ], location='center')
+        ], location='center', border_line_alpha=0,)
         p1.add_layout(legend1, 'right')
 
         # Show additional data
@@ -268,14 +268,19 @@ def create_sample_path_vis_app(
             x_range=p1.x_range, y_range=p1.y_range,
         )
 
+        _base_color_map = {
+            -2: '#7f7f7f', -1: '#ffffff',
+            0: '#1f77b4', 1: '#ff7f0e', 2: '#2ca02c', 3: '#d62728'
+        }
         i = 0
-        for track, color in zip(tracks, colors):
+        for track in tracks:
+            # TODO: Use another renderer. I suspect this is too costly.
             p2.vbar(
-                x=track,
-                top=np.repeat(i + 1, len(track)),
-                bottom=np.repeat(i, len(track)),
-                color=color,
-                width=0.5,
+                x=track['site_pos'],
+                top=np.repeat(i + 0.8, len(track['site_pos'])),
+                bottom=np.repeat(i, len(track['site_pos'])),
+                color=[_base_color_map[base] for base in track['site_base']],
+                width=1,
             )
             i += 1
 
@@ -289,7 +294,11 @@ def create_sample_path_vis_app(
         # Add legend
         renderers = [(l, [r]) for l, r in zip(legend_labels, p2.renderers)]
         renderers.reverse()
-        legend2 = Legend(items=renderers, location='center')
+        legend2 = Legend(
+            items=renderers,
+            location='center', border_line_alpha=0,
+            glyph_height=0, glyph_width=0,
+        )
         legend2.click_policy = 'mute'
         p2.add_layout(legend2, 'right')
 
