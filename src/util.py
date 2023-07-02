@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import json
+import math
 import tqdm
 
 import numpy as np
@@ -602,3 +603,35 @@ def add_individuals_to_tree_sequence(ts, paths, individual_names, metadata=None)
     new_ts = new_tables.tree_sequence()
 
     return new_ts
+
+
+# Functions to define HMM parameters.
+def get_switch_probability(n_haps, site_positions, Ne=1e6):
+    """
+    Get switch probability used by BEAGLE 4.1.
+    Based on the function `pRecomb(float ne, int nHaps, double[] pos)` in `ImpData.java`.
+
+    :param n_haps: number of haplotypes
+    :return: Switch probability
+    :rtype: numpy.ndarray
+    """
+    switch_prob = np.zeros(len(site_positions), dtype=np.float64)
+    c = -(0.04 * Ne / n_haps) # 0.04 = 4/(100 cM/M)
+    for i in np.arange(1, len(site_positions)):
+        distance_Mb = (site_positions[i] - site_positions[i - 1]) / 10**6
+        switch_prob[i] = -np.expm1(c * distance_Mb)
+    return switch_prob
+
+
+def get_mismatch_probability(n_haps):
+    """
+    Get mismatch probability used by BEAGLE 4.1.
+    Based on the function `liStephensPMismatch(int nHaps)` in `Par.java`.
+
+    :param n_haps: number of haplotypes
+    :return: Mismatch probability
+    :rtype: float
+    """
+    theta = 1 / (math.log(n_haps) + 0.5)
+    mismatch_prob = theta / (2 * (theta + n_haps))
+    return mismatch_prob
