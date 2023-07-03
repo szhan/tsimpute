@@ -225,7 +225,7 @@ def remap_to_acgt(ds1, num_workers=1):
     new_ds1 = xr.Dataset(
         {
             "contig_id": ("contigs", ds1.contig_id.values),
-            "contig_length": ("contigs", ds1.contig_length.values),
+            #"contig_length": ("contigs", ds1.contig_length.values),
             "variant_contig": ("variants", ds1.variant_contig.values),
             "variant_position": ("variants", ds1.variant_position.values),
             "variant_allele": (["variants", "alleles"], new_ds1_allel.values),
@@ -235,7 +235,7 @@ def remap_to_acgt(ds1, num_workers=1):
         },
         attrs={
             "contigs": ds1.contig_id.values,
-            "contig_lengths": ds1.contig_length.values,
+            #"contig_lengths": ds1.contig_length.values,
             "vcf_header": ds1.vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
