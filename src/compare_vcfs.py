@@ -183,7 +183,7 @@ def make_compatible(ds1, ds2, num_workers=1):
     remap_ds2 = xr.Dataset(
         {
             "contig_id": ("contigs", ds2.contig_id.values),
-            "contig_length": ("contigs", ds2.contig_length.values),
+            #"contig_length": ("contigs", ds2.contig_length.values),
             "variant_contig": ("variants", ds2_variant_contig),
             "variant_position": ("variants", ds2_variant_position),
             "variant_allele": (["variants", "alleles"], ds2_variant_allele),
@@ -193,7 +193,7 @@ def make_compatible(ds1, ds2, num_workers=1):
         },
         attrs={
             "contigs": ds2.contig_id.values,
-            "contig_lengths": ds2.contig_length.values,
+            #"contig_lengths": ds2.contig_length.values,
             "vcf_header": ds2.vcf_header,
             "source": "sgkit" + "-" + str(sg.__version__),
         }
