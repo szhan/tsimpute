@@ -144,14 +144,26 @@ def get_ts_single_panmictic(
     return ts
 
 
-def get_ts_ten_pop(pop_ref, pop_query, time_ref=0, time_query=0, yaml_dir="../assets/demes/"):
+def get_ts_ten_pop(
+    num_ref_inds,
+    num_query_inds,
+    sequence_length,
+    pop_ref,
+    pop_query,
+    time_ref=0,
+    time_query=0,
+    yaml_dir="../assets/demes/"
+):
     """
     Simulate a tree sequence under the Jacobs et al. (2019) demographic model.
 
-    Contemporary populations: YRI, CHB, and CEU.
+    Choose the reference and query (target) populations from one of YRI, CHB, and CEU.
 
     :param str pop_ref: Name of the reference population.
     :param str pop_query: Name of the query population.
+    :param int num_ref_inds: Number of reference individuals.
+    :param int num_query_inds: Number of query individuals.
+    :param int sequence_length: Sequence length.
     :param float time_ref: Time of sampling the reference haplotypes.
     :param float time_query: Time of sampling the query haplotypes.
     :param str yaml_dir: Directory containing demes YAML files.
@@ -159,9 +171,6 @@ def get_ts_ten_pop(pop_ref, pop_query, time_ref=0, time_query=0, yaml_dir="../as
     :rtype: tuple
     """
     # Set parameters.
-    num_ref_haps = 1e4  # 10k haplotypes
-    num_query_haps = 1e3  # 1k haplotypes
-    sequence_length = 1e6  # 1 Mbp
     ploidy = 2  # Diploid individuals
     mutation_rate = 1e-8  # Human-like
     recombination_rate = 1e-8  # Human-like
@@ -174,10 +183,10 @@ def get_ts_ten_pop(pop_ref, pop_query, time_ref=0, time_query=0, yaml_dir="../as
     # Population "May be either a string name or integer ID"
     sample_set = [
         msprime.SampleSet(
-            num_samples=num_ref_haps, population=pop_ref, ploidy=ploidy, time=time_ref
+            num_samples=num_ref_inds, population=pop_ref, ploidy=ploidy, time=time_ref
         ),
         msprime.SampleSet(
-            num_samples=num_query_haps,
+            num_samples=num_query_inds,
             population=pop_query,
             ploidy=ploidy,
             time=time_query,
