@@ -41,13 +41,13 @@ import simulate_ts
     "--pop_ref",
     type=click.Choice(["YRI", "CHB", "CEU"], case_sensitive=False),
     default=None,
-    help="Population of reference genomes. Used only if model ten_pop is set.",
+    help="Reference population. Used only if model ten_pop is set.",
 )
 @click.option(
     "--pop_query",
     type=click.Choice(["YRI", "CHB", "CEU"], case_sensitive=False),
     default=None,
-    help="Population of query genomes. Used only if model ten_pop is set.",
+    help="Query opulation. Used only if model ten_pop is set.",
 )
 @click.option("--out_dir", "-o", type=click.Path(exists=True), help="Output directory")
 @click.option(
@@ -69,11 +69,12 @@ def run_pipeline(
     out_dir,
     out_prefix,
     num_threads,
-    verbose,
 ):
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"INFO: START {start_datetime}")
 
+    # Simulate trees under specified demograhic model.
+    print(f"INFO: DEMOGRAPHIC MODEL {model}")
     if model == "test":
         ts_full, _, samples_ref, inds_query, _ = simulate_ts.get_ts_toy()
     elif model == "simple":
@@ -81,53 +82,32 @@ def run_pipeline(
             time_query=sampling_time
         )
     elif model == "ten_pop":
-        assert pop_ref is not None and pop_query is not None
+        assert pop_ref is not None, "Reference population is not specified."
+        assert pop_query is not None, "Query population is not specified."
         ts_full, _, samples_ref, inds_query, _ = simulate_ts.get_ts_ten_pop(
             pop_ref=pop_ref, pop_query=pop_query
         )
 
-    if verbose:
-        print("INFO: TS full")
-        util.count_sites_by_type(ts_full)
-
-    ### Create an ancestor ts from the reference genomes
+    ### Create an ancestor ts from the reference genomes.
     # Remove all the branches leading to the query genomes.
     ts_ref = ts_full.simplify(samples_ref, filter_sites=False)
-
-    if verbose:
-        print(f"INFO: TS ref genomes {ts_ref.num_samples}")
-        print(f"INFO: TS ref sites {ts_ref.num_sites}")
-        print(f"INFO: TS ref trees {ts_ref.num_trees}")
-        print(f"INFO: TS ref stats")
-        util.count_sites_by_type(ts_ref)
+    print(f"INFO: TS ref genomes {ts_ref.num_samples}")
+    print(f"INFO: TS ref sites {ts_ref.num_sites}")
+    print(f"INFO: TS ref trees {ts_ref.num_trees}")
 
     # Multiallelic sites are automatically removed when generating an ancestor ts.
-    # Sites which are biallelic in the full sample set but monoallelic in the ref. sample set are removed.
+    # Sites biallelic in the full sample set but monoallelic in the ref. sample set are removed.
     # So, only biallelic sites are retained in the ancestor ts.
-    if tsinfer.__version__ == "0.2.4.dev27+gd61ae2f":
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
-    else:
-        # The samples argument is not actually used.
-        ts_anc = tsinfer.eval_util.make_ancestors_ts(
-            samples=None, ts=ts_ref, remove_leaves=True
-        )
+    ts_anc = tsinfer.eval_util.make_ancestors_ts(ts=ts_ref, remove_leaves=True)
+    print(f"INFO: TS anc genomes {ts_anc.num_samples}")
+    print(f"INFO: TS anc sites {ts_anc.num_sites}")
+    print(f"INFO: TS anc trees {ts_anc.num_trees}")
 
-    if verbose:
-        print(f"INFO: TS anc genomes {ts_anc.num_samples}")
-        print(f"INFO: TS anc sites {ts_anc.num_sites}")
-        print(f"INFO: TS anc trees {ts_anc.num_trees}")
-        print(f"INFO: TS anc stats")
-        util.count_sites_by_type(ts_anc)
-
-    ### Create a SampleData object holding the query genomes
+    ### Create a SampleData object holding the query genomes.
     sd_full = tsinfer.SampleData.from_tree_sequence(ts_full)
     sd_query = sd_full.subset(inds_query)
-
-    if verbose:
-        print(f"INFO: SD query genomes {sd_query.num_samples}")
-        print(f"INFO: SD query sites {sd_query.num_sites}")
-        print(f"INFO: SD query stats")
-        util.count_sites_by_type(sd_query)
+    print(f"INFO: SD query genomes {sd_query.num_samples}")
+    print(f"INFO: SD query sites {sd_query.num_sites}")
 
     assert util.check_site_positions_ts_issubset_sd(ts_anc, sd_query)
 
@@ -141,17 +121,13 @@ def run_pipeline(
     shared_site_ids, shared_site_pos = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=True
     )
-
-    if verbose:
-        print(f"INFO: shared sites {len(shared_site_ids)}")
+    print(f"INFO: Shared sites {len(shared_site_ids)}")
 
     # Identify sites in `sd_query` but not in `ts_anc`, which are not to be imputed.
     exclude_site_ids, exclude_site_pos = util.compare_sites_sd_and_ts(
         sd_query_true, ts_anc, is_common=False
     )
-
-    if verbose:
-        print(f"INFO: exclude sites {len(exclude_site_ids)}")
+    print(f"INFO: Excluded sites {len(exclude_site_ids)}")
 
     assert len(set(shared_site_ids) & set(exclude_site_ids)) == 0
     assert len(set(shared_site_pos) & set(exclude_site_pos)) == 0
@@ -163,9 +139,7 @@ def run_pipeline(
         prop_mask_sites=prop_mask_sites,
     )
     mask_site_pos = sd_query_true.sites_position[:][mask_site_ids]
-
-    if verbose:
-        print(f"INFO: mask sites {len(mask_site_ids)}")
+    print(f"INFO: Masked sites {len(mask_site_ids)}")
 
     assert set(mask_site_ids).issubset(set(shared_site_ids))
     assert set(mask_site_pos).issubset(set(shared_site_pos))
@@ -179,7 +153,7 @@ def run_pipeline(
         sample_data=sd_query_mask, ancestors_ts=ts_anc, num_threads=num_threads
     )
 
-    ### Evaluate imputation performance
+    ### Evaluate imputation performance.
     ts_ref_site_pos = ts_ref.sites_position
     sd_query_true_site_pos = sd_query_true.sites_position[:]
     sd_query_mask_site_pos = sd_query_mask.sites_position[:]
@@ -216,9 +190,6 @@ def run_pipeline(
             )
             assert ref_ancestral_allele == v_query_imputed.alleles[0]
 
-            # TODO:
-            #   Why doesn't `v.num_alleles` always reflect the number of genotypes
-            #   after simplifying?
             if len(set(v_ref.genotypes)) == 1:
                 # Monoallelic sites in `ts_ref` are not imputed
                 # TODO: Revisit
@@ -262,7 +233,7 @@ def run_pipeline(
     seed_anc = prov_anc["parameters"]["random_seed"]
     seed_mut = prov_mut["parameters"]["random_seed"]
 
-    eff_pop_size = prov_anc["parameters"]["population_size"]
+    ne = prov_anc["parameters"]["population_size"]
     recombination_rate = prov_anc["parameters"]["recombination_rate"]
     mutation_rate = prov_mut["parameters"]["rate"]
     ploidy_level = prov_anc["parameters"]["ploidy"]
@@ -283,7 +254,7 @@ def run_pipeline(
                 "#" + "size_query" + "=" + f"{sd_query.num_samples}",
                 "#" + "sampling_time" + "=" + f"{sampling_time}",
                 "#" + "prop_missing_sites" + "=" + f"{prop_mask_sites}",
-                "#" + "eff_pop_size" + "=" + f"{eff_pop_size}",
+                "#" + "ne" + "=" + f"{ne}",
                 "#" + "recombination_rate" + "=" + f"{recombination_rate}",
                 "#" + "mutation_rate" + "=" + f"{mutation_rate}",
                 "#" + "ploidy_level" + "=" + f"{ploidy_level}",
