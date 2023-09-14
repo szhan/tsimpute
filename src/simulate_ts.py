@@ -144,7 +144,7 @@ def get_ts_single_panmictic(
     return ts
 
 
-def get_ts_ten_pop(pop_ref, pop_query, time_ref=0, time_query=0):
+def get_ts_ten_pop(pop_ref, pop_query, time_ref=0, time_query=0, yaml_dir="../assets/demes/"):
     """
     Simulate a tree sequence under the Jacobs et al. (2019) demographic model.
 
@@ -154,6 +154,7 @@ def get_ts_ten_pop(pop_ref, pop_query, time_ref=0, time_query=0):
     :param str pop_query: Name of the query population.
     :param float time_ref: Time of sampling the reference haplotypes.
     :param float time_query: Time of sampling the query haplotypes.
+    :param str yaml_dir: Directory containing demes YAML files.
     :return: Tree sequence and associated indices.
     :rtype: tuple
     """
@@ -165,7 +166,7 @@ def get_ts_ten_pop(pop_ref, pop_query, time_ref=0, time_query=0):
     mutation_rate = 1e-8  # Human-like
     recombination_rate = 1e-8  # Human-like
     # Get demographic model.
-    yaml_file = "./assets/demes/jacobs_2019.yaml"
+    yaml_file = yaml_dir + "/" + "jacobs_2019.yaml"
     ooa_graph = demes.load(yaml_file)
     demographic_model = msprime.Demography.from_demes(ooa_graph)
     # Define sample set.
