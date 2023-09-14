@@ -83,26 +83,25 @@ def run_tsinfer(
     :param float mmr_ancestors: Mismatch ratio used when matching ancestors (default = None).
     :param float mmr_samples: Mismatch ratio used when matching samples (default = None).
     :param bool truncate_ancestors: Truncate ancestors before matching ancestors? (default = False).
-    :param int num_threads: Number of CPUs (default = 1).
+    :param int num_threads: CPUs (default = 1).
     """
     start_datetime = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     logging.info(f"start: {start_datetime}")
 
     logging.info(f"dep: tskit {tskit.__version__}")
     logging.info(f"dep: tsinfer {tsinfer.__version__}")
-
     logging.info(f"par: recombination_rate = {recombination_rate}")
     logging.info(f"par: genetic_map = {genetic_map}")
     logging.info(f"par: mmr_ancestors = {mmr_ancestors}")
     logging.info(f"par: mmr_samples = {mmr_samples}")
     logging.info(f"par: truncate_ancestors = {truncate_ancestors}")
-    
+
     logging.info(f"Loading samples file: {in_samples_file}")
     sample_data = tsinfer.load(in_samples_file)
 
     if genetic_map is not None:
         logging.info(f"Loading genetic map: {genetic_map}")
-        logging.info("Using this instead of a genome-wide uniform recombination rate.")
+        logging.info("Using this instead of a genome-wide recombination rate.")
         recombination_rate = msprime.RateMap.read_hapmap(genetic_map)
 
     out_ancestors_file = out_dir + "/" + out_prefix + ".ancestors"
