@@ -1,6 +1,7 @@
 # Local directories
 analysis/
 assets/
+notebooks/simulated_data/
 
 # Visual Studio Code files
 .vscode/
