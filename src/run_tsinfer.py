@@ -75,7 +75,9 @@ def run_tsinfer(
     num_threads,
 ):
     """
-    :param str in_samples_file: Samples file for tsinfer input.
+    Convenience wrapper for running the standard tsinfer pipeline.
+
+    :param str in_samples_file: Samples file.
     :param str out_dir: Output directory.
     :param str out_prefix: Prefix of output filenames.
     :param float recombination_rate: Uniform genome-wide recombination rate (default = None).
@@ -116,6 +118,7 @@ def run_tsinfer(
     if truncate_ancestors:
         logging.info("Truncating ancestors.")
         # TODO: Allow user to specify lower and upper time bounds.
+        # WARN: Best not to use for now.
         ancestor_data = ancestor_data.truncate_ancestors(
             lower_time_bound=0.4, upper_time_bound=0.6
         )
