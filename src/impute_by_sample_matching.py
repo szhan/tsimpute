@@ -252,11 +252,14 @@ def impute_samples(ts, H2):
     """
     Step 3.
 
-    Given a matrix of samples (rows) x sites (columns), impute into the samples.
+    Impute into query haplotypes represented by a matrix of size (h, m),
+    where h = number of haplotypes and m = number of sites (reference markers).
 
-    :param tskit.TreeSequence ts: Tree sequence with samples to match against.
-    :param numpy.ndarray H2: Matrix of samples (rows) x sites (columns).
-    :return: Matrix of samples (rows) x sites (columns) with imputed alleles.
+    WARN: The imputed alleles are in ACGT encoding.
+
+    :param tskit.TreeSequence ts: Tree sequence with reference samples.
+    :param numpy.ndarray H2: Query haplotypes with missing data.
+    :return: Query haplotypes with imputed alleles.
     :rtype: numpy.ndarray
     """
     assert (
@@ -265,7 +268,7 @@ def impute_samples(ts, H2):
 
     H3 = np.zeros_like(H2)
     i = 0
-    for v in tqdm(ts.variants(), total=ts.num_sites):
+    for v in tqdm(ts.variants(alleles=tskit.ALLELES_ACGT), total=ts.num_sites):
         H3[:, i] = v.genotypes[H2[:, i]]
         i += 1
 
