@@ -13,7 +13,7 @@ sys.path.append("../")
 import util
 
 
-# Functions for writing and reading contents
+# Functions for writing and reading contents.
 def print_tsdata_to_vcf(
     tsdata,
     ploidy,
@@ -54,17 +54,14 @@ def print_tsdata_to_vcf(
     QUAL = "."
     FILTER = "PASS"
     FORMAT = "GT"
-
     if ploidy not in [1, 2]:
         raise ValueError(f"Ploidy {ploidy} is not recognized.")
-
     if isinstance(tsdata, tsinfer.SampleData):
         individual_names = [x.metadata["name"] for x in tsdata.individuals()]
     elif isinstance(tsdata, tskit.TreeSequence):
         individual_names = [json.loads(x.metadata)["sample"] for x in tsdata.individuals()]
     else:
         raise TypeError(f"tsdata must be a SampleData or TreeSequence object.")
-
     header = (
         "##fileformat=VCFv4.2\n" + \
         "##source=tskit " + tskit.__version__ + "\n" + \
@@ -74,31 +71,27 @@ def print_tsdata_to_vcf(
         "length=" + str(int(tsdata.sequence_length)) + ">\n"
     )
     header += "\t".join(
-        ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
+        ["#" + "CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
         + individual_names
     )
-
     out_file = out_prefix + ".vcf"
     with open(out_file, "w") as f:
         f.write(header + "\n")
         for v in tqdm.tqdm(tsdata.variants(), total=tsdata.num_sites):
-            # Site positions are stored as float in tskit
+            # Site positions are stored as float in tskit.
+            # WARN: This is totally wrong if the site positions are not discrete.
             POS = int(v.site.position)
-            # If the ts was produced by simulation,
-            # there's no ref. sequence other than the ancestral sequence.
+            # If ts was simulated, there's no ref. sequence besides the ancestral sequence.
             REF = v.site.ancestral_state
             alt_alleles = list(set(v.alleles) - {REF} - {None})
             AA = v.site.ancestral_state
             ALT = ",".join(alt_alleles) if len(alt_alleles) > 0 else "."
             INFO = "AA" + "=" + AA
-
             record = np.array([CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT], dtype=str)
-
             if exclude_monoallelic_sites:
                 is_monoallelic = len(np.unique(v.genotypes)) == 1
                 if is_monoallelic:
                     continue
-
             if site_mask is not None and POS in site_mask:
                 if exclude_mask_sites:
                     continue
@@ -110,7 +103,6 @@ def print_tsdata_to_vcf(
                     a1 = gt[np.arange(0, tsdata.num_samples, 2)]
                     a2 = gt[np.arange(1, tsdata.num_samples, 2)]
                     gt = np.char.join('|', np.char.add(a1, a2))
-
             f.write("\t".join(np.concatenate([record, gt])) + "\n")
 
 
