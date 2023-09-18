@@ -16,7 +16,6 @@ import util
 # Functions for writing and reading contents.
 def print_tsdata_to_vcf(
     tsdata,
-    ploidy,
     contig_name,
     out_prefix,
     site_mask=None,
@@ -25,6 +24,8 @@ def print_tsdata_to_vcf(
 ):
     """
     Print the contents of a `SampleData` or `TreeSequence` object in VCF 4.2.
+
+    Assume that all the individuals are diploid.
 
     Fields:
         CHROM contig_name
@@ -42,7 +43,6 @@ def print_tsdata_to_vcf(
             individual n - 1
 
     :param tskit.TreeSequence/tsinfer.SampleData tsdata: Tree sequence or samples.
-    :param int ploidy: 1 or 2.
     :param str contig_name: Contig name.
     :param str out_prefix: Output file prefix (*.vcf).
     :param array_like site_mask: Site positions to mask.
@@ -54,8 +54,6 @@ def print_tsdata_to_vcf(
     QUAL = "."
     FILTER = "PASS"
     FORMAT = "GT"
-    if ploidy not in [1, 2]:
-        raise ValueError(f"Ploidy {ploidy} is not recognized.")
     if isinstance(tsdata, tsinfer.SampleData):
         individual_names = [x.metadata["name"] for x in tsdata.individuals()]
     elif isinstance(tsdata, tskit.TreeSequence):
@@ -95,14 +93,12 @@ def print_tsdata_to_vcf(
             if site_mask is not None and POS in site_mask:
                 if exclude_mask_sites:
                     continue
-                missing_gt = '.' if ploidy == 1 else '.|.'
-                gt = np.repeat(missing_gt, tsdata.num_individuals)
+                gt = np.repeat('.|.', tsdata.num_individuals)
             else:
                 gt = v.genotypes.astype(str)
-                if ploidy == 2:
-                    a1 = gt[np.arange(0, tsdata.num_samples, 2)]
-                    a2 = gt[np.arange(1, tsdata.num_samples, 2)]
-                    gt = np.char.join('|', np.char.add(a1, a2))
+                a1 = gt[np.arange(0, tsdata.num_samples, 2)]
+                a2 = gt[np.arange(1, tsdata.num_samples, 2)]
+                gt = np.char.join('|', np.char.add(a1, a2))
             f.write("\t".join(np.concatenate([record, gt])) + "\n")
 
 
