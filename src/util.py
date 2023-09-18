@@ -59,7 +59,7 @@ def print_tsdata_to_vcf(
         raise ValueError(f"Ploidy {ploidy} is not recognized.")
 
     if isinstance(tsdata, tsinfer.SampleData):
-        individual_names = [x.metadata["sample"] for x in tsdata.individuals()]
+        individual_names = [x.metadata["name"] for x in tsdata.individuals()]
     elif isinstance(tsdata, tskit.TreeSequence):
         individual_names = [json.loads(x.metadata)["sample"] for x in tsdata.individuals()]
     else:
