@@ -150,6 +150,8 @@ def get_ts_ten_pop(
     sequence_length,
     pop_ref,
     pop_query,
+    recombination_rate=1e-8,
+    mutation_rate=1e-8,
     time_ref=0,
     time_query=0,
     yaml_dir="../assets/demes/"
@@ -164,6 +166,8 @@ def get_ts_ten_pop(
     :param int num_ref_inds: Number of reference individuals.
     :param int num_query_inds: Number of query individuals.
     :param int sequence_length: Sequence length.
+    :param float mutation_rate: Mutation rate.
+    :param float recombination_rate: Recomination rate.
     :param float time_ref: Time of sampling the reference haplotypes.
     :param float time_query: Time of sampling the query haplotypes.
     :param str yaml_dir: Directory containing demes YAML files.
@@ -172,8 +176,6 @@ def get_ts_ten_pop(
     """
     # Set parameters.
     ploidy = 2  # Diploid individuals
-    mutation_rate = 1e-8  # Human-like
-    recombination_rate = 1e-8  # Human-like
     # Get demographic model.
     yaml_file = yaml_dir + "/" + "jacobs_2019.yaml"
     ooa_graph = demes.load(yaml_file)
