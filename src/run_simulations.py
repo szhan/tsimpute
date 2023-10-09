@@ -7,11 +7,11 @@ import msprime
 import tskit
 import tsinfer
 
-sys.path.append("./src")
-import masks
-import measures
-import util
-import simulate_ts
+sys.path.append("./")
+from src import masks
+from src import measures
+from src import util
+from src import simulate_ts
 
 
 @click.command()

@@ -12,9 +12,9 @@ import pandas as pd
 import tskit
 import tsinfer
 
-sys.path.append("./src")
-import masks
-import measures
+sys.path.append("./")
+from src import masks
+from src import measures
 
 
 @click.command()

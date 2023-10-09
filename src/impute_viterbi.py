@@ -12,9 +12,9 @@ import _tskit
 import tskit
 import tsinfer
 
-sys.path.append("./src")
-import masks
-import util
+sys.path.append("./")
+from src import masks
+from src import util
 
 
 _ACGT_INTEGERS_ = np.array([tskit.MISSING_DATA, 0, 1, 2, 3])
