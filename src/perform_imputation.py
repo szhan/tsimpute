@@ -9,9 +9,9 @@ import msprime
 import tskit
 import tsinfer
 
-sys.path.append("./src")
-import masks
-import util
+sys.path.append("./")
+from src import masks
+from src import util
 
 
 @click.command()
