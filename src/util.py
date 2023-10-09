@@ -8,10 +8,6 @@ import numpy as np
 import tskit
 import tsinfer
 
-import sys
-sys.path.append("../")
-import util
-
 
 # Functions for writing and reading contents.
 def print_tsdata_to_vcf(
@@ -520,13 +516,13 @@ def add_individuals_to_tree_sequence(ts, paths, individual_names, metadata=None)
         metadata_path += f"\"status\": \"imputed\", "
         metadata_path += f"\"recomb\": \"uniform\""
 
-        path_1 = util.SamplePath(
+        path_1 = SamplePath(
             individual=individual_names[i],
             nodes=paths[2 * i, :],
             site_positions=ts.sites_position,
             metadata=metadata_path.encode('ascii')
         )
-        path_2 = util.SamplePath(
+        path_2 = SamplePath(
             individual=individual_names[i],
             nodes=paths[2 * i + 1, :],
             site_positions=ts.sites_position,
