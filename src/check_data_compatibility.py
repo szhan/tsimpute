@@ -177,6 +177,9 @@ def make_compatible_samples(
     Note that this function uses the `SampleData` attributes `sites_alleles` and `sites_genotypes`
     which are not explained in the tsinfer API doc.
 
+    If `chip_site_pos` and/or `mask_site_pos` are provided, then add metadata to the sites in `new_sd`.
+    Otherwise, the metadata is empty (or None).
+
     :param tsinfer.SampleData sd: Samples possibly incompatible with tree sequence.
     :param tskit.TreeSequence ts: Tree sequence.
     :param bool skip_unused_markers: Skip markers only in samples. If None, set to False (default = None).
@@ -248,15 +251,13 @@ def make_compatible_samples(
         # Add sites.
         for pos in tqdm.tqdm(all_site_pos):
             # Add metadata.
-            metadata = {}
+            metadata = None
             if chip_site_pos is not None and pos in chip_site_pos:
                 metadata["marker"] = "chip"
                 num_chip_sites += 1
             elif mask_site_pos is not None and pos in mask_site_pos:
                 metadata["marker"] = "mask"
                 num_mask_sites += 1
-            else:
-                metadata["marker"] = ""
 
             # Process allele list.
             if pos in ts_site_pos and pos not in sd_site_pos:
