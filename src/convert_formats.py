@@ -1,3 +1,4 @@
+""" Functions for writing and reading contents. """
 import json
 import tqdm
 
@@ -7,7 +8,6 @@ import tskit
 import tsinfer
 
 
-# Functions for writing and reading contents.
 def print_tsdata_to_vcf(
     tsdata,
     contig_name,
@@ -84,8 +84,7 @@ def print_tsdata_to_vcf(
             INFO = "AA" + "=" + AA
             record = np.array([CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT], dtype=str)
             if exclude_monoallelic_sites:
-                is_monoallelic = len(np.unique(v.genotypes)) == 1
-                if is_monoallelic:
+                if len(np.unique(v.genotypes)) == 1:
                     continue
             if site_mask is not None and POS in site_mask:
                 if exclude_mask_sites:
