@@ -19,7 +19,9 @@ def print_tsdata_to_vcf(
     """
     Print the contents of a `SampleData` or `TreeSequence` object in VCF 4.2.
 
-    Assume that all the individuals are diploid.
+    Assume that:
+    1. Individuals are diploid.
+    2. Site positions are discrete.
 
     Fields:
         CHROM contig_name
@@ -36,12 +38,20 @@ def print_tsdata_to_vcf(
             ...
             individual n - 1
 
+    Parameters `site_mask` and `exclude_mask_sites` interact with each other.
+    Site positions in `site_mask` are either printed as '.|.' (i.e. phased missing data)
+    (if `exclude_mask_sites` is set to False) or excluded from the output file
+    (if `exclude_mask_sites` is set to True).
+
+    if `exclude_monoallelic_sites` is set to True, then invariant sites are excluded
+    from the output file.
+
     :param tskit.TreeSequence/tsinfer.SampleData tsdata: Tree sequence or sample data.
     :param str contig_name: Contig name.
     :param str out_prefix: Output file prefix (*.vcf).
-    :param array_like site_mask: Site positions to mask.
-    :param bool exclude_mask_sites: Exclude masked sites.
-    :param bool exclude_monoallelic_sites: Exclude monoallelic sites.
+    :param array_like site_mask: Site positions to mask (default = None).
+    :param bool exclude_mask_sites: Exclude masked sites (default = None).
+    :param bool exclude_monoallelic_sites: Exclude monoallelic sites (default = None).
     """
     CHROM = contig_name
     ID = "."
@@ -72,26 +82,26 @@ def print_tsdata_to_vcf(
     out_file = out_prefix + ".vcf"
     with open(out_file, "w") as f:
         f.write(header + "\n")
-        for v in tqdm.tqdm(tsdata.variants(), total=tsdata.num_sites):
+        for var in tqdm.tqdm(tsdata.variants(), total=tsdata.num_sites):
             # Site positions are stored as float in tskit.
             # WARN: This is totally wrong if the site positions are not discrete.
-            POS = int(v.site.position)
+            POS = int(var.site.position)
             # If ts was simulated, there's no ref. sequence besides the ancestral sequence.
-            REF = v.site.ancestral_state
+            REF = var.site.ancestral_state
             alt_alleles = list(set(v.alleles) - {REF} - {None})
-            AA = v.site.ancestral_state
+            AA = var.site.ancestral_state
             ALT = ",".join(alt_alleles) if len(alt_alleles) > 0 else "."
             INFO = "AA" + "=" + AA
             record = np.array([CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT], dtype=str)
             if exclude_monoallelic_sites:
-                if len(np.unique(v.genotypes)) == 1:
+                if len(np.unique(var.genotypes)) == 1:
                     continue
             if site_mask is not None and POS in site_mask:
                 if exclude_mask_sites:
                     continue
                 gt = np.repeat('.|.', tsdata.num_individuals)
             else:
-                gt = v.genotypes.astype(str)
+                gt = var.genotypes.astype(str)
                 a1 = gt[np.arange(0, tsdata.num_samples, 2)]
                 a2 = gt[np.arange(1, tsdata.num_samples, 2)]
                 gt = np.char.join('|', np.char.add(a1, a2))
