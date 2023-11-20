@@ -88,7 +88,7 @@ def print_tsdata_to_vcf(
             POS = int(var.site.position)
             # If ts was simulated, there's no ref. sequence besides the ancestral sequence.
             REF = var.site.ancestral_state
-            alt_alleles = list(set(v.alleles) - {REF} - {None})
+            alt_alleles = list(set(var.alleles) - {REF} - {None})
             AA = var.site.ancestral_state
             ALT = ",".join(alt_alleles) if len(alt_alleles) > 0 else "."
             INFO = "AA" + "=" + AA
