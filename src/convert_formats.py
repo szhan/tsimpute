@@ -1,4 +1,4 @@
-""" Functions for writing and reading contents. """
+""" Functions for convert genetic variation data between formats. """
 import json
 import tqdm
 
@@ -106,3 +106,32 @@ def print_tsdata_to_vcf(
                 a2 = gt[np.arange(1, tsdata.num_samples, 2)]
                 gt = np.char.join('|', np.char.add(a1, a2))
             f.write("\t".join(np.concatenate([record, gt])) + "\n")
+
+
+def print_xarray_to_samples(ds, sequence_length=0):
+    """
+    Store genetic variation data in an xarray.Dataset in tsinfer.SampleData format.
+
+    :param xarray.Dataset: Dataset from sgkit.
+    :param float: Sequence length (default = 0).
+    :return: Variants in SampleData format.
+    :rtype: tsinfer.SampleData
+    """
+    with tsinfer.SampleData(sequence_length=sequence_length) as sd:
+        # Temporary fix for metadata
+        sd.populations_metadata_schema = {"codec":"json"}
+        sd.individuals_metadata_schema = {"codec":"json"}
+        # TODO: Add population metadata.
+        sd.add_population(metadata={})
+        for _ in ds["sample_id"].values:
+            # TODO: Add individual name in metadata.
+            sd.add_individual(ploidy=2, population=0, metadata={})
+        for i in range(ds.dims["variants"]):
+            sd.add_site(
+                position=ds["variant_position"][i].values,
+                genotypes=ds["call_genotype"][i].values.flatten(),
+                alleles=ds["variant_allele"][i].values[:2],
+                # TODO: Add site metadata.
+                metadata={},
+            )
+    return sd
