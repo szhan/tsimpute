@@ -205,14 +205,23 @@ def compute_iqs_diploid(gt_true, gt_imputed):
     return iqs
 
 
-def computed_r_squared(genotypes_true, genotypes_imputed):
+def computed_r_squared(gt_1, gt_2):
     """
-    Calculate the squared correlation coefficient between `genotypes_true` and `genotypes_imputed`.
+    Calculate Pearson's R squared between the allele dosages in `gt_1` and `gt_2`.
 
-    :param numpy.ndarray genotypes_true: List of alleles from ground-truth genotypes.
-    :param numpy.ndarray genotypes_imputed: List of alleles from imputed genotypes.
-    :return: R-squared correlation coefficient.
+    Assume that all the individuals are diploid and encoding is ancestral/derived.
+
+    :param numpy.ndarray gt_1: List of alleles from one set of genotypes.
+    :param numpy.ndarray gt_2: List of alleles from another set of genotypes.
+    :return: Pearson's R-squared.
     :rtype: float
     """
-    r_squared = None
+    assert len(gt_1) % 2 == 0, "Genotypes do not have even number of alleles."
+    assert len(gt_2) % 2 == 0, "Genotypes do not have even number of alleles."
+    assert len(gt_1) == len(gt_2), "Genotype arrays differ in length."
+    assert np.all(np.isin(gt_1, [0, 1])), "Not all elements are 0 or 1."
+    assert np.all(np.isin(gt_2, [0, 1])), "Not all elements are 0 or 1."
+    dosages_1 = None
+    dosages_2 = None
+    r_squared = np.corrcoef(dosages_1, dosages_2)[0, 1] ** 2
     return r_squared
