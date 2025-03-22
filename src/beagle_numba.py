@@ -73,10 +73,10 @@ class GeneticMap:
     def __post_init__(self):
         assert len(self.base_pos) == len(
             self.gen_pos
-        ), "Lengths of physical positions and genetic map positions differ."
+        ), "Incompatible physical positions and genetic map positions."
         assert np.all(
             self.base_pos[1:] > self.base_pos[:-1]
-        ), "Physical positions are not in strict ascending order."
+        ), "Physical positions are not sorted in strict ascending order."
 
 
 @dataclass(frozen=True)
@@ -277,7 +277,7 @@ def get_mismatch_probs(num_sites, error_rate):
 
     This corresponds to `mu` in `_tskit.LsHmm`.
 
-    :param numpy.ndarray num_sites: Number of sites.
+    :param int num_sites: Number of sites.
     :param float error_rate: Allele error rate.
     :return: Mismatch probabilities.
     :rtype: numpy.ndarray
@@ -357,7 +357,7 @@ def compute_forward_matrix(
     This computes a forward probablity matrix of size (m, h).
 
     :param numpy.ndarray ref_h: Reference haplotypes.
-    :param numpy.ndarray query_h: One query haplotype.
+    :param numpy.ndarray query_h: A query haplotype.
     :param numpy.ndarray trans_probs: Transition probabilities.
     :param numpy.ndarray mismatch_probs: Mismatch probabilities.
     :param int num_alleles: Number of distinct alleles (default = 2).
@@ -402,8 +402,8 @@ def compute_backward_matrix(
 
     This computes a backward probablity matrix of size (m, h).
 
-    In BEAGLE 4.1, the values are kept one position at a time. Here, we keep the values
-    at all the positions.
+    In BEAGLE 4.1, the values are kept one position at a time.
+    Here, we keep the values at all the positions.
 
     :param numpy.ndarray ref_h: Reference haplotypes.
     :param numpy.ndarray query_h: One query haplotype.
@@ -454,7 +454,7 @@ def compute_state_prob_matrix(fwd_mat, bwd_mat):
         fwd_mat.shape == bwd_mat.shape
     ), "Forward and backward matrices differ in shape."
     state_mat = np.multiply(fwd_mat, bwd_mat)
-    # Normalise each column.
+    # Normalise per site.
     for i in range(len(state_mat)):
         state_mat[i, :] /= np.sum(state_mat[i, :])
     return state_mat
