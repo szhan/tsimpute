@@ -163,7 +163,7 @@ def get_transition_probs(cm, h, ne):
 
 
 @njit
-def compute_emission_probability(mismatch_prob, ref_a, query_a, num_alleles=2):
+def compute_emission_probability(mismatch_prob, ref_a, query_a, num_alleles):
     """
     Compute the emission probability at a site based on whether the alleles
     carried by a query haplotype and a reference haplotype match at the site.
@@ -190,8 +190,7 @@ def compute_forward_matrix_beaglelike(
     query_h,
     trans_probs,
     mismatch_probs,
-    *,
-    num_alleles=2,
+    num_alleles,
 ):
     """
     Implement LS HMM forward algorithm as in BEAGLE.
@@ -242,8 +241,7 @@ def compute_forward_matrix(
     query_h,
     trans_probs,
     mismatch_probs,
-    *,
-    num_alleles=2,
+    num_alleles,
 ):
     num_sites, num_haps = ref_h.shape
     if len(query_h) != num_sites:
@@ -273,8 +271,7 @@ def compute_backward_matrix_beaglelike(
     query_h,
     trans_probs,
     mismatch_probs,
-    *,
-    num_alleles=2,
+    num_alleles,
 ):
     """
     Implement LS HMM backward algorithm as in BEAGLE.
@@ -322,8 +319,7 @@ def compute_backward_matrix(
     query_h,
     trans_probs,
     mismatch_probs,
-    *,
-    num_alleles=2,
+    num_alleles,
 ):
     num_sites, num_haps = ref_h.shape
     if len(query_h) != num_sites:
