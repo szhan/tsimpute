@@ -320,30 +320,28 @@ def compute_backward_matrix(
     return bwd_mat
 
 
+@njit
 def compute_state_prob_matrix(fwd_mat, bwd_mat):
     """
-    Implement Li and Stephens forward-backward algorithm.
-
-    The forward and backward probability matrices are of size (m, h).
-
-    This computes a hidden state probability matrix of size (m, h),
-    in which each element is the probability of copying from
-    a reference haplotype at a genotyped position.
-
     Implementing this is simpler than faithfully reproducing BEAGLE 4.1.
 
     :param numpy.ndarray fwd_mat: Forward probability matrix.
     :param numpy.ndarray bwd_mat: Backward probability matrix.
-    :return: Hidden state probability matrix.
+    :return: Posterior state probability matrix.
     :rtype: numpy.ndarray
     """
     assert (
         fwd_mat.shape == bwd_mat.shape
-    ), "Forward and backward matrices differ in shape."
-    state_mat = np.multiply(fwd_mat, bwd_mat)
-    # Normalise per site.
-    for i in range(len(state_mat)):
-        state_mat[i, :] /= np.sum(state_mat[i, :])
+    ), "Incompatible forward and backward matrices."
+    m, h = fwd_mat.shape
+    state_mat = np.zeros_like(fwd_mat)
+    for i in range(m):
+        site_sum = 0
+        for j in range(h):
+            state_mat[i, j] = fwd_mat[i, j] * bwd_mat[i, j]
+            site_sum += state_mat[i, j]
+        for j in range(h):
+            state_mat[i, j] /= site_sum
     return state_mat
 
 
