@@ -246,20 +246,26 @@ def compute_individual_scores(
     :rtype: tuple(numpy.ndarray, numpy.ndarray)
     """
     n = len(alleles_1)  # Number of individuals.
-    assert len(alleles_2) == n, "Lengths of alleles differ."
-    assert n > 0, "There must be at least one individual."
-    assert len(allele_probs_1) == n, "Lengths of alleles and probabilities differ."
-    assert len(allele_probs_2) == n, "Lengths of alleles and probabilities differ."
+    if len(alleles_2) != n:
+        raise ValueError("Incompatible alleles.")
+    if n <= 0:
+        raise ValueError("There must be at least one individual.")
+    if len(allele_probs_1) != n:
+        raise ValueError("Incompatible alleles and allele probabilities.")
+    if len(allele_probs_2) != n:
+        raise ValueError("Incompatible alleles and allele probabilities.")
     dosage_probs = np.zeros((n, 3), dtype=np.float64)
     dosage_scores = np.zeros(n, dtype=np.float64)
     for i in range(n):
-        ap_hap1_ref = (
-            allele_probs_1[i] if alleles_1[i] == ref else 1 - allele_probs_1[i]
-        )
+        if alleles_1[i] == ref:
+            ap_hap1_ref = allele_probs_1[i]
+        else:
+            ap_hap1_ref = 1 - allele_probs_1[i]
         ap_hap1_alt = 1 - ap_hap1_ref
-        ap_hap2_ref = (
-            allele_probs_2[i] if alleles_2[i] == ref else 1 - allele_probs_2[i]
-        )
+        if alleles_2[i] == ref:
+            ap_hap2_ref = allele_probs_2[i]
+        else:
+            ap_hap2_ref = 1 - allele_probs_2[i]
         ap_hap2_alt = 1 - ap_hap2_ref
         dosage_probs[i, 0] = ap_hap1_ref * ap_hap2_ref  # P(RR)
         dosage_probs[i, 1] = ap_hap1_ref * ap_hap2_alt  # P(RA)

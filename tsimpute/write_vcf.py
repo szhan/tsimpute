@@ -1,22 +1,27 @@
 from dataclasses import dataclass
+import numpy as np
 import tskit
 
 
-_ACGT_ALLELES_INT = [0, 1, 2, 3, tskit.MISSING_DATA]
+__DATE__ = "TODO"
+__VERSION__ = "TODO"
 
+
+# Processing of results.
+TUPLE_ACGT_ALLELES = (0, 1, 2, 3, tskit.MISSING_DATA)
 
 @dataclass(frozen=True)
 class ImpData:
     """
     Imputation data containing:
     * Individual names.
-    * Physical positions of imputed sites (bp).
-    * Designated REF allele at each site.
-    * Designated ALT allele at each site.
-    * Imputed alleles at each site.
-    * Imputed allele probabilities at each site.
+    * Positions of the imputed sites (bp).
+    * Designated REF allele at each imputed site.
+    * Designated ALT allele at each imputed site.
+    * Imputed alleles at each imputed site.
+    * Imputed allele probabilities at each imputed site.
 
-    Assume that all the sites are biallelic.
+    Assume that all the imputed sites are biallelic.
 
     Let x = number of imputed sites and q = number of query haplotypes.
     Since the query haplotypes are from diploid individuals, q is equal to
@@ -34,35 +39,31 @@ class ImpData:
     allele_probs: np.ndarray
 
     def __post_init__(self):
-        assert len(self.individual_names) > 0, "There must be at least one individual."
-        assert len(self.site_pos) > 0, "There must be at least one site."
-        assert self.alleles.shape[0] / 2 == len(
-            self.individual_names
-        ), "Number of query haplotypes is not equal to twice the number of individuals."
-        assert len(self.site_pos) == len(
-            self.alts
-        ), "Number of sites in refs is not equal to the number of site positions."
-        assert len(self.site_pos) == len(
-            self.refs
-        ), "Number of sites in alts != number of site positions."
-        assert (
-            len(self.site_pos) == self.alleles.shape[1]
-        ), "Number of sites in alleles != number of site positions."
-        assert (
-            self.alleles.shape == self.allele_probs.shape
-        ), "Dimensions of alleles != dimensions of allele probabilities."
+        if len(self.individual_names) <= 0:
+            raise ValueError("There must be at least one individual.")
+        if len(self.site_pos) <= 0:
+            raise ValueError("There must be at least one site.")
+        if self.alleles.shape[0] / 2 != len(self.individual_names):
+            raise ValueError("Unexpected number of query haplotypes.")
+        if len(self.site_pos) != len(self.refs):
+            raise ValueError("Unexpeced number of ref. alleles.")
+        if len(self.site_pos) != len(self.alts):
+            raise ValueError("Unexpeced number of alt. alleles.")
+        if len(self.site_pos) != self.alleles.shape[1]:
+            raise ValueError("Number of sites in alleles != number of site positions.")
+        if self.alleles.shape != self.allele_probs.shape:
+            raise ValueError("Incompatible alleles and allele probabilities.")
         for i in range(self.alleles.shape[1]):
-            assert np.all(np.isin(self.alleles[:, i], [self.refs[i], self.alts[i]]))
-        assert np.all(
-            np.isin(np.unique(self.refs), _ACGT_ALLELES_INT)
-        ), "Unrecognized alleles are in REF alleles."
-        assert np.all(
-            np.isin(np.unique(self.alts), _ACGT_ALLELES_INT)
-        ), "Unrecognized alleles are in ALT alleles."
-        assert np.all(
-            np.isin(np.unique(self.alleles), _ACGT_ALLELES_INT)
-        ), "Unrecognized alleles are in alleles."
-        assert ~np.array_equal(self.refs, self.alts), "Some REFs are identical to ALTs."
+            if ~np.all(np.isin(self.alleles[:, i], [self.refs[i], self.alts[i]])):
+                raise ValueError("TODO")
+        if ~np.all(np.isin(np.unique(self.refs), TUPLE_ACGT_ALLELES)):
+            raise ValueError("Unrecognized alleles in REF.")
+        if ~np.all(np.isin(np.unique(self.alts), TUPLE_ACGT_ALLELES)):
+            raise ValueError("Unrecognized alleles in ALT.")
+        if ~np.all(np.isin(np.unique(self.alleles), TUPLE_ACGT_ALLELES)):
+            raise ValueError("Unrecognized alleles in alleles.")
+        if np.array_equal(self.refs, self.alts):
+            raise ValueError("Some REFs are identical to ALTs.")
 
     @property
     def num_sites(self):
