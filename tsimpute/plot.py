@@ -26,18 +26,23 @@ def plot_iqs_versus_maf(
     num_sites_min_iqs = np.sum(df["iqs"] >= min_iqs)
     prop_sites_min_iqs = num_sites_min_iqs / float(df.shape[0])
 
-    fig, ax = plt.subplots(figsize=(7, 7,))
+    fig, ax = plt.subplots(
+        figsize=(
+            7,
+            7,
+        )
+    )
 
     ax.set_title(
         f"{method}"
         "\n"
         f"% sites with min IQS: {round(prop_sites_min_iqs * 100.0, 2)}",
-        size=20
+        size=20,
     )
     ax.set_xlim([0, max_maf])
     ax.set_ylabel("IQS", size=20)
     ax.set_xlabel("MAF", size=20)
-    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.tick_params(axis="both", which="major", labelsize=20)
 
     g = sns.scatterplot(
         y="iqs",
@@ -45,9 +50,9 @@ def plot_iqs_versus_maf(
         data=df,
         c=x,
         cmap="viridis",
-        #x_jitter=True,
+        # x_jitter=True,
         ax=ax,
-        alpha=0.2
+        alpha=0.2,
     )
 
     if out_png_file is not None:

@@ -68,11 +68,17 @@ def run_tsimpute(
     pos_typed = pos_all[idx_typed]
     pos_untyped = pos_all[idx_untyped]
     # Get genetic map positions of genotyped and ungenotyped markers.
-    cm_typed = beagle_numba.convert_to_genetic_map_positions(pos_typed, genetic_map=genetic_map)
-    cm_untyped = beagle_numba.convert_to_genetic_map_positions(pos_untyped, genetic_map=genetic_map)
+    cm_typed = beagle_numba.convert_to_genetic_map_positions(
+        pos_typed, genetic_map=genetic_map
+    )
+    cm_untyped = beagle_numba.convert_to_genetic_map_positions(
+        pos_untyped, genetic_map=genetic_map
+    )
     # Get HMM probabilities at genotyped positions.
     trans_probs = beagle_numba.get_transition_probs(cm_typed, h=h, ne=ne)
-    mismatch_probs = beagle_numba.get_mismatch_probs(len(pos_typed), error_rate=error_rate)
+    mismatch_probs = beagle_numba.get_mismatch_probs(
+        len(pos_typed), error_rate=error_rate
+    )
     # Subset haplotypes.
     ref_ts_typed = ref_ts.delete_sites(site_ids=idx_untyped)
     ref_ts_untyped = ref_ts.delete_sites(site_ids=idx_typed)
@@ -104,5 +110,7 @@ def run_tsimpute(
         use_threshold=use_threshold,
         return_weights=False,
     )
-    imputed_alleles, max_allele_probs = beagle_numba.get_map_alleles(imputed_allele_probs)
+    imputed_alleles, max_allele_probs = beagle_numba.get_map_alleles(
+        imputed_allele_probs
+    )
     return (imputed_alleles, max_allele_probs)
