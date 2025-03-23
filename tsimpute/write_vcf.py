@@ -10,6 +10,7 @@ __VERSION__ = "TODO"
 # Processing of results.
 TUPLE_ACGT_ALLELES = (0, 1, 2, 3, tskit.MISSING_DATA)
 
+
 @dataclass(frozen=True)
 class ImpData:
     """

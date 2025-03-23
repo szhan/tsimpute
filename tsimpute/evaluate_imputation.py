@@ -238,7 +238,9 @@ def evaluate_imputation(
         # Get proportion of wrongly imputed alleles that are ancestral.
         prop_wrongly_imputed_alleles_0[i] = 0
         # Get total number of wrongly imputed alleles, ancestral or derived.
-        num_wrongly_imputed_alleles[i] = np.sum(v_sd_true.genotypes != imputed_genotypes)
+        num_wrongly_imputed_alleles[i] = np.sum(
+            v_sd_true.genotypes != imputed_genotypes
+        )
         if num_wrongly_imputed_alleles[i] > 0:
             prop_wrongly_imputed_alleles_0[i] = (
                 1

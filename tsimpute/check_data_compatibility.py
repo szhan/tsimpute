@@ -137,9 +137,7 @@ def make_compatible_samples(
     num_chip_sites = 0
     num_mask_sites = 0
 
-    with tsinfer.SampleData(
-        sequence_length=ts.sequence_length, path=path
-    ) as new_sd:
+    with tsinfer.SampleData(sequence_length=ts.sequence_length, path=path) as new_sd:
         # Copy populations in sd to new_sd.
         for pop in sd.populations():
             if not isinstance(pop.metadata, dict):

@@ -1,4 +1,5 @@
 """Re-implementation of the BEAGLE 4.1 algorithm"""
+
 import warnings
 from dataclasses import dataclass
 
@@ -6,7 +7,6 @@ import numpy as np
 from numba import njit
 
 import tskit
-from . import measures
 
 
 @dataclass(frozen=True)
@@ -75,8 +75,9 @@ def convert_to_cm(site_pos, genetic_map=None):
     _MIN_CM_DIST = 1e-7
     if genetic_map is None:
         return site_pos / 1e6  # 1 cM / 1 Mb
-    if ~np.all(site_pos >= genetic_map.base_pos[0]) or \
-        ~np.all(site_pos < genetic_map.base_pos[-1]):
+    if ~np.all(site_pos >= genetic_map.base_pos[0]) or ~np.all(
+        site_pos < genetic_map.base_pos[-1]
+    ):
         raise ValueError("Site positions are outside of the genetic map.")
     # Approximate genetic map distances by linear interpolation.
     # Note np.searchsorted(a, v, side='right') returns i s.t. a[i-1] <= v < a[i].
