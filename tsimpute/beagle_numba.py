@@ -67,7 +67,7 @@ def convert_to_cm(site_pos, genetic_map=None):
     genetic map positions. For details, see `PlinkGenMap.java`
     in the BEAGLE 4.1 source code.
 
-    :param numpy.ndarray pos: Site positions (bp).
+    :param numpy.ndarray site_pos: Site positions (bp).
     :param GeneticMap genetic_map: Genetic map.
     :return: Genetic map positions (cM).
     :rtype: numpy.ndarray
@@ -94,7 +94,7 @@ def convert_to_cm(site_pos, genetic_map=None):
         ), f"Query position is not >= left-bound position: {site_pos[i]}, {a}."
         assert (
             fb >= fa
-        ), f"Genetic distances are not monotonically ascending: {fb}, {fa}."
+        ), f"Genetic map positions are not monotonically ascending: {fb}, {fa}."
         est_cm[i] = fa
         est_cm[i] += (fb - fa) * (site_pos[i] - a) / (b - a)
         # Ensure that adjacent positions are not identical in cM.
@@ -482,7 +482,8 @@ def interpolate_allele_probs(
     return (probs_rescaled, None)
 
 
-def get_map_alleles(allele_probs):
+@njit
+def get_map_alleles(allele_probs, num_alleles):
     """
     Compute maximum a posteriori (MAP) alleles at the ungenotyped positions
     of a query haplotype, based on posterior marginal allele probabilities.
@@ -493,11 +494,21 @@ def get_map_alleles(allele_probs):
     TODO: Investigate how often this happens and the effect of this arbitrary choice.
 
     :param numpy.ndarray allele_probs: Imputed allele probabilities.
+    :param int num_alleles: Number of distinct alleles
     :return: Imputed alleles and their probabilities.
     :rtype: tuple(numpy.ndarray, numpy.ndarray)
     """
-    imputed_alleles = np.argmax(allele_probs, axis=1)
-    max_allele_probs = np.max(allele_probs, axis=1)
+    x, a = allele_probs.shape
+    assert a == num_alleles
+    imputed_alleles = np.zeros(x, dtype=np.int32) - 1
+    max_allele_probs = np.zeros(x, dtype=np.float64)
+    for i in range(x):
+        imputed_alleles[i] = 0
+        max_allele_probs[i] = allele_probs[i, 0]
+        for j in range(1, num_alleles):
+            if allele_probs[i, j] > max_allele_probs[i]:
+                imputed_alleles[i] = j
+                max_allele_probs[i] = allele_probs[i, j]
     return (imputed_alleles, max_allele_probs)
 
 
@@ -585,5 +596,5 @@ def run_interpolation_beagle(
         use_threshold=use_threshold,
         return_weights=False,
     )
-    imputed_alleles, max_allele_probs = get_map_alleles(imputed_allele_probs)
+    imputed_alleles, max_allele_probs = get_map_alleles(imputed_allele_probs, num_alleles=num_alleles)
     return (imputed_alleles, max_allele_probs)
