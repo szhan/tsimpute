@@ -164,21 +164,24 @@ def get_transition_probs(cm, h, ne):
 
 
 @njit
-def compute_emission_probability(mismatch_prob, ref_a, query_a, num_alleles):
+def compute_emission_prob(mismatch_prob, ref_a, query_a, num_alleles):
     """
     Compute the emission probability at a site based on whether the alleles
     carried by a query haplotype and a reference haplotype match at the site.
 
-    Emission probability may be scaled according to the number of distinct
-    segregating alleles.
+    Emission probability may be scaled as per the number of distinct alleles.
 
     :param float mismatch_prob: Mismatch probability.
     :param int ref_a: Reference allele.
     :param int query_a: Query allele.
-    :param int num_alleles: Number of distinct alleles (default = 2).
+    :param int num_alleles: Number of distinct alleles.
     :return: Emission probability.
     :rtype: float
     """
+    if ref_a == tskit.MISSING_DATA:
+        return 0.0
+    if query_a == tskit.MISSING_DATA:
+        return 1.0
     if ref_a == query_a:
         return 1.0 - (num_alleles - 1) * mismatch_prob
     return mismatch_prob
@@ -253,7 +256,7 @@ def compute_forward_matrix(
         shift = trans_probs[i] / num_haps
         scale = (1 - trans_probs[i]) / last_sum
         for j in range(num_haps):
-            fwd_mat[i, j] = compute_emission_probability(
+            fwd_mat[i, j] = compute_emission_prob(
                 mismatch_prob=mismatch_probs[i],
                 ref_a=ref_h[i, j],
                 query_a=query_h[i],
@@ -330,7 +333,7 @@ def compute_backward_matrix(
     for i in range(num_sites - 2, -1, -1):
         iP1 = i + 1
         for j in range(num_haps):
-            bwd_mat[iP1, j] *= compute_emission_probability(
+            bwd_mat[iP1, j] *= compute_emission_prob(
                 mismatch_prob=mismatch_probs[iP1],
                 ref_a=ref_h[iP1, j],
                 query_a=query_h[iP1],
