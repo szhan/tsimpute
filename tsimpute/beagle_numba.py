@@ -159,7 +159,7 @@ def get_transition_probs(cm, h, ne):
 
 
 @njit
-def compute_emission_probability(mismatch_prob, is_match, *, num_alleles=2):
+def compute_emission_probability(mismatch_prob, ref_a, query_a, num_alleles=2):
     """
     Compute the emission probability at a site based on whether the alleles
     carried by a query haplotype and a reference haplotype match at the site.
@@ -168,23 +168,24 @@ def compute_emission_probability(mismatch_prob, is_match, *, num_alleles=2):
     segregating alleles.
 
     :param float mismatch_prob: Mismatch probability.
-    :param bool is_match: True if matched, otherwise False.
+    :param int ref_a: Reference allele.
+    :param int query_a: Query allele.
     :param int num_alleles: Number of distinct alleles (default = 2).
     :return: Emission probability.
     :rtype: float
     """
-    em_prob = mismatch_prob
-    if is_match:
-        em_prob = 1.0 - (num_alleles - 1) * mismatch_prob
-    return em_prob
+    if ref_a == query_a:
+        return 1.0 - (num_alleles - 1) * mismatch_prob
+    return mismatch_prob
 
 
 # Replication of BEAGLE's implementation of LS HMM forward-backward algorithm.
-def compute_forward_matrix(
+@njit
+def compute_forward_matrix_beaglelike(
     ref_h, query_h, trans_probs, mismatch_probs, *, num_alleles=2
 ):
     """
-    Implement Li and Stephens forward algorithm.
+    Implement LS HMM forward algorithm as in BEAGLE.
 
     Reference haplotypes and query haplotype are subsetted to genotyped positions.
     So, they are a matrix of size (m, h) and an array of size m, respectively.
@@ -201,6 +202,7 @@ def compute_forward_matrix(
     """
     h = ref_h.shape[1]  # Number of reference haplotypes.
     m = ref_h.shape[0]  # Number of genotyped positions.
+    assert len(query_h) == m
     fwd_mat = np.zeros((m, h), dtype=np.float64)
     last_sum = 1.0  # Normalization factor.
     for i in range(m):
@@ -226,11 +228,36 @@ def compute_forward_matrix(
 
 
 @njit
-def compute_backward_matrix(
+def compute_forward_matrix(
+    ref_h, query_h, trans_probs, mismatch_probs, *, num_alleles=2
+):
+    m, h = ref_h.shape
+    assert len(query_h) == m
+    fwd_mat = np.zeros((m, h), dtype=np.float64)
+    last_sum = 1.0
+    for i in range(m):
+        shift = trans_probs[i] / h
+        scale = (1 - trans_probs[i]) / last_sum
+        for j in range(h):
+            fwd_mat[i, j] = compute_emission_probability(
+                mismatch_prob=mismatch_probs[i],
+                ref_a=ref_h[i, j],
+                query_a=query_h[i],
+                num_alleles=num_alleles,
+            )
+            if i > 0:
+                fwd_mat[i, j] *= scale * fwd_mat[i - 1, j] + shift
+        site_sum = np.sum(fwd_mat[i, :])
+        last_sum = site_sum / h if i == 0 else site_sum
+    return fwd_mat
+
+
+@njit
+def compute_backward_matrix_beaglelike(
     ref_h, query_h, trans_probs, mismatch_probs, *, num_alleles=2
 ):
     """
-    Implement Li and Stephens backward algorithm.
+    Implement LS HMM backward algorithm as in BEAGLE.
 
     Reference haplotypes and query haplotype are subsetted to genotyped positions.
     So, they are a matrix of size (m, h) and an array of size m, respectively.
@@ -250,6 +277,7 @@ def compute_backward_matrix(
     """
     h = ref_h.shape[1]  # Number of reference haplotypes.
     m = ref_h.shape[0]  # Number of genotyped positions.
+    assert len(query_h) == m
     bwd_mat = np.zeros((m, h), dtype=np.float64)
     bwd_mat[-1, :] = 1.0 / h  # Initialise the last column.
     for i in range(m - 2, -1, -1):
@@ -261,6 +289,30 @@ def compute_backward_matrix(
             if query_a == ref_a:
                 em_prob = 1.0 - (num_alleles - 1) * mismatch_probs[iP1]
             bwd_mat[iP1, j] *= em_prob
+        site_sum = np.sum(bwd_mat[iP1, :])
+        scale = (1 - trans_probs[iP1]) / site_sum
+        shift = trans_probs[iP1] / h
+        bwd_mat[i, :] = scale * bwd_mat[iP1, :] + shift
+    return bwd_mat
+
+
+@njit
+def compute_backward_matrix(
+    ref_h, query_h, trans_probs, mismatch_probs, *, num_alleles=2
+):
+    m, h = ref_h.shape
+    assert len(query_h) == m
+    bwd_mat = np.zeros((m, h), dtype=np.float64)
+    bwd_mat[-1, :] = 1.0 / h
+    for i in range(m - 2, -1, -1):
+        iP1 = i + 1
+        for j in range(h):
+            bwd_mat[iP1, j] *= compute_emission_probability(
+                mismatch_prob=mismatch_probs[iP1],
+                ref_a=ref_h[iP1, j],
+                query_a=query_h[iP1],
+                num_alleles=num_alleles,
+            )
         site_sum = np.sum(bwd_mat[iP1, :])
         scale = (1 - trans_probs[iP1]) / site_sum
         shift = trans_probs[iP1] / h
