@@ -1,6 +1,4 @@
-"""
-Calculate various metrics to assess imputation performance.
-"""
+"""Calculate metrics to assess imputation performance."""
 import numpy as np
 
 
@@ -216,3 +214,170 @@ def computed_r_squared(genotypes_true, genotypes_imputed):
     """
     r_squared = None
     return r_squared
+
+
+""" Metrics used by BEAGLE. """
+
+
+# Individual-level
+def compute_individual_scores(
+    alleles_1, allele_probs_1, alleles_2, allele_probs_2, ref
+):
+    """
+    Compute genotype probabilities and allele dosages of diploid individuals
+    at a position based on posterior marginal allele probabilities.
+
+    Assume that all sites are biallelic. Otherwise, the calculation below is incorrect.
+    Note 0 refers to the REF allele and 1 the ALT allele.
+
+    Unphased genotype (or dosage) probabilities are: P(RR), P(RA or AR), P(AA).
+    Dosages of the ALT allele are: RR = 0, RA or AR = 1, AA = 2.
+
+    In BEAGLE 4.1 output,
+    GP: "Estimated Genotype Probability", and
+    DS: "Estimated ALT dose [P(RA) + P(AA)]".
+
+    :param numpy.ndarray alleles_1: Imputed alleles for haplotype 1.
+    :param numpy.ndarray allele_probs_1: Imputed allele probabilities for haplotype 1.
+    :param numpy.ndarray alleles_2: Imputed alleles for haplotype 2.
+    :param numpy.ndarray allele_probs_2: Imputed allele probabilities for haplotype 2.
+    :param int ref: Specified REF allele (ACGT encoding).
+    :return: Dosage probabilities and dosage scores.
+    :rtype: tuple(numpy.ndarray, numpy.ndarray)
+    """
+    n = len(alleles_1)  # Number of individuals.
+    assert len(alleles_2) == n, "Lengths of alleles differ."
+    assert n > 0, "There must be at least one individual."
+    assert len(allele_probs_1) == n, "Lengths of alleles and probabilities differ."
+    assert len(allele_probs_2) == n, "Lengths of alleles and probabilities differ."
+    dosage_probs = np.zeros((n, 3), dtype=np.float64)
+    dosage_scores = np.zeros(n, dtype=np.float64)
+    for i in range(n):
+        ap_hap1_ref = (
+            allele_probs_1[i] if alleles_1[i] == ref else 1 - allele_probs_1[i]
+        )
+        ap_hap1_alt = 1 - ap_hap1_ref
+        ap_hap2_ref = (
+            allele_probs_2[i] if alleles_2[i] == ref else 1 - allele_probs_2[i]
+        )
+        ap_hap2_alt = 1 - ap_hap2_ref
+        dosage_probs[i, 0] = ap_hap1_ref * ap_hap2_ref  # P(RR)
+        dosage_probs[i, 1] = ap_hap1_ref * ap_hap2_alt  # P(RA)
+        dosage_probs[i, 1] += ap_hap1_alt * ap_hap2_ref  # P(AR)
+        dosage_probs[i, 2] = ap_hap1_alt * ap_hap2_alt  # P(AA)
+        dosage_scores[i] = dosage_probs[i, 1] + 2 * dosage_probs[i, 2]
+    return (dosage_probs, dosage_scores)
+
+
+# Site-level
+def compute_allelic_r_squared(dosage_probs):
+    """
+    Compute the estimated allelic R^2 at a position from the unphased genotype
+    (or dosage) probabilities of a set of diploid individuals.
+
+    Assume that site is biallelic. Otherwise, the calculation below is incorrect.
+    Note that 0 refers to REF allele and 1 the ALT allele.
+
+    It is not the true allelic R^2, which needs access to true genotypes to compute.
+    The true allelic R^s is the squared correlation between true and imputed ALT dosages.
+    It has been shown the true and estimated allelic R-squared are highly correlated.
+
+    In BEAGLE 4.1, it is AR2: "Allelic R-Squared: estimated squared correlation
+    between most probable REF dose and true REF dose".
+    See `allelicR2` in `R2Estimator.java` of the BEAGLE 4.1 source code.
+
+    See the formulation in the Appendix 1 of Browning & Browning (2009).
+    Am J Hum Genet. 84(2): 210–223. doi: 10.1016/j.ajhg.2009.01.005.
+
+    :return: Dosage probabilities and dosage scores.
+    :return: Estimated allelic R-squared.
+    :rtype: float
+    """
+    _MIN_R2_DEN = 1e-8
+    n = len(dosage_probs)  # Number of individuals.
+    assert n > 0, "There must be at least one individual."
+    assert dosage_probs.shape[1] == 3, "Three genotypes are considered."
+    f = 1 / n
+    z = np.argmax(dosage_probs, axis=1)  # Most likely imputed dosage.
+    u = dosage_probs[:, 1] + 2 * dosage_probs[:, 2]  # E[X | y_i]
+    w = dosage_probs[:, 1] + 4 * dosage_probs[:, 2]  # E[X^2 | y_i]
+    cov = np.sum(z * u) - np.sum(z) * np.sum(u) * f
+    var_best = np.sum(z**2) - np.sum(z) ** 2 * f
+    var_exp = np.sum(w) - np.sum(u) ** 2 * f
+    den = var_best * var_exp
+    # Minimum of allelic R^2 is zero.
+    allelic_rsq = 0 if den < _MIN_R2_DEN else cov**2 / den
+    return allelic_rsq
+
+
+def compute_dosage_r_squared(dosage_probs):
+    """
+    Compute the dosage R^2 for a position from the unphased genotype (or dosage)
+    probabilities of a set of diploid individuals.
+
+    Assume that site is biallelic. Otherwise, the calculation below is incorrect.
+    Note that 0 refers to REF allele and 1 the ALT allele.
+
+    In BEAGLE 4.1, DR2: "Dosage R-Squared: estimated squared correlation
+    between estimated REF dose [P(RA) + 2 * P(RR)] and true REF dose".
+    See `doseR2` in `R2Estimator.java` of the BEAGLE 4.1 source code.
+
+    :return: Dosage probabilities and dosage scores.
+    :return: Dosage R-squared.
+    :rtype: float
+    """
+    _MIN_R2_DEN = 1e-8
+    n = len(dosage_probs)  # Number of individuals.
+    assert n > 0, "There must be at least one individual."
+    assert dosage_probs.shape[1] == 3, "Three genotypes are considered."
+    f = 1 / n
+    u = dosage_probs[:, 1] + 2 * dosage_probs[:, 2]  # E[X | y_i].
+    w = dosage_probs[:, 1] + 4 * dosage_probs[:, 2]  # E[X^2 | y_i].
+    c = np.sum(u) ** 2 * f
+    num = np.sum(u**2) - c
+    if num < 0:
+        num = 0
+    den = np.sum(w) - c
+    dosage_rsq = 0 if den < _MIN_R2_DEN else num / den
+    return dosage_rsq
+
+
+def compute_allele_frequency(
+    alleles_1,
+    allele_probs_1,
+    alleles_2,
+    allele_probs_2,
+    allele,
+):
+    """
+    Estimate the frequency of a specified allele at a position from allele probabilities
+    of a set of diploid individuals.
+
+    Assume that site is biallelic. Otherwise, the calculation below is incorrect.
+
+    Input are the imputed alleles and their probabilities at a position.
+
+    In BEAGLE 4.1, AF: "Estimated ALT Allele Frequencies".
+    See `printInfo` in `VcfRecBuilder.java` of the BEAGLE 4.1 source code.
+
+    See the note in "Standardized Allele-Frequency Error" in Browning & Browning (2009).
+    Am J Hum Genet. 84(2): 210–223. doi: 10.1016/j.ajhg.2009.01.005.
+
+    :param numpy.ndarray alleles_1: Imputed alleles for haplotype 1.
+    :param numpy.ndarray allele_probs_1: Imputed allele probabilities for haplotype 1.
+    :param numpy.ndarray alleles_2: Imputed alleles for haplotype 2.
+    :param numpy.ndarray allele_probs_2: Imputed allele probabilities for haplotype 2.
+    :param int allele: Specified allele (ACGT encoding).
+    :return: Estimated allele frequency.
+    :rtype: float
+    """
+    n = len(alleles_1)  # Number of individuals.
+    assert len(alleles_2) == n, "Lengths of alleles differ."
+    assert n > 0, "There must be at least one individual."
+    assert len(allele_probs_1) == n, "Lengths of alleles and probabilities differ."
+    assert len(allele_probs_2) == n, "Lengths of alleles and probabilities differ."
+    cum_ap_hap1 = np.sum(allele_probs_1[alleles_1 == allele])
+    cum_ap_hap2 = np.sum(allele_probs_2[alleles_2 == allele])
+    # See `printInfo` in `VcfRecBuilder.java` in BEAGLE 4.1 source code.
+    est_af = (cum_ap_hap1 + cum_ap_hap2) / (2 * n)
+    return est_af
