@@ -53,19 +53,21 @@ def check_data(ref_h, query_h):
     return True
 
 
-def convert_to_genetic_map_positions(pos, *, genetic_map=None):
+def convert_to_cm(site_pos, genetic_map=None):
     """
-    Convert physical positions (bp) to genetic map positions (cM).
+    Convert site positions (bp) to genetic map positions (cM).
 
     In BEAGLE 4.1, when a genetic map is not specified, it is assumed
     that the recombination rate is constant (1 cM / 1 Mb).
 
     If a genetic map is specified, then the genetic map positions are
-    either taken straight from it or interpolated using it. The genetic map
-    needs to contain physical positions and corresponding genetic map positions.
-    See `PlinkGenMap.java` in the BEAGLE 4.1 source code for details.
+    either taken directly from it or interpolated using it.
 
-    :param numpy.ndarray pos: Physical positions (bp).
+    The genetic map needs to contain site positions and their corresponding
+    genetic map positions. For details, see `PlinkGenMap.java`
+    in the BEAGLE 4.1 source code.
+
+    :param numpy.ndarray pos: Site positions (bp).
     :param GeneticMap genetic_map: Genetic map.
     :return: Genetic map positions (cM).
     :rtype: numpy.ndarray
@@ -73,27 +75,28 @@ def convert_to_genetic_map_positions(pos, *, genetic_map=None):
     # See 'cumPos' in 'ImputationData.java' in BEAGLE 4.1.
     _MIN_CM_DIST = 1e-7
     if genetic_map is None:
-        return pos / 1e6  # 1 cM / 1 Mb
-    assert np.all(pos >= genetic_map.base_pos[0]) and np.all(
-        pos < genetic_map.base_pos[-1]
-    ), "Some physical positions are outside of genetic map."
+        return site_pos / 1e6  # 1 cM / 1 Mb
+    assert np.all(site_pos >= genetic_map.base_pos[0]) and np.all(
+        site_pos < genetic_map.base_pos[-1]
+    ), "Some site positions are outside of the genetic map."
     # Approximate genetic map distances by linear interpolation.
     # Note np.searchsorted(a, v, side='right') returns i s.t. a[i-1] <= v < a[i].
-    right_idx = np.searchsorted(genetic_map.base_pos, pos, side="right")
-    est_cm = np.zeros(len(pos), dtype=np.float64)  # BEAGLE 4.1 uses double in Java.
-    for i in range(len(pos)):
+    right_idx = np.searchsorted(genetic_map.base_pos, site_pos, side="right")
+    m = len(site_pos)
+    est_cm = np.zeros(m, dtype=np.float64)  # BEAGLE 4.1 uses double in Java.
+    for i in range(m):
         a = genetic_map.base_pos[right_idx[i] - 1]
         b = genetic_map.base_pos[right_idx[i]]
         fa = genetic_map.gen_pos[right_idx[i] - 1]
         fb = genetic_map.gen_pos[right_idx[i]]
         assert (
-            pos[i] >= a
-        ), f"Query position is not >= left-bound position: {pos[i]}, {a}."
+            site_pos[i] >= a
+        ), f"Query position is not >= left-bound position: {site_pos[i]}, {a}."
         assert (
             fb >= fa
-        ), f"Genetic map positions are not monotonically ascending: {fb}, {fa}."
+        ), f"Genetic distances are not monotonically ascending: {fb}, {fa}."
         est_cm[i] = fa
-        est_cm[i] += (fb - fa) * (pos[i] - a) / (b - a)
+        est_cm[i] += (fb - fa) * (site_pos[i] - a) / (b - a)
         # Ensure that adjacent positions are not identical in cM.
         if i > 0:
             if est_cm[i] - est_cm[i - 1] < _MIN_CM_DIST:
@@ -546,8 +549,8 @@ def run_interpolation_beagle(
     pos_typed = pos_all[idx_typed]
     pos_untyped = pos_all[idx_untyped]
     # Get genetic map positions of of genotyped and ungenotyped markers.
-    cm_typed = convert_to_genetic_map_positions(pos_typed, genetic_map=genetic_map)
-    cm_untyped = convert_to_genetic_map_positions(pos_untyped, genetic_map=genetic_map)
+    cm_typed = convert_to_cm(pos_typed, genetic_map=genetic_map)
+    cm_untyped = convert_to_cm(pos_untyped, genetic_map=genetic_map)
     # Get HMM probabilities at genotyped positions.
     trans_probs = get_transition_probs(cm_typed, h=h, ne=ne)
     mismatch_probs = get_mismatch_probs(len(pos_typed), error_rate=error_rate)
