@@ -549,6 +549,7 @@ def run_interpolation_beagle(
     error_rate=1e-4,
     genetic_map=None,
     use_threshold=False,
+    return_matrices=False,
 ):
     """
     Perform a simplified version of the procedure of interpolation-style imputation
@@ -571,8 +572,9 @@ def run_interpolation_beagle(
     :param float error_rate: Allele error rate (default = 1e-4).
     :param GeneticMap genetic_map: Genetic map (default = None).
     :param bool use_threshold: Set trivial probabilities to 0 if True (default = False).
+    :param bool return_matrices: Return matrices from forward-backward algorithms.
     :return: Imputed alleles and their probabilities.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray)
+    :rtype: tuple(numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray)
     """
     warnings.warn("This function is experimental and not fully tested.", stacklevel=1)
     warnings.warn(
@@ -627,4 +629,19 @@ def run_interpolation_beagle(
     imputed_alleles, max_allele_probs = get_map_alleles(
         imputed_allele_probs, num_alleles=num_alleles
     )
-    return (imputed_alleles, max_allele_probs)
+    if return_matrices:
+        return (
+            imputed_alleles,
+            max_allele_probs,
+            fwd_mat,
+            bwd_mat,
+            state_mat,
+        )
+    else:
+        return (
+            imputed_alleles,
+            max_allele_probs,
+            None,
+            None,
+            None,
+        )
