@@ -2,8 +2,8 @@ import warnings
 
 import numpy as np
 
-import _tskit
 import tskit
+import tsls
 
 from . import beagle_numba
 
@@ -15,7 +15,6 @@ def run_tsimpute(
     *,
     ne=1e6,
     error_rate=1e-4,
-    precision=10,
     genetic_map=None,
     use_threshold=False,
 ):
@@ -61,44 +60,43 @@ def run_tsimpute(
         stacklevel=1,
     )
     h = ref_ts.num_samples  # Number of reference haplotypes.
+
     # Separate indices of genotyped and ungenotyped positions.
     idx_typed = np.where(query_h != tskit.MISSING_DATA)[0]
     idx_untyped = np.where(query_h == tskit.MISSING_DATA)[0]
+
     # Set physical positions of genotyped and ungenotyped markers.
     pos_typed = pos_all[idx_typed]
     pos_untyped = pos_all[idx_untyped]
+
     # Get genetic map positions of genotyped and ungenotyped markers.
-    cm_typed = beagle_numba.convert_to_genetic_map_positions(
-        pos_typed, genetic_map=genetic_map
-    )
-    cm_untyped = beagle_numba.convert_to_genetic_map_positions(
-        pos_untyped, genetic_map=genetic_map
-    )
+    cm_typed = beagle_numba.convert_to_cm(pos_typed, genetic_map=genetic_map)
+    cm_untyped = beagle_numba.convert_to_cm(pos_untyped, genetic_map=genetic_map)
+
     # Get HMM probabilities at genotyped positions.
     trans_probs = beagle_numba.get_transition_probs(cm_typed, h=h, ne=ne)
     mismatch_probs = beagle_numba.get_mismatch_probs(
         len(pos_typed), error_rate=error_rate
     )
+
     # Subset haplotypes.
     ref_ts_typed = ref_ts.delete_sites(site_ids=idx_untyped)
     ref_ts_untyped = ref_ts.delete_sites(site_ids=idx_typed)
     ref_h_untyped = ref_ts_untyped.genotype_matrix(alleles=tskit.ALLELES_ACGT)
-    query_h_typed = query_h[idx_typed]
+    query_h_typed = query_h[idx_typed].T.astype(np.int8)
+
     # Get matrices at genotyped positions from tree sequence.
-    fwd_mat = _tskit.CompressedMatrix(ref_ts_typed._ll_tree_sequence)
-    bwd_mat = _tskit.CompressedMatrix(ref_ts_typed._ll_tree_sequence)
-    # WARN: Be careful with argument `acgt_alleles`!!!
-    ls_hmm = _tskit.LsHmm(
-        ref_ts_typed._ll_tree_sequence,
-        recombination_rate=trans_probs,  # Transition probabilities.
-        mutation_rate=mismatch_probs,  # Mismatch probabilities.
-        acgt_alleles=True,  # TODO: Handle allele encoding properly.
-        precision=precision,
+    ref_ts_typed_tsls = tsls.TreeSequence(ref_ts_typed, alleles=tskit.ALLELES_ACGT)
+    hmm = tsls.Hmm(
+        ref_ts_typed_tsls,
+        recombination=trans_probs,
+        mismatch=mismatch_probs,
     )
-    ls_hmm.forward_matrix(query_h_typed.T, fwd_mat)
-    ls_hmm.backward_matrix(query_h_typed.T, fwd_mat.normalisation_factor, bwd_mat)
+    fwd_mat = hmm.forward_matrix(query_h_typed)
+    bwd_mat = hmm.backward_matrix(query_h_typed, fwd_mat.normalisation_factor)
     # TODO: Check that these state probabilities align.
-    state_mat = state_mat = np.multiply(fwd_mat.decode(), bwd_mat.decode())
+    state_mat = np.multiply(fwd_mat.decode(), bwd_mat.decode())
+
     # Interpolate allele probabilities.
     imputed_allele_probs, _ = beagle_numba.interpolate_allele_probs(
         state_mat=state_mat,
@@ -110,7 +108,10 @@ def run_tsimpute(
         use_threshold=use_threshold,
         return_weights=False,
     )
+
     imputed_alleles, max_allele_probs = beagle_numba.get_map_alleles(
-        imputed_allele_probs
+        allele_probs=imputed_allele_probs,
+        num_alleles=len(tskit.ALLELES_ACGT),
     )
+
     return (imputed_alleles, max_allele_probs)

@@ -14,6 +14,7 @@ dependencies = [
   "zarr",
   "numpy",
   "numba",
+  "tsls",
 ]
 dynamic = ["version"]
 
@@ -39,4 +40,7 @@ packages = ["tsimpute"]
 
 [tool.setuptools_scm]
 write_to = "tsimpute/_version.py"
+
+[tool.uv.sources]
+tsls = { git = "https://github.com/tskit-dev/tsls" }
 

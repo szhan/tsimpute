@@ -6,7 +6,8 @@ import io
 import numpy as np
 import pytest
 
-import tests.beagle_numba
+from tsimpute import beagle_numba
+from tsimpute import run_tsimpute
 import tskit
 
 
@@ -459,74 +460,6 @@ assert np.sum(toy_query_8[1] == -1) == 5
 assert toy_query_8_beagle_allele_probs.shape == (2, 2, 5)
 
 
-@pytest.mark.parametrize(
-    "input_ref,input_query,expected",
-    [
-        (toy_ref_0, toy_query_0, toy_query_0_beagle_imputed),
-        (toy_ref_1, toy_query_1, toy_query_1_beagle_imputed),
-        (toy_ref_2, toy_query_2, toy_query_2_beagle_imputed),
-        (toy_ref_3, toy_query_3, toy_query_3_beagle_imputed),
-        (toy_ref_4, toy_query_4, toy_query_4_beagle_imputed),
-        (toy_ref_5, toy_query_5, toy_query_5_beagle_imputed),
-        (toy_ref_6, toy_query_6, toy_query_6_beagle_imputed),
-        (toy_ref_7, toy_query_7, toy_query_7_beagle_imputed),
-        (toy_ref_8, toy_query_8, toy_query_8_beagle_imputed),
-    ],
-)
-def test_beagle_vanilla(input_ref, input_query, expected):
-    """Compare imputed alleles from Python BEAGLE implementation and BEAGLE 4.1."""
-    assert input_query.shape == expected.shape
-    pos = (np.arange(9) + 1) * 1e4
-    num_query_haps = input_query.shape[0]
-    num_ungenotyped_markers = np.sum(input_query[0] == -1)
-    imputed_alleles = np.zeros(
-        (num_query_haps, num_ungenotyped_markers), dtype=np.int32
-    )
-    expected_ungenotyped = expected[:, input_query[0] == -1]
-    assert imputed_alleles.shape == expected_ungenotyped.shape
-    for i in range(num_query_haps):
-        imputed_alleles[i], _ = tests.beagle.run_beagle(
-            input_ref, input_query[i], pos, miscall_rate=1e-4, ne=10.0
-        )
-        np.testing.assert_array_equal(imputed_alleles[i], expected_ungenotyped[i])
-
-
-@pytest.mark.parametrize(
-    "input_ref,input_query",
-    [
-        (toy_ref_0, toy_query_0),
-        (toy_ref_1, toy_query_1),
-        (toy_ref_2, toy_query_2),
-        (toy_ref_3, toy_query_3),
-        (toy_ref_4, toy_query_4),
-        (toy_ref_5, toy_query_5),
-        (toy_ref_6, toy_query_6),
-        (toy_ref_7, toy_query_7),
-        (toy_ref_8, toy_query_8),
-    ],
-)
-def test_beagle_numba(input_ref, input_query):
-    """Compare imputed alleles from vanilla and numba Python BEAGLE implementations."""
-    pos = (np.arange(9) + 1) * 1e4
-    num_query_haps = input_query.shape[0]
-    for i in range(num_query_haps):
-        imputed_alleles_vanilla, _ = tests.beagle.run_beagle(
-            input_ref,
-            input_query[i],
-            pos,
-            ne=10.0,
-            miscall_rate=1e-4,
-        )
-        imputed_alleles_numba, _ = tests.beagle_numba.run_interpolation_beagle(
-            input_ref,
-            input_query[i],
-            pos,
-            ne=10.0,
-            error_rate=1e-4,
-        )
-        np.testing.assert_array_equal(imputed_alleles_vanilla, imputed_alleles_numba)
-
-
 # Below is toy data set case 7 in tree sequence format.
 toy_ts_nodes_text = """\
 id      is_sample       time    population      individual      metadata
@@ -648,21 +581,17 @@ def parse_matrix(csv_text):
 )
 def test_tsimpute(input_query, expected):
     """
-    Compare imputed alleles from tsimpute and BEAGLE 4.1.
+    Compare imputed alleles from BEAGLE 4.1 and ts BEAGLE re-implementation.
     """
     toy_ref_ts = get_toy_data()  # Same for both cases
     pos = toy_ref_ts.sites_position
     num_query_haps = input_query.shape[0]
-    mu = np.zeros(len(pos), dtype=np.float32) + 1e-8
-    rho = np.zeros(len(pos), dtype=np.float32) + 1e-8
     expected_subset = expected[:, input_query[0] == -1]
     for i in range(num_query_haps):
-        imputed_alleles, _ = tests.beagle_numba.run_tsimpute(
+        imputed_alleles, _ = run_tsimpute.run_tsimpute(
             toy_ref_ts,
             input_query[i],
-            pos,
-            rho,
-            mu,
+            beagle_numba.convert_to_cm(pos),
         )
         np.testing.assert_array_equal(imputed_alleles, expected_subset[i])
 
@@ -703,17 +632,11 @@ def test_tsimpute(input_query, expected):
         (np.array([10, 20]), np.array([15]), np.array([0.001]), np.array([0])),
     ],
 )
-def test_get_weights(typed_pos, untyped_pos, expected_weights, expected_idx):
-    # beagle, no numba
-    actual_weights, actual_idx = tests.beagle.get_weights(typed_pos, untyped_pos)
-    np.testing.assert_allclose(actual_weights, expected_weights)
-    np.testing.assert_array_equal(actual_idx, expected_idx)
-    # beagle, numba
-    genotyped_cm = tests.beagle_numba.convert_to_genetic_map_positions(typed_pos)
-    ungenotyped_cm = tests.beagle_numba.convert_to_genetic_map_positions(untyped_pos)
-    actual_weights, actual_idx = tests.beagle_numba.get_weights(
+def _test_get_weights(typed_pos, untyped_pos, expected_weights, expected_idx):
+    genotyped_cm = beagle_numba.convert_to_cm(typed_pos)
+    ungenotyped_cm = beagle_numba.convert_to_cm(untyped_pos)
+    actual_weights, actual_idx = beagle_numba.get_weights(
         typed_pos, untyped_pos, genotyped_cm, ungenotyped_cm
     )
     np.testing.assert_allclose(actual_weights, expected_weights)
     np.testing.assert_array_equal(actual_idx, expected_idx)
-
