@@ -1,23 +1,28 @@
 import warnings
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 import tskit
 import tsls
 
 from . import beagle_numba
 
+IntArray = NDArray[np.integer[Any]]
+FloatArray = NDArray[np.floating[Any]]
+
 
 def run_tsimpute(
-    ref_ts,
-    query_h,
-    pos_all,
+    ref_ts: tskit.TreeSequence,
+    query_h: IntArray,
+    pos_all: FloatArray,
     *,
-    ne=1e6,
-    error_rate=1e-4,
-    genetic_map=None,
-    use_threshold=False,
-):
+    ne: float = 1e6,
+    error_rate: float = 1e-4,
+    genetic_map: beagle_numba.GeneticMap | None = None,
+    use_threshold: bool = False,
+) -> tuple[IntArray, FloatArray]:
     """
     Perform interpolation-style imputation, except that the forward and backward
     probability matrices are computed from a tree sequence.

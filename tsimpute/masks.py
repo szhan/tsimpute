@@ -1,9 +1,18 @@
+from pathlib import Path
+from typing import Any, IO
+
 import numpy as np
 import pandas as pd
 import tskit
+import tsinfer
+from numpy.typing import NDArray
+
+FloatArray = NDArray[np.floating[Any]]
 
 
-def pick_mask_sites_random(sites, prop_mask_sites, seed=None):
+def pick_mask_sites_random(
+    sites: FloatArray, prop_mask_sites: float, seed: int | None = None
+) -> FloatArray:
     """
     Draw N sites from `sites` at random, where N is the number of sites to mask
     based on the specified proportion of masked sites.
@@ -31,7 +40,12 @@ def pick_mask_sites_random(sites, prop_mask_sites, seed=None):
     return mask_sites
 
 
-def mask_sites_in_sample_data(sample_data, sites, site_type, path=None):
+def mask_sites_in_sample_data(
+    sample_data: tsinfer.SampleData,
+    sites: FloatArray,
+    site_type: str,
+    path: str | Path | None = None,
+) -> tsinfer.SampleData:
     """
     Create a `SampleData` object from an existing `SampleData` object,
     which contains mask sites (all genotypes marked as missing) specified by
@@ -60,7 +74,9 @@ def mask_sites_in_sample_data(sample_data, sites, site_type, path=None):
     return new_sd
 
 
-def parse_site_position_file(in_file, one_based):
+def parse_site_position_file(
+    in_file: str | Path | IO[str], one_based: bool
+) -> FloatArray:
     """
     Read list of site positions from a plain tab-delimited text file,
     which has these columns:

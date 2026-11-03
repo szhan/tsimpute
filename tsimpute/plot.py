@@ -2,18 +2,20 @@ import math
 import scipy.stats as stats
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
+from pathlib import Path
 
 
 def plot_iqs_versus_maf(
-    df,
-    method,
-    min_iqs=0.90,
-    max_maf=0.50,
-    subsample_frac=0.01,
-    out_png_file=None,
-    dpi=100,
-):
+    df: pd.DataFrame,
+    method: str,
+    min_iqs: float = 0.90,
+    max_maf: float = 0.50,
+    subsample_frac: float = 0.01,
+    out_png_file: str | Path | None = None,
+    dpi: int = 100,
+) -> None:
     assert 0.0 <= subsample_frac <= 1.0
 
     subsample_size = math.ceil(df.shape[0] * subsample_frac)

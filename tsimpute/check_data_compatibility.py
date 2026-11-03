@@ -1,14 +1,20 @@
 import json
 import tqdm
+from typing import Any, TypeAlias
 
 import numpy as np
+from numpy.typing import NDArray
 
 import tskit
 import tsinfer
 
+SampleDataOrTreeSequence: TypeAlias = tsinfer.SampleData | tskit.TreeSequence
+FloatArray = NDArray[np.floating[Any]]
 
 # Functions for checking and ensuring data compatibility.
-def is_compatible(tsdata_1, tsdata_2):
+def is_compatible(
+    tsdata_1: SampleDataOrTreeSequence, tsdata_2: SampleDataOrTreeSequence
+) -> bool:
     """
     Check if `tsdata_1` is compatible with `tsdata_2`.
 
@@ -66,13 +72,13 @@ def is_compatible(tsdata_1, tsdata_2):
 
 
 def make_compatible_samples(
-    sd,
-    ts,
-    skip_unused_markers=None,
-    chip_site_pos=None,
-    mask_site_pos=None,
-    path=None,
-):
+    sd: tsinfer.SampleData,
+    ts: tskit.TreeSequence,
+    skip_unused_markers: bool | None = None,
+    chip_site_pos: FloatArray | None = None,
+    mask_site_pos: FloatArray | None = None,
+    path: str | None = None,
+) -> tsinfer.SampleData:
     """
     Create a new `SampleData` object (`new_sd`) from an existing one (`sd`) such that:
     (1) The allele list in `new_sd` corresponds to the allele list in `ts` at each site.

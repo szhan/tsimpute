@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import logging
 import sys
+from typing import Literal
 from git import Repo
 from tqdm import tqdm
 
@@ -67,14 +68,14 @@ from src import measures
     help="Output log file.",
 )
 def evaluate_imputation(
-    in_imputed_file,
-    in_file_type,
-    in_true_samples_file,
-    in_reference_trees_file,
-    in_chip_file,
-    out_csv_file,
-    out_log_file,
-):
+    in_imputed_file: str,
+    in_file_type: Literal["trees", "samples"],
+    in_true_samples_file: str,
+    in_reference_trees_file: str,
+    in_chip_file: str,
+    out_csv_file: str,
+    out_log_file: str,
+) -> None:
     logging.basicConfig(filename=out_log_file, level=logging.INFO, filemode="w")
 
     start_dt = datetime.now()

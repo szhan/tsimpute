@@ -75,17 +75,17 @@ from src import util
 )
 @click.option("--num_threads", "-t", type=int, default=1, help="Number of CPUs.")
 def perform_imputation(
-    in_reference_trees_file,
-    in_target_samples_file,
-    in_chip_file,
-    out_dir,
-    out_prefix,
-    recombination_rate,
-    genetic_map,
-    mmr_samples,
-    remove_leaves,
-    num_threads,
-):
+    in_reference_trees_file: str,
+    in_target_samples_file: str,
+    in_chip_file: str,
+    out_dir: str | Path,
+    out_prefix: str,
+    recombination_rate: float | msprime.RateMap | None,
+    genetic_map: str | None,
+    mmr_samples: float | None,
+    remove_leaves: bool,
+    num_threads: int,
+) -> None:
     out_dir = Path(out_dir)
     log_file = out_dir / f"{out_prefix}.log"
     compat_samples_file = out_dir / f"{out_prefix}.compat.samples"
