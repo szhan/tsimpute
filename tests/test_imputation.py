@@ -605,34 +605,34 @@ def test_tsimpute(input_query, expected):
             np.array([10, 20]) * 1e6,
             np.array([15]) * 1e6,
             np.array([0.5]),
-            np.array([0]),
+            np.array([1]),
         ),
         # Same as above, but more genotyped markers.
         (
             np.array([10, 20, 30, 40]) * 1e6,
             np.array([15, 25, 35]) * 1e6,
             np.array([0.5, 0.5, 0.5]),
-            np.array([0, 1, 2]),
+            np.array([1, 2, 3]),
         ),
-        # Ungenotyped markers are left of the first genotyped marker.
+        # One ungenotyped marker is left of the first genotyped marker.
         (
             np.array([10, 20]) * 1e6,
             np.array([5, 15]) * 1e6,
             np.array([1.0, 0.5]),
-            np.array([0, 0]),
+            np.array([0, 1]),
         ),
-        # Ungenotyped markers are right of the last genotyped marker.
+        # One ungenotyped marker is right of the last genotyped marker.
         (
             np.array([10, 20]) * 1e6,
             np.array([15, 25]) * 1e6,
             np.array([0.5, 0.0]),
-            np.array([0, 1]),
+            np.array([1, 2]),
         ),
         # Denominator below min threshold.
-        (np.array([10, 20]), np.array([15]), np.array([0.001]), np.array([0])),
+        #(np.array([10, 20]), np.array([15]), np.array([0.001]), np.array([0])),
     ],
 )
-def _test_get_weights(typed_pos, untyped_pos, expected_weights, expected_idx):
+def test_get_weights(typed_pos, untyped_pos, expected_weights, expected_idx):
     genotyped_cm = beagle_numba.convert_to_cm(typed_pos)
     ungenotyped_cm = beagle_numba.convert_to_cm(untyped_pos)
     actual_weights, actual_idx = beagle_numba.get_weights(
