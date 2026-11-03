@@ -6,7 +6,7 @@ license = {file = "LICENSE"}
 authors = [
   {name = "Shing Hei Zhan", email = "shing.zhan@ndph.ox.ac.uk"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
   "click",
   "tskit>=0.5.3",
