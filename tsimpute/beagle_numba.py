@@ -2,11 +2,16 @@
 
 import warnings
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 from numba import njit
 
 import tskit
+
+IntArray = NDArray[np.integer[Any]]
+FloatArray = NDArray[np.floating[Any]]
 
 
 @dataclass(frozen=True)
@@ -17,10 +22,10 @@ class GeneticMap:
     * Genetic map positions (cM).
     """
 
-    base_pos: np.ndarray
-    gen_pos: np.ndarray
+    base_pos: FloatArray
+    gen_pos: FloatArray
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert len(self.base_pos) == len(
             self.gen_pos
         ), "Incompatible physical positions and genetic map positions."
@@ -30,7 +35,7 @@ class GeneticMap:
 
 
 # Helper functions.
-def is_data_compatible(ref_h, query_h):
+def is_data_compatible(ref_h: IntArray, query_h: IntArray) -> bool:
     """
     For each position, check whether the alleles in the query haplotype
     are represented in the reference haplotypes.
@@ -52,7 +57,9 @@ def is_data_compatible(ref_h, query_h):
     return True
 
 
-def convert_to_cm(site_pos, genetic_map=None):
+def convert_to_cm(
+    site_pos: FloatArray, genetic_map: GeneticMap | None = None
+) -> FloatArray:
     """
     Convert site positions (bp) to genetic map positions (cM).
 
@@ -107,7 +114,7 @@ def convert_to_cm(site_pos, genetic_map=None):
 
 
 # HMM probabilities.
-def get_mismatch_probs(num_sites, error_rate):
+def get_mismatch_probs(num_sites: int, error_rate: float) -> FloatArray:
     """
     Compute mismatch probabilities at genotyped positions.
 
@@ -132,7 +139,7 @@ def get_mismatch_probs(num_sites, error_rate):
     return mismatch_probs
 
 
-def get_transition_probs(cm, h, ne):
+def get_transition_probs(cm: FloatArray, h: int, ne: float) -> FloatArray:
     """
     Compute transition probabilities to a random state at genotyped positions.
 
@@ -165,7 +172,9 @@ def get_transition_probs(cm, h, ne):
 
 
 @njit
-def compute_emission_prob(mismatch_prob, ref_a, query_a, num_alleles):
+def compute_emission_prob(
+    mismatch_prob: float, ref_a: int, query_a: int, num_alleles: int
+) -> float:
     """
     Compute the emission probability at a site based on whether the alleles
     carried by a query haplotype and a reference haplotype match at the site.
@@ -191,12 +200,12 @@ def compute_emission_prob(mismatch_prob, ref_a, query_a, num_alleles):
 # Replication of BEAGLE's implementation of LS HMM forward-backward algorithm.
 @njit
 def compute_forward_matrix_beaglelike(
-    ref_h,
-    query_h,
-    trans_probs,
-    mismatch_probs,
-    num_alleles,
-):
+    ref_h: IntArray,
+    query_h: IntArray,
+    trans_probs: FloatArray,
+    mismatch_probs: FloatArray,
+    num_alleles: int,
+) -> FloatArray:
     """
     Implement LS HMM forward algorithm as in BEAGLE.
 
@@ -242,12 +251,12 @@ def compute_forward_matrix_beaglelike(
 
 @njit
 def compute_forward_matrix(
-    ref_h,
-    query_h,
-    trans_probs,
-    mismatch_probs,
-    num_alleles,
-):
+    ref_h: IntArray,
+    query_h: IntArray,
+    trans_probs: FloatArray,
+    mismatch_probs: FloatArray,
+    num_alleles: int,
+) -> FloatArray:
     num_sites, num_haps = ref_h.shape
     if len(query_h) != num_sites:
         raise ValueError("Incompatible query haplotype.")
@@ -272,12 +281,12 @@ def compute_forward_matrix(
 
 @njit
 def compute_backward_matrix_beaglelike(
-    ref_h,
-    query_h,
-    trans_probs,
-    mismatch_probs,
-    num_alleles,
-):
+    ref_h: IntArray,
+    query_h: IntArray,
+    trans_probs: FloatArray,
+    mismatch_probs: FloatArray,
+    num_alleles: int,
+) -> FloatArray:
     """
     Implement LS HMM backward algorithm as in BEAGLE.
 
@@ -320,12 +329,12 @@ def compute_backward_matrix_beaglelike(
 
 @njit
 def compute_backward_matrix(
-    ref_h,
-    query_h,
-    trans_probs,
-    mismatch_probs,
-    num_alleles,
-):
+    ref_h: IntArray,
+    query_h: IntArray,
+    trans_probs: FloatArray,
+    mismatch_probs: FloatArray,
+    num_alleles: int,
+) -> FloatArray:
     num_sites, num_haps = ref_h.shape
     if len(query_h) != num_sites:
         raise ValueError("Incompatible query haplotype.")
@@ -348,7 +357,9 @@ def compute_backward_matrix(
 
 
 @njit
-def compute_state_prob_matrix(fwd_mat, bwd_mat):
+def compute_state_prob_matrix(
+    fwd_mat: FloatArray, bwd_mat: FloatArray
+) -> FloatArray:
     """
     Implementing this is simpler than faithfully reproducing BEAGLE 4.1.
 
@@ -373,7 +384,12 @@ def compute_state_prob_matrix(fwd_mat, bwd_mat):
 
 # Imputation.
 @njit
-def get_weights(typed_pos, untyped_pos, typed_cm, untyped_cm):
+def get_weights(
+    typed_pos: FloatArray,
+    untyped_pos: FloatArray,
+    typed_cm: FloatArray,
+    untyped_cm: FloatArray,
+) -> tuple[FloatArray, IntArray]:
     """
     Compute weights for the ungenotyped positions in a query haplotype, which are used in
     linear interpolation of hidden state probabilities at the ungenotyped positions.
@@ -421,16 +437,16 @@ def get_weights(typed_pos, untyped_pos, typed_cm, untyped_cm):
 
 @njit
 def interpolate_allele_probs(
-    state_mat,
-    ref_h,
-    pos_typed,
-    pos_untyped,
-    cm_typed,
-    cm_untyped,
+    state_mat: FloatArray,
+    ref_h: IntArray,
+    pos_typed: FloatArray,
+    pos_untyped: FloatArray,
+    cm_typed: FloatArray,
+    cm_untyped: FloatArray,
     *,
-    use_threshold=False,
-    return_weights=False,
-):
+    use_threshold: bool = False,
+    return_weights: bool = False,
+) -> tuple[FloatArray, FloatArray | None]:
     """
     Interpolate allele probabilities at the ungenotyped positions of a query haplotype
     following Equation 1 of BB2016.
@@ -510,7 +526,9 @@ def interpolate_allele_probs(
 
 
 @njit
-def get_map_alleles(allele_probs, num_alleles):
+def get_map_alleles(
+    allele_probs: FloatArray, num_alleles: int
+) -> tuple[IntArray, FloatArray]:
     """
     Compute maximum a posteriori (MAP) alleles at the ungenotyped positions
     of a query haplotype, based on posterior marginal allele probabilities.
@@ -541,16 +559,22 @@ def get_map_alleles(allele_probs, num_alleles):
 
 
 def run_interpolation_beagle(
-    ref_h,
-    query_h,
-    pos_all,
+    ref_h: IntArray,
+    query_h: IntArray,
+    pos_all: FloatArray,
     *,
-    ne=1e6,
-    error_rate=1e-4,
-    genetic_map=None,
-    use_threshold=False,
-    return_matrices=False,
-):
+    ne: float = 1e6,
+    error_rate: float = 1e-4,
+    genetic_map: GeneticMap | None = None,
+    use_threshold: bool = False,
+    return_matrices: bool = False,
+) -> tuple[
+    IntArray,
+    FloatArray,
+    FloatArray | None,
+    FloatArray | None,
+    FloatArray | None,
+]:
     """
     Perform a simplified version of the procedure of interpolation-style imputation
     based on Equation 1 of BB2016.

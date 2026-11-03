@@ -1,6 +1,13 @@
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
+from numpy.typing import NDArray
 import tskit
+from pathlib import Path
+
+IntArray = NDArray[np.integer[Any]]
+FloatArray = NDArray[np.floating[Any]]
 
 
 __DATE__ = "TODO"
@@ -32,14 +39,14 @@ class ImpData:
     Imputed allele probabilities is a matrix of size (q, x).
     """
 
-    individual_names: list
-    site_pos: np.ndarray
-    refs: np.ndarray
-    alts: np.ndarray
-    alleles: np.ndarray
-    allele_probs: np.ndarray
+    individual_names: list[str]
+    site_pos: FloatArray
+    refs: IntArray
+    alts: IntArray
+    alleles: IntArray
+    allele_probs: FloatArray
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if len(self.individual_names) <= 0:
             raise ValueError("There must be at least one individual.")
         if len(self.site_pos) <= 0:
@@ -67,24 +74,26 @@ class ImpData:
             raise ValueError("Some REFs are identical to ALTs.")
 
     @property
-    def num_sites(self):
+    def num_sites(self) -> int:
         return len(self.site_pos)
 
     @property
-    def num_samples(self):
+    def num_samples(self) -> int:
         return self.alleles.shape[0]
 
     @property
-    def num_individuals(self):
+    def num_individuals(self) -> int:
         return len(self.individual_names)
 
-    def get_ref_allele_at_site(self, i):
+    def get_ref_allele_at_site(self, i: int) -> np.integer[Any]:
         return self.refs[i]
 
-    def get_alt_allele_at_site(self, i):
+    def get_alt_allele_at_site(self, i: int) -> np.integer[Any]:
         return self.alts[i]
 
-    def get_alleles_at_site(self, i):
+    def get_alleles_at_site(
+        self, i: int
+    ) -> tuple[IntArray, FloatArray, IntArray, FloatArray]:
         idx_hap1 = np.arange(0, self.num_samples, 2)
         idx_hap2 = np.arange(1, self.num_samples, 2)
         a1 = self.alleles[idx_hap1, i]
@@ -94,7 +103,14 @@ class ImpData:
         return a1, ap1, a2, ap2
 
 
-def write_vcf(impdata, out_file, *, chr_name="1", print_gp=False, decimals=2):
+def write_vcf(
+    impdata: ImpData,
+    out_file: str | Path,
+    *,
+    chr_name: str = "1",
+    print_gp: bool = False,
+    decimals: int = 2,
+) -> None:
     """
     Print imputation results in VCF format, following the output of BEAGLE 4.1.
 

@@ -1,8 +1,14 @@
 """ Functions for adding new sample paths to an existing tree sequence. """
 from dataclasses import dataclass, field
+from typing import Any
+
 import tqdm
 
 import numpy as np
+from numpy.typing import NDArray
+
+IntArray = NDArray[np.integer[Any]]
+FloatArray = NDArray[np.floating[Any]]
 
 
 @dataclass(frozen=True)
@@ -22,8 +28,8 @@ class SamplePath:
     metadata: Metadata associated with the path (optional).
     """
     individual: str
-    nodes: np.ndarray
-    site_positions: np.ndarray
+    nodes: IntArray
+    site_positions: FloatArray
     metadata: dict = None
     is_valid: bool = field(init=False)
 

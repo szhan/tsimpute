@@ -1,9 +1,17 @@
 """Calculate metrics to assess imputation performance."""
 
+from typing import Any
+
 import numpy as np
+from numpy.typing import NDArray
+
+IntArray = NDArray[np.integer[Any]]
+FloatArray = NDArray[np.floating[Any]]
 
 
-def compute_concordance(gt_true, gt_imputed, allele_state=None):
+def compute_concordance(
+    gt_true: IntArray, gt_imputed: IntArray, allele_state: int | None = None
+) -> float:
     """
     Calculate the total concordance (sometimes referred to as imputation accuracy) between
     `gt_true` and `gt_imputed`.
@@ -44,15 +52,21 @@ def compute_concordance(gt_true, gt_imputed, allele_state=None):
     return concordance
 
 
-def compute_concordance_haploid(gt_true, gt_imputed, allele_state=None):
+def compute_concordance_haploid(
+    gt_true: IntArray, gt_imputed: IntArray, allele_state: int | None = None
+) -> float:
     pass
 
 
-def compute_concordance_diploid(gt_true, gt_imputed, allele_state=None):
+def compute_concordance_diploid(
+    gt_true: IntArray, gt_imputed: IntArray, allele_state: int | None = None
+) -> float:
     pass
 
 
-def compute_iqs(gt_true, gt_imputed, ploidy):
+def compute_iqs(
+    gt_true: IntArray, gt_imputed: IntArray, ploidy: int
+) -> float:
     """
     Calculate the Imputation Quality Score (IQS) as proposed by Lin et al. (2010).
     https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0009697
@@ -88,7 +102,7 @@ def compute_iqs(gt_true, gt_imputed, ploidy):
     return iqs
 
 
-def compute_iqs_haploid(gt_true, gt_imputed):
+def compute_iqs_haploid(gt_true: IntArray, gt_imputed: IntArray) -> float:
     """
     Calculate the IQS between `gt_true` and `gt_imputed`.
 
@@ -136,7 +150,7 @@ def compute_iqs_haploid(gt_true, gt_imputed):
     return iqs
 
 
-def compute_iqs_diploid(gt_true, gt_imputed):
+def compute_iqs_diploid(gt_true: IntArray, gt_imputed: IntArray) -> float:
     """
     Calculate the IQS between `gt_true` and `gt_imputed`.
 
@@ -204,7 +218,9 @@ def compute_iqs_diploid(gt_true, gt_imputed):
     return iqs
 
 
-def computed_r_squared(genotypes_true, genotypes_imputed):
+def computed_r_squared(
+    genotypes_true: IntArray, genotypes_imputed: IntArray
+) -> float | None:
     """
     Calculate the squared correlation coefficient between `genotypes_true` and `genotypes_imputed`.
 
@@ -222,8 +238,12 @@ def computed_r_squared(genotypes_true, genotypes_imputed):
 
 # Individual-level
 def compute_individual_scores(
-    alleles_1, allele_probs_1, alleles_2, allele_probs_2, ref
-):
+    alleles_1: IntArray,
+    allele_probs_1: FloatArray,
+    alleles_2: IntArray,
+    allele_probs_2: FloatArray,
+    ref: int,
+) -> tuple[FloatArray, FloatArray]:
     """
     Compute genotype probabilities and allele dosages of diploid individuals
     at a position based on posterior marginal allele probabilities.
@@ -277,7 +297,7 @@ def compute_individual_scores(
 
 
 # Site-level
-def compute_allelic_r_squared(dosage_probs):
+def compute_allelic_r_squared(dosage_probs: FloatArray) -> float:
     """
     Compute the estimated allelic R^2 at a position from the unphased genotype
     (or dosage) probabilities of a set of diploid individuals.
@@ -317,7 +337,7 @@ def compute_allelic_r_squared(dosage_probs):
     return allelic_rsq
 
 
-def compute_dosage_r_squared(dosage_probs):
+def compute_dosage_r_squared(dosage_probs: FloatArray) -> float:
     """
     Compute the dosage R^2 for a position from the unphased genotype (or dosage)
     probabilities of a set of diploid individuals.
@@ -350,12 +370,12 @@ def compute_dosage_r_squared(dosage_probs):
 
 
 def compute_allele_frequency(
-    alleles_1,
-    allele_probs_1,
-    alleles_2,
-    allele_probs_2,
-    allele,
-):
+    alleles_1: IntArray,
+    allele_probs_1: FloatArray,
+    alleles_2: IntArray,
+    allele_probs_2: FloatArray,
+    allele: int,
+) -> float:
     """
     Estimate the frequency of a specified allele at a position from allele probabilities
     of a set of diploid individuals.
