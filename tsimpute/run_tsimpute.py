@@ -1,5 +1,7 @@
 import warnings
+
 from typing import Any
+from typing import NamedTuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,6 +13,12 @@ from . import beagle_numba
 
 IntArray = NDArray[np.integer[Any]]
 FloatArray = NDArray[np.floating[Any]]
+
+
+class ImputationResult(NamedTuple):
+    imputed_alleles: IntArray
+    max_allele_probs: FloatArray
+    imputed_allele_probs: FloatArray
 
 
 def run_tsimpute(
@@ -119,4 +127,8 @@ def run_tsimpute(
         num_alleles=len(tskit.ALLELES_ACGT),
     )
 
-    return (imputed_alleles, max_allele_probs)
+    return ImputationResult(
+        imputed_alleles,
+        max_allele_probs,
+        imputed_allele_probs,
+    )
