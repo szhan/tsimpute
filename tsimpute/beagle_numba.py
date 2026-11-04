@@ -26,12 +26,10 @@ class GeneticMap:
     gen_pos: FloatArray
 
     def __post_init__(self) -> None:
-        assert len(self.base_pos) == len(
-            self.gen_pos
-        ), "Incompatible physical positions and genetic map positions."
-        assert np.all(
-            self.base_pos[1:] > self.base_pos[:-1]
-        ), "Physical positions are not sorted in strict ascending order."
+        if len(self.base_pos) != len(self.gen_pos):
+            raise ValueError("Incompatible physical and genetic map positions.")
+        if np.any(self.base_pos[1:] <= self.base_pos[:-1]):
+            raise ValueError("Physical positions are not sorted in strict ascending order.")
 
 
 # Helper functions.
